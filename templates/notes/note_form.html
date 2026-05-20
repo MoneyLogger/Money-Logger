@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>{{ action }} Note - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue: #2563eb;
+            --purple: #9333ea;
+            --slate: #334155;
+            --muted: #64748b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            color: #0f172a;
+            background:
+                radial-gradient(circle at top left, rgba(59,130,246,.16), transparent 24rem),
+                radial-gradient(circle at top right, rgba(168,85,247,.18), transparent 28rem),
+                linear-gradient(135deg, #eff6ff 0%, #faf5ff 52%, #fdf2f8 100%);
+        }
+        a { color: inherit; text-decoration: none; }
+        button, input, textarea, select { font: inherit; }
+        svg { display: block; }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(24px);
+            background: rgba(255,255,255,.7);
+            border-bottom: 1px solid rgba(255,255,255,.22);
+            box-shadow: 0 4px 18px rgba(15,23,42,.05);
+        }
+        .header-inner,
+        .main {
+            width: min(1280px, calc(100vw - 32px));
+            margin: 0 auto;
+        }
+        .header-inner {
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 10px 0;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            background: linear-gradient(135deg, #3b82f6, #9333ea);
+            box-shadow: 0 12px 24px rgba(99,102,241,.24);
+        }
+        .brand-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            background: linear-gradient(90deg, #2563eb, #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .brand-subtitle {
+            font-size: .75rem;
+            color: #717182;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .back-link,
+        .primary-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 16px;
+            border-radius: 14px;
+            font-size: .92rem;
+            font-weight: 700;
+        }
+        .back-link {
+            color: #334155;
+            background: rgba(255,255,255,.72);
+            border: 1px solid rgba(148,163,184,.18);
+        }
+        .primary-link {
+            color: #fff;
+            background: linear-gradient(90deg, #2563eb, #9333ea);
+            box-shadow: 0 12px 28px rgba(79, 70, 229, 0.24);
+        }
+
+        .main {
+            padding: 34px 0 90px;
+        }
+        .layout {
+            display: grid;
+            grid-template-columns: 1.2fr .85fr;
+            gap: 24px;
+            align-items: start;
+        }
+        .panel,
+        .preview-shell {
+            position: relative;
+            overflow: hidden;
+            border-radius: 28px;
+            border: 1px solid rgba(255,255,255,.4);
+            background: rgba(255,255,255,.8);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+        }
+        .panel {
+            padding: 30px;
+        }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            color: #7c3aed;
+            background: rgba(243,232,255,.8);
+            font-size: .8rem;
+            font-weight: 700;
+        }
+        .panel h1 {
+            margin-top: 16px;
+            font-size: clamp(2rem, 3vw, 2.7rem);
+            line-height: 1.04;
+            letter-spacing: -.03em;
+        }
+        .panel-copy {
+            max-width: 42rem;
+            margin-top: 12px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+            margin-top: 28px;
+        }
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .field.full { grid-column: 1 / -1; }
+        .field label,
+        .check-wrap span {
+            color: var(--slate);
+            font-size: .82rem;
+            font-weight: 800;
+            letter-spacing: .03em;
+            text-transform: uppercase;
+        }
+        .field input[type="text"],
+        .field input[type="date"],
+        .field textarea,
+        .field select {
+            width: 100%;
+            border: 1px solid rgba(226,232,240,.95);
+            outline: 0;
+            border-radius: 18px;
+            padding: 14px 16px;
+            background: rgba(255,255,255,.88);
+            color: #0f172a;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,.35);
+        }
+        .field input:focus,
+        .field textarea:focus,
+        .field select:focus {
+            border-color: rgba(147,51,234,.45);
+            box-shadow: 0 0 0 4px rgba(147,51,234,.12);
+        }
+        .field textarea {
+            min-height: 180px;
+            resize: vertical;
+            font-family: 'Kalam', cursive;
+            font-size: 1.06rem;
+            line-height: 1.6;
+        }
+        .check-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 56px;
+            padding: 0 16px;
+            border-radius: 18px;
+            background: rgba(255,255,255,.84);
+            border: 1px solid rgba(226,232,240,.95);
+        }
+        .check-wrap input {
+            width: 18px;
+            height: 18px;
+            accent-color: #7c3aed;
+        }
+        .errorlist {
+            list-style: none;
+            color: #dc2626;
+            font-size: .84rem;
+            font-weight: 700;
+        }
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 26px;
+        }
+        .save-btn,
+        .cancel-btn {
+            min-height: 52px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 18px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .save-btn {
+            flex: 1;
+            border: 0;
+            color: #fff;
+            background: linear-gradient(90deg, #2563eb, #9333ea);
+            box-shadow: 0 16px 28px rgba(79,70,229,.22);
+        }
+        .cancel-btn {
+            padding: 0 18px;
+            background: rgba(255,255,255,.76);
+            border: 1px solid rgba(226,232,240,.95);
+            color: var(--slate);
+        }
+
+        .preview-shell {
+            padding: 26px;
+            background:
+                linear-gradient(rgba(129,140,248,.09) 1.4px, transparent 1.4px),
+                linear-gradient(90deg, rgba(129,140,248,.09) 1.4px, transparent 1.4px),
+                rgba(255,255,255,.45);
+            background-size: 30px 30px;
+        }
+        .preview-shell::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(circle, rgba(147,197,253,.16) 1px, transparent 1.5px),
+                radial-gradient(circle, rgba(216,180,254,.16) 1px, transparent 1.5px);
+            background-size: 30px 30px, 30px 30px;
+            background-position: 15px 15px, 0 0;
+            pointer-events: none;
+        }
+        .preview-content {
+            position: relative;
+            z-index: 1;
+        }
+        .preview-head {
+            margin-bottom: 18px;
+        }
+        .preview-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #475569;
+            font-size: .86rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+        }
+        .preview-label .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #c084fc;
+        }
+        .preview-copy {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+        .sticky {
+            position: relative;
+            min-height: 360px;
+            padding: 34px 24px 24px;
+            border-radius: 8px;
+            border: 1px solid color-mix(in srgb, var(--edge) 72%, white 28%);
+            background:
+                radial-gradient(circle at top right, rgba(255,255,255,.34), transparent 46%),
+                linear-gradient(135deg, color-mix(in srgb, var(--paper) 94%, white 6%), color-mix(in srgb, var(--paper) 84%, white 16%));
+            box-shadow: 0 22px 34px rgba(15,23,42,.15);
+            transform: rotate(-1deg);
+        }
+        .sticky.yellow { --paper:#ffe35a; --edge:#f7ce1d; --pin:#bf7500; --pin-shadow:#965b00; }
+        .sticky.pink { --paper:#f5a7cf; --edge:#f66fb5; --pin:#db0872; --pin-shadow:#b0065e; }
+        .sticky.green { --paper:#8ef0b2; --edge:#53de84; --pin:#0b9b43; --pin-shadow:#06742f; }
+        .sticky.blue { --paper:#9ed0fb; --edge:#69aef9; --pin:#2563eb; --pin-shadow:#1d4ed8; }
+        .sticky.purple { --paper:#ddb6fb; --edge:#ca8dff; --pin:#8b1fe8; --pin-shadow:#6d16bd; }
+        .sticky.red { --paper:#ffb0d4; --edge:#ff86c2; --pin:#db0872; --pin-shadow:#b0065e; }
+        .pin {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            width: 26px;
+            height: 26px;
+            transform: translateX(-50%);
+            border-radius: 999px;
+            background: var(--pin);
+            box-shadow: 0 3px 0 var(--pin-shadow), 0 8px 16px rgba(15,23,42,.18);
+        }
+        .pin::before {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 22px;
+            width: 4px;
+            height: 24px;
+            transform: translateX(-50%) rotate(8deg);
+            background: var(--pin-shadow);
+            border-radius: 999px;
+            opacity: .72;
+        }
+        .preview-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 26px;
+            padding: 0 10px;
+            border-radius: 999px;
+            color: #fff;
+            font-size: .78rem;
+            font-weight: 800;
+        }
+        .priority-high { background: #ef4444; }
+        .priority-med { background: #eab308; color: #422006; }
+        .priority-low { background: #16a34a; }
+        .meta-chip {
+            min-height: 26px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.52);
+            border: 1px solid rgba(255,255,255,.3);
+            color: #334155;
+            font-size: .78rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+        }
+        .sticky-title {
+            color: #0f172a;
+            font-family: 'Kalam', cursive;
+            font-size: 2rem;
+            line-height: 1.12;
+            font-weight: 700;
+        }
+        .sticky-content {
+            margin-top: 12px;
+            color: #334155;
+            font-family: 'Kalam', cursive;
+            font-size: 1.08rem;
+            line-height: 1.65;
+            white-space: pre-line;
+        }
+        .sticky-date {
+            position: absolute;
+            left: 24px;
+            right: 24px;
+            bottom: 20px;
+            color: #64748b;
+            font-size: .9rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 980px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .header-inner,
+            .main {
+                width: min(1280px, calc(100vw - 20px));
+            }
+            .brand-subtitle { display: none; }
+            .header-actions .primary-link { display: none; }
+            .panel,
+            .preview-shell { border-radius: 24px; padding: 22px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <a href="{% url 'dashboard' %}" class="brand">
+                <span class="brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline><polyline points="16 7 22 7 22 13"></polyline></svg>
+                </span>
+                <span>
+                    <span class="brand-title">Money Logger</span>
+                    <span class="brand-subtitle">Financial Survival Tracker</span>
+                </span>
+            </a>
+
+            <div class="header-actions">
+                <a href="{% url 'note_create' %}" class="primary-link">New Note</a>
+                <a href="{% url 'notes_list' %}" class="back-link">Back to Notes</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="layout">
+            <section class="panel">
+                <span class="eyebrow">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>
+                    {{ action }} note
+                </span>
+                <h1>{{ action }} a sticky note that looks at home in your reference UI.</h1>
+                <p class="panel-copy">
+                    This editor keeps the paper-note personality, but the surrounding layout now follows the same
+                    gradient glass treatment and card rhythm from `DesignCode`.
+                </p>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        <div class="field full">
+                            <label for="{{ form.title.id_for_label }}">Title</label>
+                            {{ form.title }}
+                            {{ form.title.errors }}
+                        </div>
+                        <div class="field full">
+                            <label for="{{ form.content.id_for_label }}">Note</label>
+                            {{ form.content }}
+                            {{ form.content.errors }}
+                        </div>
+                        <div class="field">
+                            <label for="{{ form.color.id_for_label }}">Color</label>
+                            {{ form.color }}
+                            {{ form.color.errors }}
+                        </div>
+                        <div class="field">
+                            <label for="{{ form.category.id_for_label }}">Category</label>
+                            {{ form.category }}
+                            {{ form.category.errors }}
+                        </div>
+                        <div class="field">
+                            <label for="{{ form.priority.id_for_label }}">Priority</label>
+                            {{ form.priority }}
+                            {{ form.priority.errors }}
+                        </div>
+                        <div class="field">
+                            <label for="{{ form.date.id_for_label }}">Date</label>
+                            {{ form.date }}
+                            {{ form.date.errors }}
+                        </div>
+                        <label class="field full">
+                            <span>Pin On Board</span>
+                            <span class="check-wrap">
+                                {{ form.is_pinned }}
+                                Keep this note at the top of the board
+                            </span>
+                            {{ form.is_pinned.errors }}
+                        </label>
+                    </div>
+
+                    <div class="actions">
+                        <button type="submit" class="save-btn">Save Note</button>
+                        <a href="{% url 'notes_list' %}" class="cancel-btn">Cancel</a>
+                    </div>
+                </form>
+            </section>
+
+            <aside class="preview-shell">
+                <div class="preview-content">
+                    <div class="preview-head">
+                        <div class="preview-label"><span class="dot"></span>Live Preview</div>
+                        <p class="preview-copy">A quick note card preview so the handwritten board look stays intentional.</p>
+                    </div>
+
+                    <article id="preview-note" class="sticky {{ form.color.value|default:'yellow' }}">
+                        <span id="preview-pin" class="pin" {% if not form.is_pinned.value %}style="display:none;"{% endif %}></span>
+                        <div class="preview-meta">
+                            <span id="preview-priority" class="badge priority-{{ form.priority.value|default:'med' }}">{{ form.priority.value|default:"med"|upper }}</span>
+                            <span id="preview-category" class="meta-chip">{{ form.category.value|default:"ideas"|title }}</span>
+                            <span id="preview-pinned-chip" class="meta-chip" {% if not form.is_pinned.value %}style="display:none;"{% endif %}>Pinned</span>
+                        </div>
+                        <h2 id="preview-title" class="sticky-title">{{ form.title.value|default:"Fresh idea for the board" }}</h2>
+                        <p id="preview-content" class="sticky-content">{{ form.content.value|default:"Write reminders, goals, money ideas, or quick plans. The note preview updates as you type." }}</p>
+                        <p id="preview-date" class="sticky-date">{{ form.date.value|default:"Today" }}</p>
+                    </article>
+                </div>
+            </aside>
+        </div>
+    </main>
+
+    <script>
+        (function () {
+            const titleInput = document.getElementById("{{ form.title.id_for_label }}");
+            const contentInput = document.getElementById("{{ form.content.id_for_label }}");
+            const colorInput = document.getElementById("{{ form.color.id_for_label }}");
+            const categoryInput = document.getElementById("{{ form.category.id_for_label }}");
+            const priorityInput = document.getElementById("{{ form.priority.id_for_label }}");
+            const dateInput = document.getElementById("{{ form.date.id_for_label }}");
+            const pinnedInput = document.getElementById("{{ form.is_pinned.id_for_label }}");
+
+            const preview = document.getElementById("preview-note");
+            const previewTitle = document.getElementById("preview-title");
+            const previewContent = document.getElementById("preview-content");
+            const previewCategory = document.getElementById("preview-category");
+            const previewPriority = document.getElementById("preview-priority");
+            const previewDate = document.getElementById("preview-date");
+            const previewPin = document.getElementById("preview-pin");
+            const previewPinnedChip = document.getElementById("preview-pinned-chip");
+
+            const colorClasses = ["yellow", "pink", "green", "blue", "purple", "red"];
+            const priorityClasses = ["priority-high", "priority-med", "priority-low"];
+
+            function titleCase(value) {
+                return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+            }
+
+            function syncPreview() {
+                previewTitle.textContent = titleInput.value.trim() || "Fresh idea for the board";
+                previewContent.textContent = contentInput.value.trim() || "Write reminders, goals, money ideas, or quick plans. The note preview updates as you type.";
+                previewCategory.textContent = titleCase(categoryInput.value || "ideas");
+
+                preview.classList.remove(...colorClasses);
+                preview.classList.add(colorInput.value || "yellow");
+
+                previewPriority.classList.remove(...priorityClasses);
+                previewPriority.classList.add("priority-" + (priorityInput.value || "med"));
+                previewPriority.textContent = (priorityInput.value || "med").toUpperCase();
+
+                previewDate.textContent = dateInput.value || "Today";
+
+                const pinned = Boolean(pinnedInput.checked);
+                previewPin.style.display = pinned ? "" : "none";
+                previewPinnedChip.style.display = pinned ? "" : "none";
+            }
+
+            [titleInput, contentInput, colorInput, categoryInput, priorityInput, dateInput, pinnedInput].forEach((input) => {
+                input.addEventListener("input", syncPreview);
+                input.addEventListener("change", syncPreview);
+            });
+
+            syncPreview();
+        })();
+    </script>
+</body>
+</html>

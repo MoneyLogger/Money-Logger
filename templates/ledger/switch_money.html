@@ -1,0 +1,262 @@
+{% load currency_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>Switch Money - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { 
+            background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); 
+            color: #2c3e50; 
+            min-height: 100vh; 
+        }
+        .header { 
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(10px); 
+            padding: 20px 0; 
+            color: #1f2937; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .header-content { max-width: 1100px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { font-size: 1.8rem; font-weight: 700; }
+        .back-btn { 
+            background: linear-gradient(135deg, #2563eb, #7c3aed); 
+            color: #fff; 
+            padding: 8px 16px; 
+            border-radius: 8px; 
+            text-decoration: none; 
+            font-weight: 600; 
+            transition: all 0.3s; 
+        }
+        .back-btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        .container { max-width: 600px; margin: 0 auto; padding: 30px 20px; }
+        .form-card { 
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(10px); 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            padding: 40px; 
+            position: relative; 
+            overflow: hidden; 
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .form-card::before { 
+            content: ''; 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            right: 0; 
+            height: 4px; 
+            background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%); 
+        }
+        .form-title { text-align: center; margin-bottom: 30px; }
+        .form-title h2 { font-size: 1.8rem; font-weight: 700; color: #2c3e50; margin-bottom: 8px; }
+        .form-title p { color: #7f8c8d; font-size: 0.9rem; }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #34495e; font-size: 0.9rem; }
+        .form-group input, .form-group select { width: 100%; padding: 14px 16px; border: 2px solid #e1e8ed; border-radius: 12px; font-size: 1rem; transition: all 0.3s ease; background: #fff; font-family: 'Inter', sans-serif; }
+        .form-group textarea { width: 100%; padding: 14px 16px; border: 2px solid #e1e8ed; border-radius: 12px; font-size: 1rem; transition: all 0.3s ease; background: #fff; font-family: 'Inter', sans-serif; resize: vertical; min-height: 80px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { 
+            outline: none; 
+            border-color: #2563eb; 
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); 
+        }
+        .radio-group { display: flex; gap: 15px; margin-top: 8px; }
+        .radio-option { flex: 1; position: relative; }
+        .radio-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+        .radio-option label { display: block; padding: 12px 16px; border: 2px solid #e1e8ed; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s ease; font-weight: 600; margin-bottom: 0; }
+        .radio-option input[type="radio"]:checked + label { 
+            border-color: #2563eb; 
+            background: rgba(37, 99, 235, 0.1); 
+            color: #2563eb; 
+        }
+        .submit-btn { 
+            width: 100%; 
+            padding: 16px; 
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 1.1rem; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            margin-top: 10px; 
+        }
+        .submit-btn:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3); 
+        }
+        .info-box { 
+            background: rgba(59, 130, 246, 0.1); 
+            border-left: 4px solid #2563eb; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+        }
+        .info-box p { 
+            color: #1e40af; 
+            font-size: 0.9rem; 
+            margin-bottom: 5px; 
+        }
+        @media (max-width: 768px) {
+            .container { padding: 20px 15px; }
+            .form-card { padding: 30px 25px; border-radius: 16px; }
+            .form-title h2 { font-size: 1.5rem; }
+            .header h1 { font-size: 1.5rem; }
+            .radio-group { flex-direction: column; gap: 10px; }
+            .form-group input, .form-group select { padding: 12px 14px; font-size: 16px; }
+            .form-group textarea { padding: 12px 14px; font-size: 16px; }
+            .submit-btn { padding: 14px; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>🔄 Switch Money</h1>
+            <a href="{% url 'dashboard' %}" class="back-btn">← Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="form-card">
+            <div class="form-title">
+                <h2>Transfer Money</h2>
+                <p>Move money between UPI Cash and Hand Cash</p>
+            </div>
+
+            <div class="info-box">
+                <p><strong>ℹ️ Note:</strong> This is a transfer, not income or expense.</p>
+                <p>Your total balance remains the same.</p>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label>Transfer Direction</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="upi_to_hand" name="{{ form.switch_direction.name }}" value="UPI_TO_HAND" checked>
+                            <label for="upi_to_hand">💳 UPI → 💵 Hand</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="hand_to_upi" name="{{ form.switch_direction.name }}" value="HAND_TO_UPI">
+                            <label for="hand_to_upi">💵 Hand → 💳 UPI</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.amount.id_for_label }}">Amount (₹)</label>
+                    {{ form.amount }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}">Description (Optional)</label>
+                    {{ form.description }}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.date.id_for_label }}">Date</label>
+                    {{ form.date }}
+                </div>
+
+                <button type="submit" class="submit-btn">🔄 Switch Money</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    (function () {
+        const amountInput = document.getElementById('{{ form.amount.id_for_label }}');
+        if (!amountInput) return;
+
+        const hint = document.createElement('div');
+        hint.style.cssText = 'font-size:0.78rem;color:#95a5a6;margin-top:5px;';
+        hint.textContent = '💡 Tip: Type an expression like 100+200 or 2100-20*100/2 and press Enter to calculate';
+        amountInput.parentNode.appendChild(hint);
+
+        const preview = document.createElement('div');
+        preview.style.cssText = 'font-size:0.85rem;color:#27ae60;font-weight:600;margin-top:4px;display:none;';
+        amountInput.parentNode.insertBefore(preview, hint);
+
+        function isExpression(val) {
+            return /[+\-*\/]/.test(val) && /[0-9]/.test(val);
+        }
+
+        function safeEval(expr) {
+            if (!/^[\d\s\+\-\*\/\.\(\)]+$/.test(expr)) return null;
+            try {
+                const result = Function('"use strict"; return (' + expr + ')')();
+                if (typeof result === 'number' && isFinite(result) && result >= 0) {
+                    return parseFloat(result.toFixed(2));
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        amountInput.addEventListener('keydown', function (e) {
+            const operators = ['+', '-', '*', '/'];
+            if (operators.includes(e.key)) {
+                amountInput.type = 'text';
+            }
+
+            if (e.key === 'Enter') {
+                const val = this.value.trim();
+                if (isExpression(val)) {
+                    e.preventDefault();
+                    const result = safeEval(val);
+                    if (result !== null) {
+                        amountInput.type = 'number';
+                        this.value = result;
+                        preview.style.display = 'none';
+                        hint.textContent = '✅ Calculated!';
+                        setTimeout(() => {
+                            hint.textContent = '💡 Tip: Type an expression like 100+200 or 2100-20*100/2 and press Enter to calculate';
+                        }, 2000);
+                    } else {
+                        preview.textContent = '⚠️ Invalid expression';
+                        preview.style.color = '#e74c3c';
+                        preview.style.display = 'block';
+                        setTimeout(() => { preview.style.color = '#27ae60'; preview.style.display = 'none'; }, 2000);
+                    }
+                } else {
+                    amountInput.type = 'number';
+                }
+            }
+
+            if (e.key === 'Escape') {
+                amountInput.type = 'number';
+                preview.style.display = 'none';
+            }
+        });
+
+        amountInput.addEventListener('input', function () {
+            const val = this.value.trim();
+            if (isExpression(val)) {
+                const result = safeEval(val);
+                if (result !== null) {
+                    preview.textContent = '= ₹' + result.toLocaleString('en-IN');
+                    preview.style.color = '#27ae60';
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+    })();
+    </script>
+</body>
+</html>

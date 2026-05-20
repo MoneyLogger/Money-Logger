@@ -1,0 +1,166 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>{{ title }} - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
+        
+        /* Header */
+        .header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(24px); background: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.2); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .header-inner { max-width: 1280px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; height: 4rem; }
+        .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
+        .logo-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: linear-gradient(to bottom right, #3b82f6, #9333ea); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .logo-text { font-weight: 700; font-size: 1.25rem; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .logo-subtitle { font-size: 0.75rem; color: #6b7280; }
+        .back-btn { padding: 0.5rem 1rem; background: rgba(255,255,255,0.8); border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; color: #4b5563; text-decoration: none; transition: all 0.2s; }
+        .back-btn:hover { background: rgba(255,255,255,1); color: #111827; }
+        
+        /* Form Card */
+        .form-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1rem; padding: 2rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .form-header { margin-bottom: 2rem; }
+        .form-header h1 { font-size: 1.875rem; font-weight: 800; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.5rem; }
+        .form-header p { color: #6b7280; font-size: 0.875rem; }
+        
+        /* Form Fields */
+        .form-group { margin-bottom: 1.5rem; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
+        .form-input, .form-select { width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.9); border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 1rem; transition: all 0.3s; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .form-help { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; }
+        .form-error { font-size: 0.75rem; color: #ef4444; margin-top: 0.25rem; }
+        
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        
+        /* Buttons */
+        .form-actions { display: flex; gap: 1rem; margin-top: 2rem; }
+        .btn { padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 600; text-decoration: none; transition: all 0.3s; border: none; cursor: pointer; }
+        .btn-primary { background: linear-gradient(to right, #2563eb, #9333ea); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-secondary { background: rgba(107,114,128,0.1); color: #6b7280; }
+        .btn-secondary:hover { background: rgba(107,114,128,0.2); }
+        
+        /* Messages */
+        .messages { margin-bottom: 1.5rem; }
+        .message { padding: 1rem; border-radius: 0.75rem; margin-bottom: 0.5rem; }
+        .message.success { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
+        .message.error { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem 0.5rem; }
+            .form-card { padding: 1.5rem; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-inner">
+            <a href="{% url 'dashboard' %}" class="logo">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                </div>
+                <div>
+                    <div class="logo-text">Money Logger</div>
+                    <div class="logo-subtitle">Financial Survival Tracker</div>
+                </div>
+            </a>
+            <a href="{% url 'budget_list' %}" class="back-btn">← Back to Budgets</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Messages -->
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Form Card -->
+        <div class="form-card">
+            <div class="form-header">
+                <h1>{{ title }}</h1>
+                <p>Set spending limits for different categories</p>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label class="form-label" for="id_category">Category *</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}
+                        <div class="form-error">{{ form.category.errors.0 }}</div>
+                    {% else %}
+                        <div class="form-help">Select from categories you've used in your transactions</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="id_amount">Budget Amount (₹) *</label>
+                    {{ form.amount }}
+                    {% if form.amount.errors %}
+                        <div class="form-error">{{ form.amount.errors.0 }}</div>
+                    {% else %}
+                        <div class="form-help">Maximum amount you want to spend in this category</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label" for="id_period">Period *</label>
+                        {{ form.period }}
+                        {% if form.period.errors %}
+                            <div class="form-error">{{ form.period.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="id_month">Month *</label>
+                        {{ form.month }}
+                        {% if form.month.errors %}
+                            <div class="form-error">{{ form.month.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="id_year">Year *</label>
+                        {{ form.year }}
+                        {% if form.year.errors %}
+                            <div class="form-error">{{ form.year.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="id_alert_threshold">Alert Threshold (%) *</label>
+                    {{ form.alert_threshold }}
+                    {% if form.alert_threshold.errors %}
+                        <div class="form-error">{{ form.alert_threshold.errors.0 }}</div>
+                    {% else %}
+                        <div class="form-help">Get notified when you reach this percentage of your budget (default: 80%)</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        {% if budget %}Update Budget{% else %}Create Budget{% endif %}
+                    </button>
+                    <a href="{% url 'budget_list' %}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,2 @@
+DB_TOKEN="eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3Nzg5MzE3NzQsImlkIjoiMDE5ZTMwOTgtNmUwMS03ZjMwLTlhZjItNDQwMjgwZjJkZDEwIiwicmlkIjoiZjhlM2M3MTQtYjgyNS00MzZjLThlZjAtMzM0NzEyZTgzYjUwIn0.N9PwW9m9BpE5IW-PcFxZ8NEGGfqMra7o2XhAzxhTDcaF8rJpwwOjRzCZ60kxEjc-cXiAgyqSrJpGhk1Zf9rECA"
+DATABASE = "libsql://money-logger-db-moneylogger.aws-us-west-2.turso.io"

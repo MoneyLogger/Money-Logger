@@ -1,0 +1,1638 @@
+{% load currency_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>Add Transaction - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3);
+            min-height: 100vh;
+        }
+
+        /* Header Navigation */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(24px);
+            background: rgba(255,255,255,0.7);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+        }
+
+        .header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 4rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.75rem;
+            background: linear-gradient(to bottom right, #3b82f6, #9333ea);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 1.25rem;
+            background: linear-gradient(to right, #2563eb, #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-link {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4b5563;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.5);
+            color: #111827;
+        }
+
+        .nav-link.active {
+            color: #2563eb;
+            background: linear-gradient(to right, #dbeafe, #e9d5ff);
+        }
+
+        .btn-add {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(to right, #2563eb, #9333ea);
+            color: white;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: box-shadow 0.2s;
+        }
+
+        .btn-add:hover {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        /* Settings Dropdown */
+        .settings-dropdown { position: relative; }
+        .settings-btn { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(255,255,255,0.5); border: 1px solid rgba(229,231,235,0.5); cursor: pointer; transition: all 0.2s; }
+        .settings-btn:hover { background: rgba(255,255,255,0.8); border-color: #e5e7eb; }
+        .settings-btn svg { width: 1.25rem; height: 1.25rem; color: #6b7280; }
+        .settings-menu { position: absolute; top: calc(100% + 0.5rem); right: 0; min-width: 200px; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 0.75rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; display: none; z-index: 100; animation: slideDown 0.2s ease-out; }
+        .settings-menu.active { display: block; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .settings-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #374151; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; background: transparent; width: 100%; text-align: left; }
+        .settings-menu-item:hover { background: rgba(59,130,246,0.1); color: #2563eb; }
+        .settings-menu-item svg { width: 1.125rem; height: 1.125rem; color: currentColor; }
+        .settings-menu-divider { height: 1px; background: rgba(229,231,235,0.5); margin: 0.5rem 0; }
+        .settings-menu-item.logout-item { color: #ef4444; }
+        .settings-menu-item.logout-item:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
+
+        .container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 0 20px 80px;
+        }
+
+        /* Mobile-first responsive container */
+        @media (max-width: 640px) {
+            .container {
+                max-width: 100%;
+                padding: 0 16px 80px;
+            }
+        }
+
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .container {
+                max-width: 640px;
+                padding: 0 24px 80px;
+            }
+        }
+
+        @media (min-width: 1025px) {
+            .container {
+                max-width: 768px;
+                padding: 0 32px 80px;
+            }
+        }
+
+        /* Form Card */
+        .form-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            border: 1px solid rgba(229, 231, 235, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Mobile form card adjustments */
+        @media (max-width: 640px) {
+            .form-card {
+                border-radius: 20px;
+                margin: 0 8px;
+                box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.25);
+            }
+        }
+
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .form-card {
+                border-radius: 24px;
+                margin: 0 16px;
+            }
+        }
+
+        .form-header {
+            padding: 32px;
+            background: linear-gradient(to right, rgba(219,234,254,0.5), rgba(233,213,255,0.5));
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+        }
+
+        .form-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #2563eb, #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            color: #6b7280;
+            font-size: 1rem;
+        }
+
+        /* Mobile form header */
+        @media (max-width: 640px) {
+            .form-header {
+                padding: 20px;
+                text-align: center;
+            }
+            
+            .form-header h1 {
+                font-size: 1.75rem;
+                line-height: 1.2;
+            }
+            
+            .form-header p {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Tablet form header */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .form-header {
+                padding: 28px;
+            }
+            
+            .form-header h1 {
+                font-size: 1.875rem;
+            }
+        }
+
+        .form-content {
+            padding: 32px;
+        }
+
+        /* Mobile form content */
+        @media (max-width: 640px) {
+            .form-content {
+                padding: 20px;
+            }
+        }
+
+        /* Tablet form content */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .form-content {
+                padding: 28px;
+            }
+        }
+
+        /* Form Groups */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.8125rem;
+        }
+
+        /* Transaction Type Toggle - Inline Tab Style */
+        .type-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(249, 250, 251, 0.8);
+            border-radius: 12px;
+            padding: 8px;
+            gap: 0;
+        }
+
+        .type-option {
+            position: relative;
+            flex: 1;
+        }
+
+        .type-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .type-option label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: transparent;
+            margin-bottom: 0;
+            border-radius: 8px;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #6b7280;
+            border: none;
+            position: relative;
+            min-height: 48px;
+        }
+
+        /* Separator between options */
+        .type-option:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1px;
+            height: 24px;
+            background: #d1d5db;
+        }
+
+        .type-option input[type="radio"]:checked + label::after {
+            display: none;
+        }
+
+        .type-option:has(input[type="radio"]:checked) + .type-option::after {
+            display: none;
+        }
+
+        .type-option label:hover {
+            color: #374151;
+        }
+
+        .type-option input[type="radio"]:checked + label {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .type-option.income input[type="radio"]:checked + label {
+            color: #16a34a;
+        }
+
+        .type-option.expense input[type="radio"]:checked + label {
+            color: #dc2626;
+        }
+
+        .type-option.switch input[type="radio"]:checked + label {
+            color: #2563eb;
+        }
+
+        .type-icon {
+            width: 20px;
+            height: 20px;
+            color: currentColor;
+            transition: color 0.3s ease;
+        }
+
+        .type-text {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: currentColor;
+            transition: color 0.3s ease;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 640px) {
+            .type-toggle {
+                padding: 6px;
+                gap: 0;
+            }
+
+            .type-option label {
+                padding: 12px 14px;
+                gap: 6px;
+                font-size: 0.875rem;
+                min-height: 44px;
+            }
+            
+            .type-icon {
+                width: 18px;
+                height: 18px;
+            }
+            
+            .type-text {
+                font-size: 0.875rem;
+            }
+
+            .type-option:not(:last-child)::after {
+                height: 20px;
+            }
+        }
+
+        /* Tablet adjustments */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .type-toggle {
+                padding: 7px;
+            }
+
+            .type-option label {
+                padding: 13px 18px;
+                min-height: 46px;
+            }
+            
+            .type-icon {
+                width: 19px;
+                height: 19px;
+            }
+        }
+
+        /* Input Fields */
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: #9ca3af;
+            z-index: 1;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            padding-left: 44px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.9375rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-input.amount {
+            font-size: 1.375rem;
+            font-weight: 700;
+            background: linear-gradient(to bottom right, #f9fafb, #f3f4f6);
+            padding: 12px 14px;
+            padding-left: 44px;
+        }
+
+        /* Mobile input adjustments */
+        @media (max-width: 640px) {
+            .form-input {
+                padding: 12px;
+                padding-left: 44px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                border-radius: 10px;
+                min-height: 48px;
+            }
+            
+            .form-input.amount {
+                font-size: 1.25rem;
+                padding: 14px 12px;
+                padding-left: 44px;
+                min-height: 52px;
+                font-weight: 700;
+            }
+            
+            .input-icon {
+                left: 16px;
+                width: 18px;
+                height: 18px;
+            }
+        }
+
+        /* Tablet input adjustments */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .form-input {
+                padding: 11px 14px;
+                padding-left: 44px;
+                min-height: 46px;
+            }
+            
+            .form-input.amount {
+                font-size: 1.3125rem;
+                padding: 13px 14px;
+                padding-left: 44px;
+                min-height: 50px;
+            }
+            
+            .input-icon {
+                width: 19px;
+                height: 19px;
+            }
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            padding-left: 44px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.9375rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            resize: none;
+            min-height: 70px;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 10px 14px;
+            padding-left: 44px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.9375rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Mobile textarea and select adjustments */
+        @media (max-width: 640px) {
+            .form-textarea {
+                padding: 12px;
+                padding-left: 44px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                border-radius: 10px;
+                min-height: 70px;
+                line-height: 1.5;
+            }
+            
+            .form-select {
+                padding: 12px;
+                padding-left: 44px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                border-radius: 10px;
+                min-height: 48px;
+                background-position: right 12px center;
+            }
+        }
+
+        /* Tablet textarea and select adjustments */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .form-textarea {
+                padding: 11px 14px;
+                padding-left: 44px;
+                min-height: 72px;
+            }
+            
+            .form-select {
+                padding: 11px 14px;
+                padding-left: 44px;
+                min-height: 46px;
+            }
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(to right, #2563eb, #9333ea);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            min-height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn.income {
+            background: linear-gradient(to right, #16a34a, #059669);
+        }
+
+        .submit-btn.expense {
+            background: linear-gradient(to right, #dc2626, #ec4899);
+        }
+
+        /* Mobile submit button */
+        @media (max-width: 640px) {
+            .submit-btn {
+                padding: 18px 16px;
+                font-size: 1.125rem;
+                font-weight: 800;
+                min-height: 64px;
+                border-radius: 16px;
+                box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.15);
+            }
+            
+            .submit-btn:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 16px 25px -5px rgba(0, 0, 0, 0.15);
+            }
+        }
+
+        /* Tablet submit button */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .submit-btn {
+                padding: 17px 16px;
+                font-size: 1.0625rem;
+                min-height: 60px;
+                border-radius: 14px;
+            }
+        }
+
+        /* Switch Transfer Section */
+        .switch-container {
+            padding: 16px;
+            background: linear-gradient(to bottom right, rgba(219,234,254,0.5), rgba(233,213,255,0.5));
+            border-radius: 12px;
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .switch-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .switch-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .switch-from,
+        .switch-to {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .switch-arrow {
+            width: 28px;
+            height: 28px;
+            color: #2563eb;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .switch-arrow svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .switch-select {
+            padding-left: 16px !important;
+        }
+
+        .switch-balance {
+            text-align: center;
+            font-size: 0.8125rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        /* Mobile switch transfer */
+        @media (max-width: 640px) {
+            .switch-container {
+                padding: 14px 12px;
+                border-radius: 10px;
+            }
+            
+            .switch-row {
+                flex-direction: column;
+                gap: 14px;
+                align-items: stretch;
+            }
+            
+            .switch-arrow {
+                width: 24px;
+                height: 24px;
+                align-self: center;
+                transform: rotate(90deg);
+                margin: 6px 0;
+            }
+            
+            .switch-from,
+            .switch-to {
+                width: 100%;
+            }
+            
+            .switch-balance {
+                font-size: 0.75rem;
+                margin-top: 6px;
+            }
+        }
+
+        /* Tablet switch transfer */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .switch-container {
+                padding: 15px 16px;
+                border-radius: 11px;
+            }
+            
+            .switch-row {
+                gap: 14px;
+            }
+            
+            .switch-arrow {
+                width: 26px;
+                height: 26px;
+            }
+        }
+
+        /* Payment Method Cards */
+        .payment-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .payment-card {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payment-card input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .payment-card-content {
+            padding: 20px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 120px;
+        }
+
+        .payment-card:hover .payment-card-content {
+            border-color: #d1d5db;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .payment-card input[type="radio"]:checked + .payment-card-content {
+            border-color: #2563eb;
+            background: linear-gradient(to bottom right, rgba(219,234,254,0.3), rgba(233,213,255,0.2));
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+        }
+
+        .payment-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .payment-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .payment-card.upi .payment-card-icon {
+            background: linear-gradient(to bottom right, rgba(37, 99, 235, 0.1), rgba(147, 51, 234, 0.1));
+        }
+
+        .payment-card.hand .payment-card-icon {
+            background: linear-gradient(to bottom right, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+        }
+
+        .payment-card input[type="radio"]:checked + .payment-card-content .payment-card-icon {
+            transform: scale(1.1);
+        }
+
+        .payment-card.upi input[type="radio"]:checked + .payment-card-content .payment-card-icon {
+            background: linear-gradient(to bottom right, #2563eb, #9333ea);
+        }
+
+        .payment-card.hand input[type="radio"]:checked + .payment-card-content .payment-card-icon {
+            background: linear-gradient(to bottom right, #10b981, #059669);
+        }
+
+        .payment-card-icon svg {
+            width: 24px;
+            height: 24px;
+            color: #6b7280;
+            transition: color 0.3s ease;
+        }
+
+        .payment-card input[type="radio"]:checked + .payment-card-content .payment-card-icon svg {
+            color: white;
+        }
+
+        .payment-card-check {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .payment-card input[type="radio"]:checked + .payment-card-content .payment-card-check {
+            border-color: #2563eb;
+            background: #2563eb;
+        }
+
+        .payment-card-check svg {
+            width: 14px;
+            height: 14px;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .payment-card input[type="radio"]:checked + .payment-card-content .payment-card-check svg {
+            opacity: 1;
+        }
+
+        .payment-card-body {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .payment-card-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #6b7280;
+            transition: color 0.3s ease;
+        }
+
+        .payment-card input[type="radio"]:checked + .payment-card-content .payment-card-title {
+            color: #2563eb;
+        }
+
+        .payment-card-balance {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #111827;
+            line-height: 1;
+        }
+
+        .payment-card-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        /* Mobile payment cards */
+        @media (max-width: 640px) {
+            .payment-cards {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .payment-card-content {
+                padding: 12px;
+                min-height: 90px;
+            }
+
+            .payment-card-icon {
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
+            }
+
+            .payment-card-icon svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            .payment-card-check {
+                width: 18px;
+                height: 18px;
+            }
+
+            .payment-card-check svg {
+                width: 12px;
+                height: 12px;
+            }
+
+            .payment-card-title {
+                font-size: 0.75rem;
+            }
+
+            .payment-card-balance {
+                font-size: 1.125rem;
+                font-weight: 700;
+            }
+
+            .payment-card-label {
+                font-size: 0.625rem;
+            }
+        }
+
+        /* Tablet payment cards */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .payment-cards {
+                gap: 14px;
+            }
+
+            .payment-card-content {
+                padding: 19px;
+                min-height: 110px;
+            }
+
+            .payment-card-icon {
+                width: 38px;
+                height: 38px;
+            }
+
+            .payment-card-icon svg {
+                width: 22px;
+                height: 22px;
+            }
+
+            .payment-card-balance {
+                font-size: 1.4375rem;
+            }
+        }
+
+        /* Messages */
+        .message {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: rgba(22, 163, 74, 0.1);
+            border: 1px solid rgba(22, 163, 74, 0.2);
+            color: #166534;
+        }
+
+        .message.error {
+            background: rgba(220, 38, 38, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+            color: #991b1b;
+        }
+
+        .message.info {
+            background: rgba(147, 51, 234, 0.1);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            color: #6b21a8;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 80px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(to right, #2563eb, #9333ea);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
+            z-index: 40;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: white;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.4);
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+        }
+
+        .fab svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            .settings-dropdown { display: none; }
+            .btn-add {
+                display: none; /* Hide desktop add button on mobile */
+            }
+            .header-inner {
+                padding: 0 1rem;
+                height: 4rem;
+            }
+            .container {
+                padding: 0 1rem 100px; /* Extra bottom padding for mobile nav */
+            }
+            .form-header {
+                padding: 20px;
+            }
+            .form-header h1 {
+                font-size: 1.75rem;
+            }
+            .form-content {
+                padding: 20px;
+            }
+            .type-toggle {
+                grid-template-columns: 1fr !important;
+                gap: 12px;
+            }
+            .form-input.amount {
+                font-size: 1.5rem;
+            }
+            
+            /* Show mobile navigation */
+            .mobile-nav {
+                display: block;
+            }
+            
+            /* Mobile-specific enhancements */
+            .logo-icon {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+            
+            .logo-text {
+                font-size: 1.25rem;
+            }
+            
+            .logo-subtitle {
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Hide FAB on add transaction page (current page) */
+        .fab.hide-on-add {
+            display: none !important;
+        }
+
+        /* Enhanced mobile interactions */
+        @media (max-width: 640px) {
+            /* Touch-friendly tap targets */
+            .type-option label {
+                -webkit-tap-highlight-color: transparent;
+                user-select: none;
+            }
+            
+            .type-option label:active {
+                transform: scale(0.98);
+            }
+            
+            .submit-btn {
+                -webkit-tap-highlight-color: transparent;
+                user-select: none;
+            }
+            
+            .submit-btn:active {
+                transform: scale(0.98);
+            }
+            
+            /* Improved form spacing on mobile */
+            .form-group {
+                margin-bottom: 20px;
+            }
+            
+            .form-label {
+                font-size: 0.8125rem;
+                font-weight: 600;
+                margin-bottom: 10px;
+            }
+            
+            /* Better visual hierarchy on mobile */
+            .form-header h1 {
+                line-height: 1.2;
+                margin-bottom: 6px;
+            }
+            
+            .form-header p {
+                font-size: 0.8125rem;
+                line-height: 1.4;
+            }
+        }
+
+        /* Tablet-specific optimizations */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .header-inner {
+                padding: 0 1.5rem;
+            }
+            
+            .container {
+                padding: 0 1.5rem 80px;
+            }
+            
+            .form-group {
+                margin-bottom: 22px;
+            }
+            
+            .form-label {
+                font-size: 0.875rem;
+                margin-bottom: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include "includes/nav.html" with active_page="add_transaction" action_url="add_transaction" action_text="Add Transaction" show_whatif=False %}
+
+    <div class="container">
+        <div class="form-card">
+            <!-- Form Header -->
+            <div class="form-header">
+                {% if request.session.whatif_mode %}
+                <div style="background: linear-gradient(to right, #f59e0b, #ea580c); color: white; padding: 0.75rem 1rem; border-radius: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 1.25rem;">🧪</span>
+                    <span style="font-size: 0.875rem; font-weight: 500;">What-If Mode Active — This transaction is temporary</span>
+                </div>
+                {% endif %}
+                <h1>Add Transaction</h1>
+                <p>Record your income, expense, or transfer money</p>
+            </div>
+
+            <div class="form-content">
+                <!-- Messages (excluding What-If mode and success messages) -->
+                {% if messages %}
+                    {% for message in messages %}
+                        {% if 'What-If' not in message.message and 'what-if' not in message.message|lower and message.tags != 'success' %}
+                        <div class="message {% if message.tags == 'error' %}error{% else %}info{% endif %}">
+                            {{ message }}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+                {% if form.errors %}
+                    <div class="message error">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <div>{{ field|title }}: {{ error }}</div>
+                            {% endfor %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" id="transactionForm">
+                    {% csrf_token %}
+                    
+                    <!-- Transaction Type -->
+                    <div class="form-group">
+                        <label class="form-label">Transaction Type</label>
+                        <div class="type-toggle" style="grid-template-columns: repeat(3, 1fr);">
+                            <div class="type-option income">
+                                <input type="radio" id="income" name="{{ form.transaction_type.name }}" value="INCOME" {% if form.transaction_type.value == 'INCOME' %}checked{% endif %}>
+                                <label for="income">
+                                    <svg class="type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="16 12 12 8 8 12"></polyline>
+                                        <line x1="12" y1="16" x2="12" y2="8"></line>
+                                    </svg>
+                                    <span class="type-text">Income</span>
+                                </label>
+                            </div>
+                            <div class="type-option expense">
+                                <input type="radio" id="expense" name="{{ form.transaction_type.name }}" value="EXPENSE" {% if form.transaction_type.value == 'EXPENSE' or not form.transaction_type.value %}checked{% endif %}>
+                                <label for="expense">
+                                    <svg class="type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="8 12 12 16 16 12"></polyline>
+                                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                                    </svg>
+                                    <span class="type-text">Expense</span>
+                                </label>
+                            </div>
+                            <div class="type-option switch">
+                                <input type="radio" id="switch" name="{{ form.transaction_type.name }}" value="SWITCH" {% if form.transaction_type.value == 'SWITCH' %}checked{% endif %}>
+                                <label for="switch">
+                                    <svg class="type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="17 1 21 5 17 9"></polyline>
+                                        <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                                        <polyline points="7 23 3 19 7 15"></polyline>
+                                        <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                                    </svg>
+                                    <span class="type-text">Switch</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.amount.id_for_label }}">Amount</label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M6 3h12"></path>
+                                <path d="M6 8h12"></path>
+                                <path d="m6 13 8.5 8"></path>
+                                <path d="M6 13h3"></path>
+                                <path d="M9 13c6.667 0 6.667-10 0-10"></path>
+                            </svg>
+                            <input type="number" id="{{ form.amount.id_for_label }}" name="{{ form.amount.name }}" 
+                                   class="form-input amount" placeholder="0.00" step="0.01" required 
+                                   value="{{ form.amount.value|default:'' }}">
+                        </div>
+                    </div>
+
+                    <!-- Switch Transfer UI (shown only when Switch is selected) -->
+                    <div class="form-group" id="switchTransferSection" style="display: none;">
+                        <input type="hidden" id="switchDirectionInput" name="{{ form.switch_direction.name }}" value="">
+                        <div class="switch-container">
+                            <div class="switch-content">
+                                <div class="switch-row">
+                                    <div class="switch-from">
+                                        <label class="form-label" style="margin-bottom: 8px;">From</label>
+                                        <select id="fromMethod" class="form-select switch-select">
+                                            <option value="UPI CASH">UPI Cash</option>
+                                            <option value="HAND CASH">Hand Cash</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="switch-arrow">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="17 1 21 5 17 9"></polyline>
+                                            <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                                            <polyline points="7 23 3 19 7 15"></polyline>
+                                            <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                                        </svg>
+                                    </div>
+                                    
+                                    <div class="switch-to">
+                                        <label class="form-label" style="margin-bottom: 8px;">To</label>
+                                        <select id="toMethod" class="form-select switch-select">
+                                            <option value="HAND CASH">Hand Cash</option>
+                                            <option value="UPI CASH">UPI Cash</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="switch-balance">
+                                    <span id="availableBalance">Available balance will be shown here</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Regular Income/Expense Fields (hidden when Switch is selected) -->
+                    <div id="regularFields">
+                        <!-- Category -->
+                        <div class="form-group">
+                            <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
+                            <div class="input-wrapper">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                                </svg>
+                                <select id="{{ form.category.id_for_label }}" name="{{ form.category.name }}" class="form-select" required>
+                                    {% for value, label in form.category.field.choices %}
+                                        <option value="{{ value }}" {% if form.category.value == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="form-group">
+                            <label class="form-label">Payment Method</label>
+                            <div class="payment-cards">
+                                <!-- UPI Cash Card -->
+                                <div class="payment-card upi">
+                                    <input type="radio" id="upi_cash" name="{{ form.money_type.name }}" value="UPI CASH" {% if form.money_type.value == 'UPI CASH' or not form.money_type.value %}checked{% endif %}>
+                                    <label for="upi_cash" class="payment-card-content">
+                                        <div class="payment-card-header">
+                                            <div class="payment-card-icon">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                                    <line x1="1" y1="10" x2="23" y2="10"></line>
+                                                </svg>
+                                            </div>
+                                            <div class="payment-card-check">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="payment-card-body">
+                                            <div class="payment-card-title">UPI Cash</div>
+                                            <div class="payment-card-balance">₹{{ upi_balance|indian_currency }}</div>
+                                            <div class="payment-card-label">Available Balance</div>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <!-- Hand Cash Card -->
+                                <div class="payment-card hand">
+                                    <input type="radio" id="hand_cash" name="{{ form.money_type.name }}" value="HAND CASH" {% if form.money_type.value == 'HAND CASH' %}checked{% endif %}>
+                                    <label for="hand_cash" class="payment-card-content">
+                                        <div class="payment-card-header">
+                                            <div class="payment-card-icon">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                                </svg>
+                                            </div>
+                                            <div class="payment-card-check">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div class="payment-card-body">
+                                            <div class="payment-card-title">Hand Cash</div>
+                                            <div class="payment-card-balance">₹{{ hand_balance|indian_currency }}</div>
+                                            <div class="payment-card-label">Available Balance</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14,2 14,8 20,8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10,9 9,9 8,9"></polyline>
+                            </svg>
+                            <textarea id="{{ form.description.id_for_label }}" name="{{ form.description.name }}" 
+                                      class="form-textarea" placeholder="Enter a description (optional)...">{{ form.description.value|default:'' }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Date -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.date.id_for_label }}">Date</label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            <input type="date" id="{{ form.date.id_for_label }}" name="{{ form.date.name }}" 
+                                   class="form-input" required value="{{ form.date.value|default:'' }}">
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        💾 Save Transaction
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Export transactions (placeholder)
+        function exportTransactions() {
+            window.location.href = '{% url "dashboard" %}';
+        }
+        
+        // Dynamic UI based on transaction type
+        function updateFormUI() {
+            const submitBtn = document.getElementById('submitBtn');
+            const incomeRadio = document.getElementById('income');
+            const expenseRadio = document.getElementById('expense');
+            const switchRadio = document.getElementById('switch');
+            const switchSection = document.getElementById('switchTransferSection');
+            const regularFields = document.getElementById('regularFields');
+            
+            if (switchRadio.checked) {
+                // Show switch UI, hide regular fields
+                switchSection.style.display = 'block';
+                regularFields.style.display = 'none';
+                submitBtn.className = 'submit-btn';
+                submitBtn.style.background = 'linear-gradient(to right, #2563eb, #9333ea)';
+                submitBtn.innerHTML = '🔄 Transfer Money';
+            } else {
+                // Show regular fields, hide switch UI
+                switchSection.style.display = 'none';
+                regularFields.style.display = 'block';
+                
+                if (incomeRadio.checked) {
+                    submitBtn.className = 'submit-btn income';
+                    submitBtn.innerHTML = '💰 Add Income';
+                } else if (expenseRadio.checked) {
+                    submitBtn.className = 'submit-btn expense';
+                    submitBtn.innerHTML = '💸 Add Expense';
+                }
+            }
+        }
+
+        // Update available balance display for switch transfers
+        function updateAvailableBalance() {
+            const fromMethod = document.getElementById('fromMethod').value;
+            const balanceSpan = document.getElementById('availableBalance');
+            
+            // You would need to pass balance data from Django context
+            // For now, showing placeholder text
+            balanceSpan.textContent = `Available ${fromMethod.toLowerCase()}: ₹0`;
+        }
+
+        // Add event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const incomeRadio = document.getElementById('income');
+            const expenseRadio = document.getElementById('expense');
+            const switchRadio = document.getElementById('switch');
+            const fromMethod = document.getElementById('fromMethod');
+            const toMethod = document.getElementById('toMethod');
+            
+            // Transaction type change handlers
+            incomeRadio.addEventListener('change', updateFormUI);
+            expenseRadio.addEventListener('change', updateFormUI);
+            switchRadio.addEventListener('change', updateFormUI);
+            
+            // Switch method change handlers
+            fromMethod.addEventListener('change', function() {
+                updateAvailableBalance();
+                // Ensure to/from are different
+                if (fromMethod.value === toMethod.value) {
+                    toMethod.value = fromMethod.value === 'UPI CASH' ? 'HAND CASH' : 'UPI CASH';
+                }
+            });
+            
+            toMethod.addEventListener('change', function() {
+                // Ensure to/from are different
+                if (fromMethod.value === toMethod.value) {
+                    fromMethod.value = toMethod.value === 'UPI CASH' ? 'HAND CASH' : 'UPI CASH';
+                    updateAvailableBalance();
+                }
+            });
+            
+            // Set initial UI state
+            updateFormUI();
+            updateAvailableBalance();
+        });
+
+        // Enhanced amount input with calculation support
+        (function () {
+            const amountInput = document.getElementById('{{ form.amount.id_for_label }}');
+            if (!amountInput) return;
+
+            // Create hint element
+            const hint = document.createElement('div');
+            hint.style.cssText = 'font-size:0.75rem;color:#6b7280;margin-top:8px;';
+            hint.textContent = '💡 Tip: Type expressions like 100+200 or 2100-20*100/2 and press Enter to calculate';
+            amountInput.parentNode.appendChild(hint);
+
+            // Create preview element
+            const preview = document.createElement('div');
+            preview.style.cssText = 'font-size:0.875rem;color:#16a34a;font-weight:600;margin-top:6px;display:none;';
+            amountInput.parentNode.insertBefore(preview, hint);
+
+            function isExpression(val) {
+                return /[+\-*\/]/.test(val) && /[0-9]/.test(val);
+            }
+
+            function safeEval(expr) {
+                // Only allow digits, operators, decimals, spaces, parentheses
+                if (!/^[\d\s\+\-\*\/\.\(\)]+$/.test(expr)) return null;
+                try {
+                    // Use Function to evaluate with proper BODMAS
+                    const result = Function('"use strict"; return (' + expr + ')')();
+                    if (typeof result === 'number' && isFinite(result) && result >= 0) {
+                        return parseFloat(result.toFixed(2));
+                    }
+                } catch (e) {}
+                return null;
+            }
+
+            // Switch to text when user starts typing an expression
+            amountInput.addEventListener('keydown', function (e) {
+                const operators = ['+', '-', '*', '/'];
+                if (operators.includes(e.key)) {
+                    amountInput.type = 'text';
+                }
+
+                if (e.key === 'Enter') {
+                    const val = this.value.trim();
+                    if (isExpression(val)) {
+                        e.preventDefault();
+                        const result = safeEval(val);
+                        if (result !== null) {
+                            amountInput.type = 'number';
+                            this.value = result;
+                            preview.style.display = 'none';
+                            hint.textContent = '✅ Calculated!';
+                            hint.style.color = '#16a34a';
+                            setTimeout(() => {
+                                hint.textContent = '💡 Tip: Type expressions like 100+200 or 2100-20*100/2 and press Enter to calculate';
+                                hint.style.color = '#6b7280';
+                            }, 2000);
+                        } else {
+                            preview.textContent = '⚠️ Invalid expression';
+                            preview.style.color = '#dc2626';
+                            preview.style.display = 'block';
+                            setTimeout(() => { 
+                                preview.style.color = '#16a34a'; 
+                                preview.style.display = 'none'; 
+                            }, 2000);
+                        }
+                    } else {
+                        amountInput.type = 'number';
+                    }
+                }
+
+                if (e.key === 'Escape') {
+                    amountInput.type = 'number';
+                    preview.style.display = 'none';
+                }
+            });
+
+            // Live preview while typing
+            amountInput.addEventListener('input', function () {
+                const val = this.value.trim();
+                if (isExpression(val)) {
+                    const result = safeEval(val);
+                    if (result !== null) {
+                        preview.textContent = '= ₹' + result.toLocaleString('en-IN');
+                        preview.style.color = '#16a34a';
+                        preview.style.display = 'block';
+                    } else {
+                        preview.style.display = 'none';
+                    }
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+        })();
+
+        // Form validation and submission
+        document.getElementById('transactionForm').addEventListener('submit', function(e) {
+            const amount = document.getElementById('{{ form.amount.id_for_label }}').value;
+            const switchRadio = document.getElementById('switch');
+            
+            if (!amount || parseFloat(amount) <= 0) {
+                e.preventDefault();
+                alert('Please enter a valid amount');
+                return;
+            }
+            
+            // Additional validation for switch transfers
+            if (switchRadio.checked) {
+                const fromMethod = document.getElementById('fromMethod').value;
+                const toMethod = document.getElementById('toMethod').value;
+                
+                if (fromMethod === toMethod) {
+                    e.preventDefault();
+                    alert('Cannot transfer to the same payment method');
+                    return;
+                }
+                
+                // Set the money_type field to the fromMethod for switch transactions
+                const moneyTypeSelect = document.getElementById('{{ form.money_type.id_for_label }}');
+                if (moneyTypeSelect) {
+                    moneyTypeSelect.value = fromMethod;
+                }
+
+                // Set switch_direction based on fromMethod -> toMethod
+                const switchDirectionInput = document.getElementById('switchDirectionInput');
+                if (switchDirectionInput) {
+                    if (fromMethod === 'UPI CASH' && toMethod === 'HAND CASH') {
+                        switchDirectionInput.value = 'UPI_TO_HAND';
+                    } else if (fromMethod === 'HAND CASH' && toMethod === 'UPI CASH') {
+                        switchDirectionInput.value = 'HAND_TO_UPI';
+                    }
+                }
+            }
+        });
+    </script>
+
+    {% include "includes/mobile_nav.html" with active_page="add_transaction" %}
+</body>
+</html>

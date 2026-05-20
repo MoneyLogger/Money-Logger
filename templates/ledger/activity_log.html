@@ -1,0 +1,138 @@
+{% load currency_filters %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>Activity Log - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { 
+            background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); 
+            color: #2c3e50; 
+            min-height: 100vh; 
+        }
+        
+        /* Header */
+        .header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(24px); background: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.2); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .header-inner { max-width: 1280px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; height: 4rem; }
+        .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
+        .logo-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: linear-gradient(to bottom right, #3b82f6, #9333ea); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .logo-text { font-weight: 700; font-size: 1.25rem; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .logo-subtitle { font-size: 0.75rem; color: #6b7280; }
+        .nav-links { display: flex; align-items: center; gap: 0.5rem; }
+        .nav-link { padding: 0.5rem 1rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; color: #4b5563; text-decoration: none; transition: all 0.2s; }
+        .nav-link:hover { background: rgba(255,255,255,0.5); color: #111827; }
+        .nav-link.active { color: #2563eb; background: linear-gradient(to right, #dbeafe, #e9d5ff); }
+        
+        /* Settings Dropdown */
+        .settings-dropdown { position: relative; }
+        .settings-btn { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(255,255,255,0.5); border: 1px solid rgba(229,231,235,0.5); cursor: pointer; transition: all 0.2s; }
+        .settings-btn:hover { background: rgba(255,255,255,0.8); border-color: #e5e7eb; }
+        .settings-btn svg { width: 1.25rem; height: 1.25rem; color: #6b7280; }
+        .settings-menu { position: absolute; top: calc(100% + 0.5rem); right: 0; min-width: 200px; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 0.75rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; display: none; z-index: 100; animation: slideDown 0.2s ease-out; }
+        .settings-menu.active { display: block; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .settings-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #374151; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; background: transparent; width: 100%; text-align: left; }
+        .settings-menu-item:hover { background: rgba(59,130,246,0.1); color: #2563eb; }
+        .settings-menu-item svg { width: 1.125rem; height: 1.125rem; color: currentColor; }
+        .settings-menu-divider { height: 1px; background: rgba(229,231,235,0.5); margin: 0.5rem 0; }
+        .settings-menu-item.logout-item { color: #ef4444; }
+        .settings-menu-item.logout-item:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
+        
+        .btn-add { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(135deg, #2563eb, #7c3aed); color: white; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: all 0.3s; box-shadow: 0 4px 6px rgba(37,99,235,0.2); }
+        .btn-add:hover { box-shadow: 0 8px 12px rgba(37,99,235,0.3); transform: scale(1.05); }
+        
+        .container { max-width: 1000px; margin: 0 auto; padding: 30px 20px 100px; }
+
+        .card { 
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(10px); 
+            border-radius: 16px; 
+            box-shadow: 0 6px 20px rgba(0,0,0,0.05); 
+            padding: 25px; 
+            margin-bottom: 20px; 
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .card h2 { font-size: 1.2rem; color: #2c3e50; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+
+        .log-item { border-left: 4px solid #ddd; padding: 14px 18px; margin-bottom: 12px; border-radius: 0 10px 10px 0; background: #f8f9fa; transition: transform 0.2s; }
+        .log-item:hover { transform: translateX(3px); }
+        .log-item.edit { border-color: #3498db; background: #eaf4fd; }
+        .log-item.delete { border-color: #e74c3c; background: #fdf0ef; }
+
+        .log-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+        .log-action { font-weight: 700; font-size: 0.85rem; padding: 3px 10px; border-radius: 20px; }
+        .log-action.edit { background: #d6eaf8; color: #1a5276; }
+        .log-action.delete { background: #fadbd8; color: #922b21; }
+        .log-time { font-size: 0.8rem; color: #95a5a6; }
+
+        .log-summary { font-size: 0.95rem; color: #2c3e50; font-weight: 600; margin-bottom: 4px; }
+        .log-changes { font-size: 0.82rem; color: #7f8c8d; font-style: italic; }
+        .log-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+        .log-tag { background: #e9ecef; color: #495057; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #95a5a6; }
+        .empty-state-icon { font-size: 3rem; margin-bottom: 12px; }
+        
+
+
+        @media(max-width: 768px) {
+            .header-inner { padding: 0 0.5rem; }
+            .nav-links { display: none; }
+            .settings-dropdown { display: none; }
+            .btn-add { display: none; }
+            .mobile-nav { display: block; }
+            .container { padding: 15px 15px 100px; }
+            .log-header { flex-direction: column; gap: 4px; }
+        }
+    </style>
+</head>
+<body>
+    {% include "includes/nav.html" with active_page="activity_log" action_url="add_transaction" action_text="Add Transaction" show_whatif=False %}
+
+    <div class="container">
+        <div class="card">
+            <h2>📋 Your Activity History</h2>
+
+            {% if logs %}
+                {% for log in logs %}
+                <div class="log-item {{ log.action|lower }}">
+                    <div class="log-header">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="log-action {{ log.action|lower }}">
+                                {% if log.action == 'EDIT' %}✏️ Edited{% else %}🗑️ Deleted{% endif %}
+                            </span>
+                            <span class="log-summary">
+                                ₹{{ log.amount|indian_currency }} — {{ log.category }}
+                            </span>
+                        </div>
+                        <span class="log-time">{{ log.timestamp|date:"d M Y, H:i" }}</span>
+                    </div>
+
+                    <div class="log-meta">
+                        <span class="log-tag">{{ log.transaction_type|title }}</span>
+                        {% if log.money_type %}<span class="log-tag">{{ log.money_type }}</span>{% endif %}
+                        <span class="log-tag">📅 {{ log.date|date:"d M Y" }}</span>
+                        {% if log.description %}<span class="log-tag">{{ log.description }}</span>{% endif %}
+                    </div>
+
+
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <p>No activity yet. Edits and deletes will appear here.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% include "includes/mobile_nav.html" with active_page="activity_log" %}
+    
+</body>
+</html>

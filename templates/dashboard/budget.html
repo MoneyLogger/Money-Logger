@@ -1,0 +1,622 @@
+{% load currency_filters %}
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>Budget - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 2rem 1rem 100px; }
+        
+        /* Header */
+        .header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(24px); background: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.2); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .header-inner { max-width: 1280px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; height: 4rem; }
+        .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
+        .logo-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: linear-gradient(to bottom right, #3b82f6, #9333ea); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .logo-text { font-weight: 700; font-size: 1.25rem; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .logo-subtitle { font-size: 0.75rem; color: #6b7280; }
+        .nav-links { display: flex; align-items: center; gap: 0.5rem; }
+        .nav-link { padding: 0.5rem 1rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; color: #4b5563; text-decoration: none; transition: all 0.2s; }
+        .nav-link:hover { background: rgba(255,255,255,0.5); color: #111827; }
+        .nav-link.active { color: #2563eb; background: linear-gradient(to right, #dbeafe, #e9d5ff); }
+        .btn-add { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(to right, #9333ea, #ec4899); color: white; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: all 0.3s; box-shadow: 0 4px 6px rgba(147,51,234,0.2); }
+        .btn-add:hover { box-shadow: 0 8px 12px rgba(147,51,234,0.3); transform: scale(1.05); }
+        
+        /* What-If Mode Toggle */
+        .whatif-toggle { margin: 0 0.5rem; }
+        .whatif-btn { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            padding: 0.5rem 1rem; 
+            background: rgba(255,255,255,0.8); 
+            backdrop-filter: blur(10px); 
+            color: #6b7280; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 0.75rem; 
+            font-size: 0.875rem; 
+            font-weight: 500; 
+            cursor: pointer; 
+            transition: all 0.2s; 
+        }
+        .whatif-btn:hover { 
+            background: rgba(255,255,255,0.9); 
+            color: #374151; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        .whatif-btn.active { 
+            background: linear-gradient(to right, #f59e0b, #ea580c); 
+            color: white; 
+            border-color: transparent; 
+        }
+        .whatif-btn.active:hover { 
+            background: linear-gradient(to right, #d97706, #c2410c); 
+        }
+        
+        /* Settings Dropdown */
+        .settings-dropdown { position: relative; }
+        .settings-btn { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(255,255,255,0.5); border: 1px solid rgba(229,231,235,0.5); cursor: pointer; transition: all 0.2s; }
+        .settings-btn:hover { background: rgba(255,255,255,0.8); border-color: #e5e7eb; }
+        .settings-btn svg { width: 1.25rem; height: 1.25rem; color: #6b7280; }
+        .settings-menu { position: absolute; top: calc(100% + 0.5rem); right: 0; min-width: 200px; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 0.75rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; display: none; z-index: 100; animation: slideDown 0.2s ease-out; }
+        .settings-menu.active { display: block; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .settings-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #374151; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; background: transparent; width: 100%; text-align: left; }
+        .settings-menu-item:hover { background: rgba(59,130,246,0.1); color: #2563eb; }
+        .settings-menu-item svg { width: 1.125rem; height: 1.125rem; color: currentColor; }
+        .settings-menu-divider { height: 1px; background: rgba(229,231,235,0.5); margin: 0.5rem 0; }
+        .settings-menu-item.logout-item { color: #ef4444; }
+        .settings-menu-item.logout-item:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
+        
+        /* Page Header */
+        .page-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; animation: fadeInUp 0.5s ease-out; }
+        .page-header-left { display: flex; align-items: center; gap: 1rem; }
+        .page-icon { width: 4rem; height: 4rem; border-radius: 1rem; background: linear-gradient(to bottom right, #9333ea, #ec4899); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 16px rgba(147,51,234,0.3); }
+        .page-icon svg { width: 2rem; height: 2rem; color: white; }
+        .page-title h1 { font-size: 2rem; font-weight: 800; color: #111827; margin-bottom: 0.25rem; }
+        .page-title p { color: #6b7280; font-size: 0.875rem; }
+        
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Overall Summary Card */
+        .summary-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1rem; padding: 1.5rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 2rem; animation: fadeInUp 0.6s ease-out; animation-delay: 0.1s; animation-fill-mode: both; }
+        .summary-card h2 { font-size: 1.25rem; font-weight: 700; color: #111827; margin-bottom: 1.5rem; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .summary-item { padding: 1rem; border-radius: 0.75rem; }
+        .summary-item.budget { background: linear-gradient(to bottom right, #dbeafe, rgba(219,234,254,0.5)); }
+        .summary-item.spent { background: linear-gradient(to bottom right, #f3e8ff, rgba(243,232,255,0.5)); }
+        .summary-item.remaining { background: linear-gradient(to bottom right, #dcfce7, rgba(220,252,231,0.5)); }
+        .summary-label { font-size: 0.875rem; color: #6b7280; margin-bottom: 0.25rem; }
+        .summary-value { font-size: 1.5rem; font-weight: 700; }
+        .summary-value.budget { color: #2563eb; }
+        .summary-value.spent { color: #9333ea; }
+        .summary-value.remaining { color: #16a34a; }
+        
+        .progress-section { margin-top: 1rem; }
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.875rem; }
+        .progress-header span { color: #6b7280; }
+        .progress-header .percentage { font-weight: 700; }
+        .progress-header .percentage.safe { color: #16a34a; }
+        .progress-header .percentage.warning { color: #f59e0b; }
+        .progress-header .percentage.danger { color: #ef4444; }
+        .progress-bar { height: 1rem; background: #f3f4f6; border-radius: 9999px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 9999px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        .progress-fill.safe { background: linear-gradient(to right, #16a34a, #22c55e); }
+        .progress-fill.warning { background: linear-gradient(to right, #f59e0b, #fbbf24); }
+        .progress-fill.danger { background: linear-gradient(to right, #ef4444, #f87171); }
+        
+        /* Budget Cards Grid */
+        .budget-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1.5rem; }
+        
+        .budget-card { position: relative; overflow: hidden; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1rem; padding: 1.5rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s; animation: fadeInUp 0.6s ease-out; animation-fill-mode: both; }
+        .budget-card:hover { box-shadow: 0 12px 24px rgba(0,0,0,0.1); transform: translateY(-4px); }
+        .budget-card.safe { border-color: rgba(229,231,235,0.5); }
+        .budget-card.warning { border-color: rgba(251,191,36,0.3); }
+        .budget-card.danger { border-color: rgba(239,68,68,0.3); }
+        
+        .budget-card::before { content: ''; position: absolute; inset: 0; opacity: 0.3; z-index: 0; }
+        .budget-card.safe::before { background: linear-gradient(to bottom right, #dcfce7, transparent); }
+        .budget-card.warning::before { background: linear-gradient(to bottom right, #fef3c7, transparent); }
+        .budget-card.danger::before { background: linear-gradient(to bottom right, #fee2e2, transparent); }
+        
+        .budget-card-content { position: relative; z-index: 1; }
+        
+        .budget-header { display: flex; align-items: center; justify-between; margin-bottom: 1rem; }
+        .budget-header-left { display: flex; align-items: center; gap: 0.75rem; }
+        .budget-icon { width: 3rem; height: 3rem; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; }
+        .budget-icon.safe { background: #dcfce7; }
+        .budget-icon.warning { background: #fef3c7; }
+        .budget-icon.danger { background: #fee2e2; }
+        .budget-icon svg { width: 1.5rem; height: 1.5rem; }
+        .budget-icon.safe svg { color: #16a34a; }
+        .budget-icon.warning svg { color: #f59e0b; }
+        .budget-icon.danger svg { color: #ef4444; }
+        
+        .budget-info h3 { font-size: 1.25rem; font-weight: 700; color: #111827; }
+        .budget-info p { font-size: 0.875rem; color: #6b7280; }
+        
+        .budget-actions { display: flex; gap: 0.5rem; }
+        .action-btn { padding: 0.5rem; border-radius: 0.5rem; transition: all 0.2s; border: none; background: transparent; cursor: pointer; }
+        .action-btn:hover { background: #f3f4f6; }
+        .action-btn svg { width: 1.25rem; height: 1.25rem; color: #6b7280; }
+        .action-btn.delete-btn:hover { background: #fee2e2; }
+        .action-btn.delete-btn:hover svg { color: #ef4444; }
+        
+        .limit-input { width: 100%; padding: 0.5rem; border: 2px solid #9333ea; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 700; }
+        .limit-input:focus { outline: none; border-color: #ec4899; }
+        
+        .edit-actions { display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(229,231,235,0.5); }
+        .btn-save, .btn-cancel { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+        .btn-save { background: linear-gradient(to right, #16a34a, #22c55e); color: white; }
+        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(22,163,74,0.3); }
+        .btn-save svg { width: 1.25rem; height: 1.25rem; }
+        .btn-cancel { background: rgba(107,114,128,0.1); color: #6b7280; }
+        .btn-cancel:hover { background: rgba(107,114,128,0.2); }
+        .btn-cancel svg { width: 1.25rem; height: 1.25rem; }
+        
+        /* Delete Confirmation Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: center; justify-content: center; animation: fadeIn 0.2s ease-out; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: white; border-radius: 1rem; padding: 2rem; max-width: 400px; width: 90%; box-shadow: 0 20px 25px rgba(0,0,0,0.15); animation: slideUp 0.3s ease-out; }
+        .modal-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+        .modal-icon { width: 3rem; height: 3rem; border-radius: 0.75rem; background: #fee2e2; display: flex; align-items: center; justify-content: center; }
+        .modal-icon svg { width: 1.5rem; height: 1.5rem; color: #ef4444; }
+        .modal-title { font-size: 1.25rem; font-weight: 700; color: #111827; }
+        .modal-message { color: #6b7280; margin-bottom: 1.5rem; line-height: 1.5; }
+        .modal-actions { display: flex; gap: 0.75rem; }
+        .modal-btn { flex: 1; padding: 0.75rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s; }
+        .modal-btn-delete { background: linear-gradient(to right, #ef4444, #dc2626); color: white; }
+        .modal-btn-delete:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(239,68,68,0.3); }
+        .modal-btn-cancel { background: rgba(107,114,128,0.1); color: #6b7280; }
+        .modal-btn-cancel:hover { background: rgba(107,114,128,0.2); }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .alert-box { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; border-radius: 0.75rem; margin-bottom: 1rem; }
+        .alert-box.warning { background: #fef3c7; border: 1px solid rgba(251,191,36,0.3); }
+        .alert-box.danger { background: #fee2e2; border: 1px solid rgba(239,68,68,0.3); }
+        .alert-box svg { width: 1.25rem; height: 1.25rem; }
+        .alert-box.warning svg { color: #f59e0b; }
+        .alert-box.danger svg { color: #ef4444; }
+        .alert-box span { font-size: 0.875rem; font-weight: 500; }
+        .alert-box.warning span { color: #f59e0b; }
+        .alert-box.danger span { color: #ef4444; }
+        
+        .budget-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem; }
+        .amount-item p:first-child { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; }
+        .amount-item p:last-child { font-size: 1.125rem; font-weight: 700; }
+        .amount-item.spent p:last-child { color: #9333ea; }
+        .amount-item.limit p:last-child { color: #111827; }
+        .amount-item.remaining p:last-child.positive { color: #16a34a; }
+        .amount-item.remaining p:last-child.negative { color: #ef4444; }
+        
+        .budget-progress { margin-top: 1rem; }
+        .budget-progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; font-size: 0.875rem; }
+        .budget-progress-header span { color: #6b7280; }
+        .budget-progress-header .percentage { font-weight: 700; }
+        .budget-progress-bar { height: 0.75rem; background: #f3f4f6; border-radius: 9999px; overflow: hidden; }
+        .budget-progress-fill { height: 100%; border-radius: 9999px; transition: width 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        .budget-progress-fill.safe { background: linear-gradient(to right, #16a34a, #22c55e); }
+        .budget-progress-fill.warning { background: linear-gradient(to right, #f59e0b, #fbbf24); }
+        .budget-progress-fill.danger { background: linear-gradient(to right, #ef4444, #f87171); }
+        
+        /* Empty State */
+        .empty-state { text-align: center; padding: 6rem 2rem; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.3; }
+        .empty-state h3 { font-size: 1.25rem; font-weight: 700; color: #9ca3af; margin-bottom: 0.5rem; }
+        .empty-state p { color: #6b7280; margin-bottom: 1.5rem; }
+        
+
+        
+        /* FAB */
+        .fab { position: fixed; bottom: 80px; right: 24px; width: 56px; height: 56px; background: linear-gradient(to right, #9333ea, #ec4899); border-radius: 50%; display: none; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(147,51,234,0.3); z-index: 40; transition: all 0.3s ease; text-decoration: none; color: white; }
+        .fab:hover { transform: scale(1.1); box-shadow: 0 12px 30px rgba(147,51,234,0.4); }
+        .fab svg { width: 28px; height: 28px; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem 0.5rem 100px; }
+            .header-inner { padding: 0 0.5rem; }
+            .nav-links { display: none; }
+            .settings-dropdown { display: none; }
+            .btn-add { display: none; }
+            .budget-grid { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: 1fr; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .mobile-nav { display: block; }
+            .fab { display: flex; }
+        }
+    </style>
+</head>
+<body>
+    {% include "includes/nav.html" with active_page="budget" action_url="budget_create" action_text="Add Budget" whatif_next="budget_list" %}
+
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-header-left">
+                <div class="page-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                </div>
+                <div class="page-title">
+                    <h1>Budget Manager</h1>
+                    <p>Track spending limits by category</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Summary -->
+        {% if budget_data %}
+        <div class="summary-card">
+            <h2>Overall Budget</h2>
+            
+            <div class="summary-grid">
+                <div class="summary-item budget">
+                    <p class="summary-label">Total Budget</p>
+                    <p class="summary-value budget">₹{{ total_budget|indian_currency }}</p>
+                </div>
+                
+                <div class="summary-item spent">
+                    <p class="summary-label">Total Spent</p>
+                    <p class="summary-value spent">₹{{ total_spent|indian_currency }}</p>
+                </div>
+                
+                <div class="summary-item remaining">
+                    <p class="summary-label">Remaining</p>
+                    <p class="summary-value remaining">₹{{ total_remaining|indian_currency }}</p>
+                </div>
+            </div>
+            
+            <div class="progress-section">
+                <div class="progress-header">
+                    <span>Overall Progress</span>
+                    <span class="percentage {% if total_percentage >= 100 %}danger{% elif total_percentage >= 80 %}warning{% else %}safe{% endif %}">
+                        {{ total_percentage|floatformat:1 }}%
+                    </span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill {% if total_percentage >= 100 %}danger{% elif total_percentage >= 80 %}warning{% else %}safe{% endif %}" 
+                         style="width: 0%"
+                         data-width="{% if total_percentage > 100 %}100{% else %}{{ total_percentage|indian_currency }}{% endif %}"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget Cards -->
+        <div class="budget-grid">
+            {% for item in budget_data %}
+            {% with delay=forloop.counter0|add:1 %}
+            <div class="budget-card {{ item.status }}" style="animation-delay: 0.{{ delay }}s;">
+            {% endwith %}
+                <div class="budget-card-content">
+                    <div class="budget-header">
+                        <div class="budget-header-left">
+                            <div class="budget-icon {{ item.status }}">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                                </svg>
+                            </div>
+                            <div class="budget-info">
+                                <h3>{{ item.budget.category }}</h3>
+                                <p>
+                                    {% if item.percentage >= 100 %}Budget exceeded!
+                                    {% elif item.percentage >= 80 %}Almost at limit
+                                    {% else %}On track{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="budget-actions">
+                            <button class="action-btn" onclick="startEditing('{{ item.budget.id }}')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                            <button class="action-btn delete-btn" onclick="confirmDelete('{{ item.budget.id }}', '{{ item.budget.category }}')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18"></path>
+                                    <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                    <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {% if item.percentage >= 80 %}
+                    <div class="alert-box {% if item.percentage >= 100 %}danger{% else %}warning{% endif %}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        <span>
+                            {% if item.percentage >= 100 %}
+                                Exceeded by ₹{{ item.remaining|indian_currency|slice:"1:" }}
+                            {% else %}
+                                Only ₹{{ item.remaining|indian_currency }} remaining
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="budget-amounts">
+                        <div class="amount-item spent">
+                            <p>Spent</p>
+                            <p>₹{{ item.spent|indian_currency }}</p>
+                        </div>
+                        <div class="amount-item limit">
+                            <p>Limit</p>
+                            <div class="limit-display" id="limit-display-{{ item.budget.id }}">
+                                <p>₹{{ item.budget.amount|indian_currency }}</p>
+                            </div>
+                            <div class="limit-edit" id="limit-edit-{{ item.budget.id }}" style="display: none;">
+                                <input type="number" 
+                                       id="limit-input-{{ item.budget.id }}" 
+                                       value="{{ item.budget.amount }}" 
+                                       step="0.01" 
+                                       min="0"
+                                       class="limit-input">
+                            </div>
+                        </div>
+                        <div class="amount-item remaining">
+                            <p>Remaining</p>
+                            <p class="{% if item.remaining >= 0 %}positive{% else %}negative{% endif %}">
+                                ₹{{ item.remaining|indian_currency }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Edit Actions (Hidden by default) -->
+                    <div class="edit-actions" id="edit-actions-{{ item.budget.id }}" style="display: none;">
+                        <button class="btn-save" onclick="saveBudget('{{ item.budget.id }}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>Save</span>
+                        </button>
+                        <button class="btn-cancel" onclick="cancelEditing('{{ item.budget.id }}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            <span>Cancel</span>
+                        </button>
+                    </div>
+                    
+                    <div class="budget-progress">
+                        <div class="budget-progress-header">
+                            <span>Progress</span>
+                            <span class="percentage {% if item.percentage >= 100 %}danger{% elif item.percentage >= 80 %}warning{% else %}safe{% endif %}">
+                                {{ item.percentage|floatformat:1 }}%
+                            </span>
+                        </div>
+                        <div class="budget-progress-bar">
+                            <div class="budget-progress-fill {% if item.percentage >= 100 %}danger{% elif item.percentage >= 80 %}warning{% else %}safe{% endif %}" 
+                                 style="width: 0%"
+                                 data-width="{% if item.percentage > 100 %}100{% else %}{{ item.percentage|indian_currency }}{% endif %}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+            </div>
+            <h3>No Budgets Yet</h3>
+            <p>Create your first budget to start tracking spending limits</p>
+            <a href="{% url 'budget_create' %}" class="btn-add">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Create Budget</span>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- FAB -->
+    <a href="{% url 'budget_create' %}" class="fab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </a>
+
+    {% include "includes/mobile_nav.html" with active_page="budget" %}
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+                        <line x1="12" y1="9" x2="12" y2="13"></line>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </div>
+                <h3 class="modal-title">Delete Budget</h3>
+            </div>
+            <p class="modal-message" id="deleteMessage">Are you sure you want to delete this budget? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-delete" onclick="deleteBudget()">Delete</button>
+                <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Export transactions (placeholder)
+        function exportTransactions() {
+            window.location.href = '{% url "dashboard" %}';
+        }
+        
+        let editingBudgetId = null;
+        let deletingBudgetId = null;
+        let originalLimitValue = null;
+
+        // Start editing a budget
+        function startEditing(budgetId) {
+            // Cancel any other editing
+            if (editingBudgetId && editingBudgetId !== budgetId) {
+                cancelEditing(editingBudgetId);
+            }
+
+            editingBudgetId = budgetId;
+            originalLimitValue = document.getElementById(`limit-input-${budgetId}`).value;
+
+            // Hide display, show input
+            document.getElementById(`limit-display-${budgetId}`).style.display = 'none';
+            document.getElementById(`limit-edit-${budgetId}`).style.display = 'block';
+            document.getElementById(`edit-actions-${budgetId}`).style.display = 'flex';
+
+            // Focus the input
+            document.getElementById(`limit-input-${budgetId}`).focus();
+            document.getElementById(`limit-input-${budgetId}`).select();
+        }
+
+        // Cancel editing
+        function cancelEditing(budgetId) {
+            // Restore original value
+            document.getElementById(`limit-input-${budgetId}`).value = originalLimitValue;
+
+            // Show display, hide input
+            document.getElementById(`limit-display-${budgetId}`).style.display = 'block';
+            document.getElementById(`limit-edit-${budgetId}`).style.display = 'none';
+            document.getElementById(`edit-actions-${budgetId}`).style.display = 'none';
+
+            editingBudgetId = null;
+            originalLimitValue = null;
+        }
+
+        // Save budget
+        function saveBudget(budgetId) {
+            const newLimit = document.getElementById(`limit-input-${budgetId}`).value;
+
+            if (!newLimit || parseFloat(newLimit) <= 0) {
+                alert('Please enter a valid budget limit');
+                return;
+            }
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('budget_id', budgetId);
+            formData.append('amount', newLimit);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            // Send AJAX request
+            fetch('{% url "budget_update_ajax" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to show updated data
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to update budget');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update budget');
+            });
+        }
+
+        // Confirm delete
+        function confirmDelete(budgetId, categoryName) {
+            deletingBudgetId = budgetId;
+            document.getElementById('deleteMessage').textContent = 
+                `Are you sure you want to delete the budget for "${categoryName}"? This action cannot be undone.`;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        // Close delete modal
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            deletingBudgetId = null;
+        }
+
+        // Delete budget
+        function deleteBudget() {
+            if (!deletingBudgetId) return;
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('budget_id', deletingBudgetId);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            // Send AJAX request
+            fetch('{% url "budget_delete_ajax" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page to show updated data
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to delete budget');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to delete budget');
+            });
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDeleteModal();
+            }
+        });
+
+        // Handle Enter key in limit input
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate all progress bars to their target width
+            requestAnimationFrame(function() {
+                document.querySelectorAll('[data-width]').forEach(function(bar) {
+                    bar.style.width = bar.dataset.width + '%';
+                });
+            });
+
+            const limitInputs = document.querySelectorAll('.limit-input');
+            limitInputs.forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const budgetId = this.id.replace('limit-input-', '');
+                        saveBudget(budgetId);
+                    } else if (e.key === 'Escape') {
+                        const budgetId = this.id.replace('limit-input-', '');
+                        cancelEditing(budgetId);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
