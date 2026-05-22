@@ -1,0 +1,96 @@
+{% load currency_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>Savings Analytics - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem 8rem; }
+
+        .header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(24px); background: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.2); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+
+        h1 { font-size: 2rem; font-weight: 800; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1.5rem; }
+
+        .chart-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1.5rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 8px 16px rgba(0,0,0,0.05); padding: 1.5rem; margin-bottom: 1.5rem; }
+        .chart-card h2 { font-size: 1.125rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+
+        .bar-chart { display: flex; align-items: flex-end; gap: 0.5rem; height: 200px; padding: 1rem 0; }
+        .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+        .bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.8s; }
+        .bar.add { background: linear-gradient(to top, #3b82f6, #9333ea); }
+        .bar.withdraw { background: #ef4444; }
+        .bar-label { font-size: 0.65rem; color: #6b7280; text-align: center; white-space: nowrap; }
+        .bar-value { font-size: 0.65rem; font-weight: 600; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-box { padding: 1rem; border-radius: 1rem; background: rgba(255,255,255,0.5); border: 1px solid rgba(229,231,235,0.3); }
+        .stat-box .label { font-size: 0.75rem; color: #6b7280; }
+        .stat-box .value { font-size: 1.25rem; font-weight: 700; color: #111827; }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem 0.75rem 8rem; }
+            h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    {% include "includes/nav.html" with active_page="savings" %}
+
+    <div class="container">
+        <h1>📊 Savings Analytics</h1>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="label">Total Saved</div>
+                <div class="value">₹{{ stats.total_saved|currency }}</div>
+            </div>
+            <div class="stat-box">
+                <div class="label">Monthly Savings</div>
+                <div class="value" style="color:#059669;">+₹{{ stats.monthly_savings|currency }}</div>
+            </div>
+            <div class="stat-box">
+                <div class="label">Active Goals</div>
+                <div class="value">{{ stats.active_goals }}</div>
+            </div>
+            <div class="stat-box">
+                <div class="label">Completed Goals</div>
+                <div class="value">{{ stats.completed_goals }}</div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h2>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#9333ea;"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+                Monthly Savings Trend (Last 6 Months)
+            </h2>
+            <div class="bar-chart">
+                {% for item in monthly_data %}
+                {% with max_add=monthly_data.0.added %}
+                {% with max_val=monthly_data.0.added %}
+                <div class="bar-group">
+                    {% with add_pct=item.added %}
+                    <div class="bar-value" style="color:#059669;">{% if item.added > 0 %}₹{{ item.added|floatformat:0 }}{% endif %}</div>
+                    <div class="bar add" style="height:{% widthratio item.added max_val|add:1 180 %}px;"></div>
+                    {% if item.withdrawn > 0 %}<div class="bar withdraw" style="height:{% widthratio item.withdrawn max_val|add:1 180 %}px;"></div>{% endif %}
+                    {% endwith %}
+                    <div class="bar-label">{{ item.month|slice:":3" }}</div>
+                </div>
+                {% endwith %}
+                {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="text-align:center;margin-top:2rem;">
+            <a href="{% url 'saving_dashboard' %}" style="color:#6b7280;text-decoration:none;font-size:0.875rem;">← Back to Savings Vault</a>
+        </div>
+    </div>
+
+    {% include "includes/mobile_nav.html" with active_page="savings" %}
+</body>
+</html>

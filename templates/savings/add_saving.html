@@ -1,0 +1,208 @@
+{% load currency_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>Add to Savings - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
+        .container { max-width: 42rem; margin: 0 auto; padding: 2rem 1rem 6rem; }
+
+        .header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(24px); background: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.2); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+
+        .card { background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(239,246,255,0.3), rgba(250,245,255,0.3)); border: 1px solid rgba(168,85,247,0.2); border-radius: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.05); overflow: hidden; }
+        .card-header { padding: 1.5rem 2rem; }
+        .card-header h1 { font-size: 1.875rem; font-weight: 800; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+        .goal-selector { padding: 0 2rem 1.5rem; }
+        .goal-selector label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
+        .goal-selector select { width: 100%; padding: 0.75rem 1rem; background: white; border: 2px solid rgba(168,85,247,0.2); border-radius: 0.75rem; font-size: 1rem; outline: none; transition: all 0.2s; cursor: pointer; appearance: auto; }
+        .goal-selector select:focus { border-color: #9333ea; box-shadow: 0 0 0 3px rgba(147,51,234,0.1); }
+        .goal-info { margin-top: 0.75rem; padding: 0.75rem 1rem; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: 0.75rem; display: flex; align-items: center; justify-content: space-between; }
+        .goal-info .remaining { font-size: 0.875rem; color: #374151; }
+        .goal-info .remaining strong { color: #9333ea; }
+
+        .card-body { padding: 0 2rem 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
+
+        .amount-input-wrap { position: relative; }
+        .amount-input-wrap .prefix { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.5rem; font-weight: 600; color: #6b7280; }
+        .amount-input-wrap input { width: 100%; padding: 1rem 1rem 1rem 3rem; background: white; border: 2px solid rgba(168,85,247,0.2); border-radius: 0.75rem; font-size: 1.5rem; font-weight: 700; outline: none; transition: all 0.2s; height: 4rem; }
+        .amount-input-wrap input:focus { border-color: #9333ea; box-shadow: 0 0 0 3px rgba(147,51,234,0.1); }
+
+        .quick-amounts { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+        .quick-amounts button { padding: 0.5rem 1rem; border-radius: 0.75rem; border: 1px solid rgba(168,85,247,0.2); background: white; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s; color: #374151; }
+        .quick-amounts button:hover { border-color: #9333ea; background: rgba(147,51,234,0.05); }
+
+        .source-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .source-btn { padding: 1rem; border-radius: 1rem; border: 2px solid rgba(168,85,247,0.2); background: white; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .source-btn:hover { border-color: rgba(147,51,234,0.4); }
+        .source-btn.selected { border-color: #9333ea; background: rgba(147,51,234,0.08); }
+        .source-btn svg { width: 2rem; height: 2rem; margin: 0 auto 0.5rem; display: block; }
+        .source-btn .name { font-weight: 600; font-size: 0.875rem; }
+        .source-btn .bal { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; }
+
+        .form-input { width: 100%; padding: 0.75rem 1rem; background: white; border: 2px solid rgba(168,85,247,0.2); border-radius: 0.75rem; font-size: 0.875rem; outline: none; transition: all 0.2s; }
+        .form-input:focus { border-color: #9333ea; box-shadow: 0 0 0 3px rgba(147,51,234,0.1); }
+
+        .btn-row { display: flex; gap: 0.75rem; padding-top: 0.5rem; }
+        .btn { flex: 1; padding: 1rem; border-radius: 0.75rem; font-weight: 600; font-size: 1rem; text-align: center; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; }
+        .btn-primary { background: linear-gradient(to right, #2563eb, #9333ea); color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        .btn-primary:hover { box-shadow: 0 8px 20px rgba(37,99,235,0.3); }
+        .btn-secondary { background: white; color: #374151; border: 2px solid rgba(168,85,247,0.2); }
+        .btn-secondary:hover { background: rgba(147,51,234,0.05); }
+
+        .error-msg { color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem; }
+
+        .message-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-left: 4px solid #dc2626;
+            color: #991b1b;
+            padding: 0.75rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .message-error svg { flex-shrink: 0; }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem 0.75rem 7rem; }
+            .card-header { padding: 1.25rem 1.25rem 0; }
+            .goal-selector { padding: 0 1.25rem 1rem; }
+            .card-body { padding: 0 1.25rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    {% include "includes/nav.html" with active_page="savings" action_url="add_transaction" %}
+
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h1>Add to Savings</h1>
+            </div>
+
+            <div class="goal-selector">
+                <label for="goalSelect">Select Goal</label>
+                <select id="goalSelect" name="goal_id" form="addForm" required>
+                    <option value="">Choose a savings goal</option>
+                    {% for g in goals %}
+                    <option value="{{ g.pk }}" {% if goal and goal.pk == g.pk %}selected{% endif %} data-emoji="{{ g.icon }}" data-remaining="{{ g.remaining_amount|floatformat:0 }}" data-current="{{ g.current_amount|floatformat:0 }}" data-target="{{ g.target_amount|floatformat:0 }}">
+                        {{ g.icon }} {{ g.title }} (₹{{ g.current_amount|indian_currency }} / ₹{{ g.target_amount|indian_currency }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="goal-info" id="goalInfo" {% if not goal %}style="display:none"{% endif %}>
+                    <span class="remaining">Remaining to complete: <strong id="remainingDisplay">{% if goal %}₹{{ goal.remaining_amount|indian_currency }}{% endif %}</strong></span>
+                </div>
+            </div>
+
+            <form id="addForm" method="post" class="card-body">
+                {% csrf_token %}
+
+                {% if messages %}
+                    {% for message in messages %}
+                    <div class="message-error">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="amount">Amount to Save</label>
+                    <div class="amount-input-wrap">
+                        <span class="prefix">₹</span>
+                        <input type="number" name="amount" id="amount" placeholder="5000" step="0.01" min="1" required>
+                    </div>
+                    <div class="quick-amounts">
+                        <button type="button" onclick="setAmount(500)">₹500</button>
+                        <button type="button" onclick="setAmount(1000)">₹1,000</button>
+                        <button type="button" onclick="setAmount(2000)">₹2,000</button>
+                        <button type="button" onclick="setAmount(5000)">₹5,000</button>
+                        <button type="button" id="completeBtn" style="display:none" onclick="fillRemaining()">Complete Goal</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Money Source</label>
+                    <div class="source-grid">
+                        <div class="source-btn selected" data-source="UPI CASH" onclick="selectSource(this, 'UPI CASH')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                            <div class="name">UPI / Bank</div>
+                            <div class="bal">Available: ₹{{ upi_balance|indian_currency }}</div>
+                        </div>
+                        <div class="source-btn" data-source="HAND CASH" onclick="selectSource(this, 'HAND CASH')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2 1Z"></path></svg>
+                            <div class="name">Cash</div>
+                            <div class="bal">Available: ₹{{ hand_balance|indian_currency }}</div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="source" id="sourceInput" value="UPI CASH">
+                </div>
+
+                <div class="form-group">
+                    <label for="note">Note (Optional)</label>
+                    <input type="text" name="note" id="note" class="form-input" placeholder="Add a note about this savings..." maxlength="255">
+                </div>
+
+                <div class="btn-row">
+                    <a href="{% url 'saving_dashboard' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Add to Savings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% include "includes/mobile_nav.html" with active_page="savings" %}
+
+    <script>
+    function setAmount(val) { document.getElementById('amount').value = val; }
+
+    function selectSource(el, value) {
+        document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('sourceInput').value = value;
+    }
+
+    document.getElementById('goalSelect').addEventListener('change', function() {
+        const opt = this.options[this.selectedIndex];
+        const info = document.getElementById('goalInfo');
+        if (opt.value) {
+            info.style.display = 'flex';
+            document.getElementById('remainingDisplay').textContent = '₹' + Number(opt.dataset.remaining).toLocaleString('en-IN');
+            const btn = document.getElementById('completeBtn');
+            if (Number(opt.dataset.remaining) > 0) {
+                btn.style.display = 'inline-block';
+                btn.textContent = 'Complete Goal (₹' + Number(opt.dataset.remaining).toLocaleString('en-IN') + ')';
+            } else {
+                btn.style.display = 'none';
+            }
+        } else {
+            info.style.display = 'none';
+        }
+    });
+
+    function fillRemaining() {
+        const opt = document.getElementById('goalSelect').options[document.getElementById('goalSelect').selectedIndex];
+        if (opt.value) document.getElementById('amount').value = opt.dataset.remaining;
+    }
+
+    {% if goal %}
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('goalSelect').dispatchEvent(new Event('change'));
+    });
+    {% endif %}
+    </script>
+</body>
+</html>

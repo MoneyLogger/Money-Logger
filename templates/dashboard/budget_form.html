@@ -47,10 +47,7 @@
         .btn-secondary:hover { background: rgba(107,114,128,0.2); }
         
         /* Messages */
-        .messages { margin-bottom: 1.5rem; }
-        .message { padding: 1rem; border-radius: 0.75rem; margin-bottom: 0.5rem; }
-        .message.success { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); }
-        .message.error { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
+
         
         /* Responsive */
         @media (max-width: 768px) {
@@ -80,9 +77,9 @@
     <div class="container">
         <!-- Messages -->
         {% if messages %}
-        <div class="messages">
+        <div>
             {% for message in messages %}
-            <div class="message {{ message.tags }}">{{ message }}</div>
+            <div>{{ message }}</div>
             {% endfor %}
         </div>
         {% endif %}

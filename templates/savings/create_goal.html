@@ -1,0 +1,152 @@
+{% load currency_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>Create Goal - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
+        .container { max-width: 42rem; margin: 0 auto; padding: 2rem 1rem 6rem; }
+
+        .header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(24px); background: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.2); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+
+        .card { background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(239,246,255,0.3), rgba(250,245,255,0.3)); border: 1px solid rgba(168,85,247,0.2); border-radius: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.05); padding: 2rem; }
+        .card h1 { font-size: 1.875rem; font-weight: 800; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.25rem; }
+        .card .sub { color: #6b7280; margin-bottom: 2rem; }
+
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
+
+        .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 0.5rem; margin-bottom: 0.5rem; }
+        .emoji-btn { width: 100%; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 0.75rem; border: 2px solid #e5e7eb; background: white; cursor: pointer; transition: all 0.2s; }
+        .emoji-btn:hover { border-color: rgba(147,51,234,0.4); background: rgba(147,51,234,0.05); }
+        .emoji-btn.selected { border-color: #9333ea; background: rgba(147,51,234,0.1); transform: scale(1.1); }
+
+        .form-input { width: 100%; padding: 0.75rem 1rem; background: white; border: 2px solid rgba(168,85,247,0.2); border-radius: 0.75rem; font-size: 1rem; outline: none; transition: all 0.2s; }
+        .form-input:focus { border-color: #9333ea; box-shadow: 0 0 0 3px rgba(147,51,234,0.1); }
+        .input-lg { height: 3.5rem; font-size: 1.125rem; }
+        .amount-wrap { position: relative; }
+        .amount-wrap .prefix { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); font-size: 1.25rem; font-weight: 600; color: #6b7280; }
+        .amount-wrap input { padding-left: 2.5rem; }
+
+        .preview-card { margin-top: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(168,85,247,0.1), rgba(236,72,153,0.1)); border: 2px solid rgba(168,85,247,0.3); border-radius: 1rem; display: none; }
+        .preview-card.show { display: block; }
+        .preview-card .preview-label { font-size: 0.875rem; color: #6b7280; margin-bottom: 0.75rem; }
+        .preview-card .preview-row { display: flex; align-items: center; gap: 0.75rem; }
+        .preview-card .preview-emoji { font-size: 2.5rem; }
+        .preview-card .preview-title { font-weight: 700; font-size: 1.125rem; color: #111827; }
+        .preview-card .preview-target { color: #9333ea; font-weight: 600; }
+
+        .btn-row { display: flex; gap: 0.75rem; padding-top: 0.5rem; }
+        .btn { flex: 1; padding: 1rem; border-radius: 0.75rem; font-weight: 600; font-size: 1rem; text-align: center; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; }
+        .btn-primary { background: linear-gradient(to right, #2563eb, #9333ea); color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
+        .btn-primary:hover { box-shadow: 0 8px 20px rgba(37,99,235,0.3); }
+        .btn-secondary { background: white; color: #374151; border: 2px solid rgba(168,85,247,0.2); text-decoration: none; display: flex; align-items: center; justify-content: center; }
+
+        .errorlist { list-style: none; margin: 0.25rem 0 0; padding: 0; color: #dc2626; font-size: 0.75rem; }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem 0.75rem 7rem; }
+            .card { padding: 1.25rem; }
+            .emoji-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    {% include "includes/nav.html" with active_page="savings" action_url="add_transaction" %}
+
+    <div class="container">
+        <div class="card">
+            <h1>{% if goal %}Edit{% else %}Create New{% endif %} Savings Goal</h1>
+            <p class="sub">{% if goal %}Update your savings target{% else %}Set a new savings target and track your progress{% endif %}</p>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label>Choose an Icon</label>
+                    <div class="emoji-grid" id="emojiGrid">
+                        {% for e in emojis %}
+                        <div class="emoji-btn{% if form.icon.value == e %} selected{% endif %}" data-emoji="{{ e }}" onclick="selectEmoji(this, '{{ e }}')">{{ e }}</div>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="icon" id="iconInput" value="{{ form.icon.value|default:'🎯' }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="id_title">Goal Name</label>
+                    <input type="text" name="title" id="id_title" class="form-input input-lg" placeholder="e.g., New Laptop, Dream Vacation" value="{{ form.title.value|default:'' }}" maxlength="100" required oninput="updatePreview()">
+                    {% if form.title.errors %}{{ form.title.errors }}{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_target_amount">Target Amount</label>
+                    <div class="amount-wrap">
+                        <span class="prefix">₹</span>
+                        <input type="number" name="target_amount" id="id_target_amount" class="form-input input-lg" placeholder="50000" step="0.01" min="1" value="{{ form.target_amount.value|default:'' }}" required oninput="updatePreview()">
+                    </div>
+                    {% if form.target_amount.errors %}{{ form.target_amount.errors }}{% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="id_deadline">Target Date</label>
+                    <input type="date" name="deadline" id="id_deadline" class="form-input input-lg" value="{{ form.deadline.value|date:'Y-m-d'|default:'' }}" onchange="updatePreview()">
+                    {% if form.deadline.errors %}{{ form.deadline.errors }}{% endif %}
+                </div>
+
+                <div class="preview-card" id="previewCard">
+                    <div class="preview-label">Preview:</div>
+                    <div class="preview-row">
+                        <div class="preview-emoji" id="previewEmoji">🎯</div>
+                        <div>
+                            <div class="preview-title" id="previewTitle">Your Goal Title</div>
+                            <div class="preview-target" id="previewTarget">Target: ₹0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <a href="{% url 'saving_dashboard' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">{% if goal %}Update Goal{% else %}Create Goal{% endif %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% include "includes/mobile_nav.html" with active_page="savings" %}
+
+    <script>
+    const popularEmojis = ['💻', '📱', '🏠', '🚗', '✈️', '🎮', '📚', '💍', '🏖️', '🎸', '📷', '⌚', '🏦', '💰', '🎯', '🌟'];
+
+    function selectEmoji(el, emoji) {
+        document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('iconInput').value = emoji;
+        updatePreview();
+    }
+
+    function updatePreview() {
+        const title = document.getElementById('id_title').value;
+        const target = document.getElementById('id_target_amount').value;
+        const emoji = document.getElementById('iconInput').value;
+        const card = document.getElementById('previewCard');
+
+        if (title && target) {
+            card.classList.add('show');
+            document.getElementById('previewEmoji').textContent = emoji;
+            document.getElementById('previewTitle').textContent = title;
+            document.getElementById('previewTarget').textContent = 'Target: ₹' + Number(target).toLocaleString('en-IN');
+        } else {
+            card.classList.remove('show');
+        }
+    }
+
+    // Initialize with default
+    document.addEventListener('DOMContentLoaded', updatePreview);
+    </script>
+</body>
+</html>

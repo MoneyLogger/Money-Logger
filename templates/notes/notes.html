@@ -278,10 +278,16 @@
             grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 24px;
         }
+        .notes-row > :only-child {
+            grid-column: 1 / -1;
+        }
         .sticky {
             position: relative;
             cursor: pointer;
-            min-height: 238px;
+            height: 270px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
             padding: 30px 24px 20px;
             padding-right: 54px;
             border-radius: 8px;
@@ -307,7 +313,7 @@
         .sticky.red { --paper:#ffb0d4; --edge:#ff86c2; --pin:#db0872; --pin-shadow:#b0065e; }
         .pin {
             position: absolute;
-            top: -10px;
+            top: 6px;
             left: 50%;
             width: 24px;
             height: 24px;
@@ -328,6 +334,7 @@
             border-radius: 999px;
             opacity: .72;
         }
+        .pin::before { display: none; }
         .pin::after {
             content: "";
             position: absolute;
@@ -392,7 +399,11 @@
             font-weight: 700;
         }
         .sticky-content {
-            min-height: 74px;
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
             color: #334155;
             font-family: 'Kalam', cursive;
             font-size: .98rem;
@@ -400,7 +411,9 @@
             white-space: pre-line;
             word-break: break-word;
         }
+        .sticky-content::-webkit-scrollbar { display: none; }
         .sticky-date {
+            flex-shrink: 0;
             margin-top: 18px;
             padding-bottom: 34px;
             color: #64748b;
@@ -431,6 +444,7 @@
             cursor: pointer;
         }
         .action.featured { background: #8a22f5; }
+        .action.copied { background: #059669; }
         .action svg { width: 16px; height: 16px; }
         .notes-row + .section-head {
             margin-top: 28px;
@@ -540,11 +554,11 @@
             .board-shell { padding: 22px; }
             .stats-card { padding: 16px; }
             .notes-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .sticky { min-height: 180px; padding: 22px 16px 16px; padding-right: 44px; }
-            .sticky-content { min-height: 48px; font-size: .85rem; }
+            .sticky { height: 200px; padding: 22px 16px 16px; padding-right: 44px; }
+            .sticky-content { font-size: .85rem; }
             .sticky-title { font-size: 1.1rem; }
             .sticky-top { margin-bottom: 8px; }
-            .sticky-date { margin-top: 10px; padding-bottom: 28px; }
+            .sticky-date { flex-shrink: 0; margin-top: 10px; padding-bottom: 28px; }
             .sticky-category { margin-bottom: 4px; font-size: .68rem; }
             .fab { display: grid; }
         }
@@ -894,6 +908,24 @@ modalOverlay.addEventListener('click', function(e) {
 });
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeModal();
+});
+
+document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const card = this.closest('.sticky');
+        const title = card.dataset.title || '';
+        const content = card.dataset.content || '';
+        const text = title + '\n' + content;
+        navigator.clipboard.writeText(text).then(() => {
+            this.classList.add('copied');
+            this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            setTimeout(() => {
+                this.classList.remove('copied');
+                this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>';
+            }, 1500);
+        }).catch(() => {});
+    });
 });
 </script>
 </body>

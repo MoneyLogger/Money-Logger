@@ -1,13 +1,14 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.db.models.functions import TruncMonth
 from datetime import datetime, date, timedelta
 import calendar
 import math
 from ledger.models import Transaction, WhatIfTransaction
 from ledger.views import is_whatif_mode
+from savings.views import get_savings_stats as _savings_stats
 from django.template.loader import render_to_string
 from django.http import JsonResponse
 
@@ -25,13 +26,15 @@ def _balances(real_qs, wi_qs):
     upi_expense = _sum(real_qs, transaction_type="EXPENSE", money_type="UPI CASH") + _sum(wi_qs, transaction_type="EXPENSE", money_type="UPI CASH")
     upi_in_sw   = _sum(real_qs, transaction_type="SWITCH",  switch_direction="HAND_TO_UPI")
     upi_out_sw  = _sum(real_qs, transaction_type="SWITCH",  switch_direction="UPI_TO_HAND")
-    upi_balance = upi_income - upi_expense + upi_in_sw - upi_out_sw
+    upi_saving  = _sum(real_qs, transaction_type="SAVING",  money_type="UPI CASH")
+    upi_balance = upi_income - upi_expense + upi_in_sw - upi_out_sw - upi_saving
 
     hand_income  = _sum(real_qs, transaction_type="INCOME",  money_type="HAND CASH") + _sum(wi_qs, transaction_type="INCOME",  money_type="HAND CASH")
     hand_expense = _sum(real_qs, transaction_type="EXPENSE", money_type="HAND CASH") + _sum(wi_qs, transaction_type="EXPENSE", money_type="HAND CASH")
     hand_in_sw   = _sum(real_qs, transaction_type="SWITCH",  switch_direction="UPI_TO_HAND")
     hand_out_sw  = _sum(real_qs, transaction_type="SWITCH",  switch_direction="HAND_TO_UPI")
-    hand_balance = hand_income - hand_expense + hand_in_sw - hand_out_sw
+    hand_saving  = _sum(real_qs, transaction_type="SAVING",  money_type="HAND CASH")
+    hand_balance = hand_income - hand_expense + hand_in_sw - hand_out_sw - hand_saving
 
     return upi_balance, hand_balance
 
@@ -74,7 +77,6 @@ def _survival_warning(available_funds, expense_mtd, days_passed, days_left, toda
 # ── views ─────────────────────────────────────────────────────────────────────
 
 @login_required
-@login_required
 def dashboard(request):
     whatif = is_whatif_mode(request)
     wi_qs  = _wi(request.user, whatif)
@@ -84,6 +86,7 @@ def dashboard(request):
     category         = request.GET.get("category")
     transaction_type = request.GET.get("transaction_type")
     money_type       = request.GET.get("money_type")
+    search           = request.GET.get("search", "").strip()
     page             = request.GET.get("page", 1)
 
     real_qs = Transaction.objects.filter(user=request.user).order_by('-id')
@@ -110,6 +113,25 @@ def dashboard(request):
         real_qs = real_qs.filter(money_type=money_type)
         wi_qs   = wi_qs.filter(money_type=money_type)
 
+    if search:
+        q_filter = (
+            Q(description__icontains=search) |
+            Q(category__icontains=search) |
+            Q(transaction_type__icontains=search) |
+            Q(money_type__icontains=search)
+        )
+        try:
+            q_filter |= Q(amount=float(search))
+        except ValueError:
+            pass
+        try:
+            parsed = datetime.strptime(search, "%Y-%m-%d").date()
+            q_filter |= Q(date=parsed)
+        except ValueError:
+            pass
+        real_qs = real_qs.filter(q_filter)
+        wi_qs   = wi_qs.filter(q_filter)
+
     # Merge real + whatif into a combined list for the table
     real_list = list(real_qs)
     wi_list   = [t for t in wi_qs.order_by('-date')]
@@ -131,6 +153,8 @@ def dashboard(request):
     all_real = Transaction.objects.filter(user=request.user)
     all_wi   = _wi(request.user, whatif)
     upi_balance, hand_balance = _balances(all_real, all_wi)
+    savings_data = _savings_stats(request.user) if request.user.is_authenticated else {"total_saved": 0}
+    total_saved = savings_data["total_saved"]
 
     today        = date.today()
     days_in_month = calendar.monthrange(today.year, today.month)[1]
@@ -141,29 +165,33 @@ def dashboard(request):
     month_wi   = all_wi.filter(date__year=today.year, date__month=today.month)
     expense_mtd   = _sum(month_real, transaction_type="EXPENSE", date__lte=today) + _sum(month_wi, transaction_type="EXPENSE", date__lte=today)
     today_expense = float(_sum(month_real, transaction_type="EXPENSE", date=today) + _sum(month_wi, transaction_type="EXPENSE", date=today))
-    available_funds = float(upi_balance) + float(hand_balance)
+    spendable_funds = float(upi_balance) + float(hand_balance)
+    available_funds = spendable_funds
 
     avg_daily, projected_end, survive, health, days_until_broke, broke_date, warning_message = \
         _survival_warning(available_funds, expense_mtd, days_passed, days_left, today_expense)
-
-    categories = Transaction.objects.filter(user=request.user).exclude(transaction_type="SWITCH").values_list('category', flat=True).distinct().order_by('category')
-
+    
+    categories = Transaction.objects.filter(user=request.user).exclude(transaction_type__in=["SWITCH", "SAVING"]).values_list('category', flat=True).distinct().order_by('category')
+    
     context = {
         "transactions": transactions_page,
         "total_income": total_income,
         "total_expense": total_expense,
         "balance": balance,
+        "total_saved": total_saved,
+        "spendable_balance": spendable_funds,
         "savings_rate": savings_rate,
         "is_healthy": is_healthy,
         "upi_balance": upi_balance,
         "hand_balance": hand_balance,
+        "search": search,
         "start_date": start_date,
         "end_date": end_date,
         "category": category,
         "transaction_type": transaction_type,
         "money_type": money_type,
         "categories": categories,
-        "transaction_types": [("INCOME", "Income"), ("EXPENSE", "Expense"), ("SWITCH", "Switch")],
+        "transaction_types": [("INCOME", "Income"), ("EXPENSE", "Expense"), ("SWITCH", "Switch"), ("SAVING", "Saving")],
         "money_types": [("UPI CASH", "UPI Cash"), ("HAND CASH", "Hand Cash")],
         "warning_message": warning_message,
         "whatif": whatif,
@@ -252,7 +280,9 @@ def analytics(request):
     days_passed  = max(1, today.day)
     days_left    = days_in_month_now - today.day
     upi_balance, hand_balance = _balances(real_all, wi_all)
-    available_funds = float(upi_balance) + float(hand_balance)
+    savings_data_analytics = _savings_stats(request.user)
+    spendable_funds_analytics = float(upi_balance) + float(hand_balance)
+    available_funds = spendable_funds_analytics
     month_real_now = real_all.filter(date__year=today.year, date__month=today.month)
     month_wi_now   = wi_all.filter(date__year=today.year, date__month=today.month)
     expense_mtd    = _sum(month_real_now, transaction_type="EXPENSE", date__lte=today) + _sum(month_wi_now, transaction_type="EXPENSE", date__lte=today)
@@ -296,7 +326,10 @@ def survival_dashboard(request):
     net_mtd     = income_mtd - expense_mtd
 
     upi_balance, hand_balance = _balances(real_all, wi_all)
-    available_funds = float(upi_balance) + float(hand_balance)
+    savings_data = _savings_stats(request.user)
+    total_saved = savings_data["total_saved"]
+    spendable_funds = float(upi_balance) + float(hand_balance)
+    available_funds = spendable_funds
 
     today_expense = float(_sum(month_real, transaction_type="EXPENSE", date=today) + _sum(month_wi, transaction_type="EXPENSE", date=today))
 
@@ -437,6 +470,8 @@ def survival_dashboard(request):
         "income_mtd": income_mtd, "expense_mtd": expense_mtd, "net_mtd": net_mtd,
         "upi_balance": upi_balance, "hand_balance": hand_balance,
         "available_funds": available_funds,
+        "total_saved": total_saved,
+        "spendable_balance": spendable_funds,
         "avg_daily_spend": avg_daily,
         "projected_remaining_spend": avg_daily * days_left,
         "projected_end_balance": projected_end,

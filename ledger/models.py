@@ -9,6 +9,7 @@ class Transaction(models.Model):
         ("INCOME", "Income"),
         ("EXPENSE", "Expense"),
         ("SWITCH", "Switch"),
+        ("SAVING", "Saving"),
     )
 
     MONEY_TYPE = (

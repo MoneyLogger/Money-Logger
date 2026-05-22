@@ -1,0 +1,515 @@
+{% load currency_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>Savings Vault - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
+        .container { max-width: 1280px; margin: 0 auto; padding: 2rem 1rem 6rem; }
+
+        .hero { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+        .hero h1 { font-size: 3rem; font-weight: 800; background: linear-gradient(to right, #2563eb, #9333ea, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.25rem; }
+        .hero p { color: #6b7280; font-size: 1.125rem; }
+        .btn-new-goal { display: none; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: linear-gradient(to right, #2563eb, #9333ea); color: white; border-radius: 1rem; font-size: 1rem; font-weight: 600; text-decoration: none; box-shadow: 0 8px 16px rgba(37,99,235,0.2); transition: all 0.2s; border: none; cursor: pointer; }
+        .btn-new-goal:hover { box-shadow: 0 12px 24px rgba(37,99,235,0.3); transform: translateY(-2px); }
+        @media (min-width: 768px) { .btn-new-goal { display: inline-flex; } }
+
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+        @media (min-width: 768px) { .summary-grid { grid-template-columns: repeat(4, 1fr); } }
+
+        .summary-card { position: relative; padding: 1.5rem; border-radius: 1.5rem; color: white; overflow: hidden; animation: fadeScale 0.4s both; }
+        .summary-card:nth-child(1) { animation-delay: 0.05s; }
+        .summary-card:nth-child(2) { animation-delay: 0.1s; }
+        .summary-card:nth-child(3) { animation-delay: 0.15s; }
+        .summary-card:nth-child(4) { animation-delay: 0.2s; }
+        .summary-card .circle { position: absolute; top: 0; right: 0; width: 8rem; height: 8rem; background: rgba(255,255,255,0.1); border-radius: 50%; margin: -2rem -2rem 0 0; }
+        .summary-card .inner { position: relative; z-index: 1; }
+        .summary-card svg.icon { width: 2rem; height: 2rem; margin-bottom: 0.75rem; opacity: 0.8; }
+        .summary-card .label { font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.25rem; }
+        .summary-card .value { font-size: 1.75rem; font-weight: 700; }
+        .summary-card .value .suffix { font-size: 1rem; opacity: 0.8; font-weight: 400; }
+        .summary-card.blue { background: linear-gradient(135deg, #3b82f6, #9333ea); }
+        .summary-card.green { background: linear-gradient(135deg, #10b981, #059669); }
+        .summary-card.pink { background: linear-gradient(135deg, #ec4899, #e11d48); }
+        .summary-card.orange { background: linear-gradient(135deg, #f59e0b, #ea580c); }
+
+        .level-card { padding: 1.5rem; border-radius: 1.5rem; background: linear-gradient(to right, rgba(168,85,247,0.08), rgba(236,72,153,0.08)); border: 1px solid rgba(168,85,247,0.2); backdrop-filter: blur(8px); margin-bottom: 2rem; animation: fadeUp 0.5s both; animation-delay: 0.25s; }
+        .level-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
+        .level-left { display: flex; align-items: center; gap: 0.75rem; }
+        .level-badge { width: 3rem; height: 3rem; border-radius: 50%; background: linear-gradient(135deg, #9333ea, #ec4899); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.25rem; flex-shrink: 0; }
+        .level-name { font-weight: 700; color: #111827; }
+        .level-xp { font-size: 0.875rem; color: #6b7280; }
+        .level-streak { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #6b7280; }
+        .level-streak span { font-weight: 600; color: #9333ea; }
+        .xp-bar { height: 0.75rem; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
+        .xp-fill { height: 100%; background: linear-gradient(to right, #9333ea, #ec4899); border-radius: 999px; transition: width 1.5s ease; }
+
+        .section-title { font-size: 1.5rem; font-weight: 700; color: #111827; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; margin-top: 2rem; }
+        .section-title svg { width: 1.5rem; height: 1.5rem; }
+
+        .goal-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+        @media (min-width: 640px) { .goal-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .goal-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1280px) { .goal-grid { grid-template-columns: repeat(4, 1fr); } }
+
+        .goal-card { position: relative; padding: 1.5rem; border-radius: 1.5rem; background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(239,246,255,0.5), rgba(250,245,255,0.5)); border: 1px solid rgba(168,85,247,0.2); box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s; overflow: hidden; animation: fadeUp 0.4s both; }
+        .goal-card:nth-child(1) { animation-delay: 0.05s; }
+        .goal-card:nth-child(2) { animation-delay: 0.1s; }
+        .goal-card:nth-child(3) { animation-delay: 0.15s; }
+        .goal-card:nth-child(4) { animation-delay: 0.2s; }
+        .goal-card:nth-child(5) { animation-delay: 0.25s; }
+        .goal-card:nth-child(6) { animation-delay: 0.3s; }
+        .goal-card:nth-child(7) { animation-delay: 0.35s; }
+        .goal-card:nth-child(8) { animation-delay: 0.4s; }
+        .goal-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
+        .goal-card.completed { opacity: 0.85; }
+        .goal-card .bg-glow { position: absolute; top: 0; right: 0; width: 8rem; height: 8rem; background: linear-gradient(135deg, rgba(168,85,247,0.15), rgba(236,72,153,0.15)); border-radius: 50%; filter: blur(40px); margin: -2rem -2rem 0 0; pointer-events: none; }
+
+        .goal-card .top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; position: relative; z-index: 1; }
+        .goal-card .emoji { font-size: 3rem; line-height: 1; }
+        .goal-badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+        .goal-badge.active { background: #dbeafe; color: #2563eb; }
+        .goal-badge.on-track { background: #d1fae5; color: #059669; }
+        .goal-badge.behind { background: #fef3c7; color: #d97706; }
+        .goal-badge.completed { background: #dbeafe; color: #2563eb; }
+        .goal-badge.paused { background: #f3f4f6; color: #6b7280; }
+
+        .goal-card .title { font-size: 1.125rem; font-weight: 700; color: #111827; margin-bottom: 1rem; position: relative; z-index: 1; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+        .goal-progress { margin-bottom: 1rem; position: relative; z-index: 1; }
+        .goal-progress .amount-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.5rem; }
+        .goal-progress .current { font-size: 1.5rem; font-weight: 700; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .goal-progress .target { font-size: 0.875rem; color: #6b7280; }
+        .goal-progress .bar-bg { height: 0.75rem; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
+        .goal-progress .bar-fill { height: 100%; border-radius: 999px; transition: width 1.2s ease; }
+        .goal-progress .bar-fill.green { background: #10b981; }
+        .goal-progress .bar-fill.yellow { background: #f59e0b; }
+        .goal-progress .bar-fill.purple { background: linear-gradient(to right, #3b82f6, #9333ea); }
+        .goal-progress .stats { display: flex; justify-content: space-between; margin-top: 0.25rem; }
+        .goal-progress .stats span { font-size: 0.75rem; color: #6b7280; }
+        .goal-progress .stats .pct { font-weight: 600; color: #9333ea; }
+
+        .goal-deadline { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; color: #6b7280; margin-bottom: 1rem; position: relative; z-index: 1; }
+        .goal-deadline.achieved { color: #059669; font-weight: 500; }
+        .goal-deadline.overdue { color: #dc2626; font-weight: 500; }
+
+        .goal-actions { display: flex; gap: 0.5rem; position: relative; z-index: 1; }
+        .goal-actions .btn { flex: 1; padding: 0.5rem 1rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 600; text-align: center; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; }
+        .goal-actions .btn-add { background: linear-gradient(to right, #2563eb, #9333ea); color: white; }
+        .goal-actions .btn-add:hover { box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+        .goal-actions .btn-del { padding: 0.5rem 0.75rem; background: transparent; color: #dc2626; border: 1px solid #fca5a5; flex: 0; cursor: pointer; }
+        .goal-actions .btn-del:hover { background: #fef2f2; }
+        .goal-actions .btn-edit { padding: 0.5rem 0.75rem; background: transparent; color: #9333ea; border: 1px solid rgba(168,85,247,0.2); flex: 0; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 0.75rem; transition: all 0.2s; }
+        .goal-actions .btn-edit:hover { background: rgba(147,51,234,0.05); }
+
+        .completed-banner { display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.75rem; background: linear-gradient(to right, #d1fae5, #a7f3d0); border: 1px solid #6ee7b7; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 600; color: #059669; position: relative; z-index: 1; }
+
+        .empty-state { text-align: center; padding: 5rem 2rem; animation: fadeUp 0.5s both; }
+        .empty-state .icon-circle { width: 8rem; height: 8rem; margin: 0 auto 1.5rem; border-radius: 50%; background: linear-gradient(135deg, rgba(168,85,247,0.2), rgba(236,72,153,0.2)); display: flex; align-items: center; justify-content: center; }
+        .empty-state .icon-circle svg { width: 4rem; height: 4rem; color: rgba(168,85,247,0.6); }
+        .empty-state h3 { font-size: 1.5rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem; }
+        .empty-state p { color: #6b7280; margin-bottom: 2rem; max-width: 28rem; margin-left: auto; margin-right: auto; }
+        .empty-state .btn-create { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 2rem; background: linear-gradient(to right, #2563eb, #9333ea); color: white; border-radius: 1rem; font-size: 1rem; font-weight: 600; text-decoration: none; box-shadow: 0 8px 16px rgba(37,99,235,0.2); transition: all 0.2s; }
+        .empty-state .btn-create:hover { box-shadow: 0 12px 24px rgba(37,99,235,0.3); }
+
+        .fab { position: fixed; bottom: 5rem; right: 1.5rem; z-index: 40; width: 4rem; height: 4rem; border-radius: 50%; background: linear-gradient(to right, #2563eb, #9333ea); color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(37,99,235,0.3); text-decoration: none; transition: all 0.2s; }
+        .fab:hover { transform: scale(1.1); box-shadow: 0 12px 30px rgba(37,99,235,0.4); }
+        .fab svg { width: 1.75rem; height: 1.75rem; }
+        @media (min-width: 768px) { .fab { display: none; } }
+
+        /* Delete Modal */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
+        .modal-overlay.active { display: flex; }
+        .modal-card { background: white; border-radius: 1.5rem; padding: 2rem; max-width: 420px; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.2); text-align: center; animation: fadeScale 0.2s ease; }
+        .modal-card .modal-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .modal-card h3 { font-size: 1.25rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem; }
+        .modal-card p { color: #6b7280; font-size: 0.875rem; margin-bottom: 0.5rem; }
+        .modal-card .goal-preview { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin: 1rem 0 1.5rem; padding: 0.75rem 1rem; background: #f9fafb; border-radius: 0.75rem; }
+        .modal-card .goal-preview .g-emoji { font-size: 1.5rem; }
+        .modal-card .goal-preview .g-title { font-weight: 600; color: #374151; }
+        .modal-actions { display: flex; gap: 0.75rem; }
+        .modal-actions .btn { flex: 1; padding: 0.75rem; border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem; border: none; cursor: pointer; transition: all 0.2s; }
+        .modal-actions .btn-cancel { background: #f3f4f6; color: #374151; }
+        .modal-actions .btn-cancel:hover { background: #e5e7eb; }
+        .modal-actions .btn-danger { background: #ef4444; color: white; }
+        .modal-actions .btn-danger:hover { background: #dc2626; }
+        .modal-actions .btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* AI Insights */
+        .insights-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 2rem; }
+        @media (min-width: 768px) { .insights-grid { grid-template-columns: repeat(2, 1fr); } }
+        .insight-card { padding: 1.25rem; border-radius: 1.25rem; background: rgba(255,255,255,0.8); backdrop-filter: blur(8px); border: 1px solid rgba(168,85,247,0.15); box-shadow: 0 4px 6px rgba(0,0,0,0.03); display: flex; gap: 1rem; align-items: flex-start; transition: all 0.2s; animation: fadeUp 0.4s both; }
+        .insight-card:hover { transform: scale(1.02); }
+        .insight-card .insight-icon { width: 2.75rem; height: 2.75rem; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .insight-card .insight-text { font-size: 0.9rem; color: #374151; line-height: 1.5; font-weight: 500; }
+
+        /* Monthly Analytics Bar */
+        .analytics-card { padding: 1.5rem; border-radius: 1.5rem; background: rgba(255,255,255,0.8); backdrop-filter: blur(8px); border: 1px solid rgba(168,85,247,0.15); box-shadow: 0 4px 6px rgba(0,0,0,0.03); margin-bottom: 2rem; }
+        .bar-chart { display: flex; align-items: flex-end; gap: 0.5rem; height: 160px; padding: 1rem 0; }
+        .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+        .bar { width: 100%; border-radius: 6px 6px 0 0; min-height: 4px; transition: height 0.8s ease; }
+        .bar.add { background: linear-gradient(to top, #3b82f6, #9333ea); }
+        .bar.withdraw { background: #ef4444; }
+        .bar-label { font-size: 0.65rem; color: #6b7280; text-align: center; white-space: nowrap; }
+        .bar-value { font-size: 0.65rem; font-weight: 600; }
+
+        .chart-legend { display: flex; justify-content: center; gap: 1.5rem; margin-top: 1rem; font-size: 0.8rem; color: #6b7280; }
+        .chart-legend span { display: flex; align-items: center; gap: 0.5rem; }
+        .chart-legend .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+        /* Achievements */
+        .achievement-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 2rem; }
+        @media (min-width: 640px) { .achievement-grid { grid-template-columns: repeat(4, 1fr); } }
+        .achieve-card { padding: 1rem; border-radius: 1rem; text-align: center; border: 2px solid; transition: all 0.2s; animation: fadeUp 0.4s both; }
+        .achieve-card.unlocked { background: linear-gradient(135deg, #fefce8, #ffedd5); border-color: #fcd34d; }
+        .achieve-card.locked { background: #f3f4f6; border-color: #d1d5db; opacity: 0.6; }
+        .achieve-card .a-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .achieve-card .a-title { font-size: 0.8rem; font-weight: 600; color: #374151; margin-bottom: 0.25rem; }
+        .achieve-card .a-desc { font-size: 0.7rem; color: #6b7280; }
+        .achieve-card .a-badge { display: inline-block; margin-top: 0.5rem; padding: 0.2rem 0.5rem; border-radius: 999px; font-size: 0.65rem; font-weight: 600; }
+        .achieve-card .a-badge.unlocked { background: #fef3c7; color: #d97706; }
+        .achieve-card .a-badge.locked { background: #e5e7eb; color: #6b7280; }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem 0.75rem 7rem; }
+            .hero h1 { font-size: 2rem; }
+            .summary-card { padding: 1rem; }
+            .summary-card .value { font-size: 1.25rem; }
+            .goal-progress .current { font-size: 1.25rem; }
+        }
+    </style>
+</head>
+<body>
+    {% include "includes/nav.html" with active_page="savings" action_url="add_transaction" %}
+
+    <div class="container">
+        <div class="hero">
+            <div>
+                <h1>Savings Vault</h1>
+                <p>Lock your money, unlock your dreams 🔐</p>
+            </div>
+            <a href="{% url 'create_goal' %}" class="btn-new-goal">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                New Goal
+            </a>
+        </div>
+
+        <div class="summary-grid">
+            <div class="summary-card blue">
+                <div class="circle"></div>
+                <div class="inner">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2 1Z"></path></svg>
+                    <div class="label">Total Saved</div>
+                    <div class="value">₹{{ stats.total_saved|indian_currency }}</div>
+                </div>
+            </div>
+            <div class="summary-card green">
+                <div class="circle"></div>
+                <div class="inner">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+                    <div class="label">This Month</div>
+                    <div class="value">+₹{{ stats.monthly_savings|indian_currency }}</div>
+                </div>
+            </div>
+            <div class="summary-card pink">
+                <div class="circle"></div>
+                <div class="inner">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <div class="label">Active Goals</div>
+                    <div class="value">{{ stats.active_goals }}</div>
+                </div>
+            </div>
+            <div class="summary-card orange">
+                <div class="circle"></div>
+                <div class="inner">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+                    <div class="label">Health Score</div>
+                    <div class="value">{{ stats.saving_health_score }}<span class="suffix">/100</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="level-card">
+            <div class="level-row">
+                <div class="level-left">
+                    <div class="level-badge">{{ stats.level }}</div>
+                    <div>
+                        <div class="level-name">Level {{ stats.level }} Saver</div>
+                        <div class="level-xp">{{ stats.xp|floatformat:0 }}% to Level {{ stats.level|add:1 }}</div>
+                    </div>
+                </div>
+                <div class="level-streak">
+                    <span>🔥</span>
+                    <span>{{ stats.completed_goals }}</span> goals completed
+                </div>
+            </div>
+            <div class="xp-bar"><div class="xp-fill" style="width:{{ stats.xp }}%"></div></div>
+        </div>
+
+        {% if goals %}
+        <div>
+            <h3 class="section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Savings Goals
+            </h3>
+            <div class="goal-grid">
+                {% for goal in goals %}
+                <div class="goal-card{% if goal.status == 'COMPLETED' %} completed{% endif %}" id="goal-{{ goal.pk }}">
+                    <div class="bg-glow"></div>
+                    <div class="top">
+                        <div class="emoji">{{ goal.icon }}</div>
+                        {% if goal.status == "ACTIVE" %}
+                            <span class="goal-badge active">⏳ Active</span>
+                        {% elif goal.status == "COMPLETED" %}
+                            <span class="goal-badge completed">✅ Completed</span>
+                        {% elif goal.status == "PAUSED" %}
+                            <span class="goal-badge paused">⏸ Paused</span>
+                        {% endif %}
+                    </div>
+                    <div class="title">{{ goal.title }}</div>
+                    <div class="goal-progress">
+                        <div class="amount-row">
+                            <span class="current">₹{{ goal.current_amount|indian_currency }}</span>
+                            <span class="target">/ ₹{{ goal.target_amount|indian_currency }}</span>
+                        </div>
+                        <div class="bar-bg">
+                            <div class="bar-fill {% if goal.status == 'COMPLETED' %}green{% elif goal.progress_percentage >= 50 %}yellow{% else %}purple{% endif %}" style="width:{% widthratio goal.current_amount goal.target_amount 100 %}%"></div>
+                        </div>
+                        <div class="stats">
+                            <span class="pct">{{ goal.progress_percentage|floatformat:0 }}%</span>
+                            {% if goal.remaining_amount > 0 %}
+                            <span>₹{{ goal.remaining_amount|indian_currency }} left</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="goal-deadline{% if goal.status == 'COMPLETED' %} achieved{% elif goal.deadline and goal.deadline < today %} overdue{% endif %}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        {% if goal.status == "COMPLETED" %}
+                            Achieved!
+                        {% elif goal.deadline %}
+                            {{ goal.deadline|date:"d M, Y" }}
+                            {% if goal.deadline > today %}
+                                ({{ goal.deadline|timeuntil }})
+                            {% elif goal.deadline == today %}
+                                (Today)
+                            {% else %}
+                                (Overdue)
+                            {% endif %}
+                        {% else %}
+                            No deadline
+                        {% endif %}
+                    </div>
+                    {% if goal.status != "COMPLETED" %}
+                    <div class="goal-actions">
+                        <a href="{% url 'add_saving' goal.pk %}" class="btn btn-add">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            Add Money
+                        </a>
+                        <a href="{% url 'edit_goal' goal.pk %}" class="btn-edit">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        </a>
+                        <button class="btn btn-del" onclick="openDeleteModal({{ goal.pk }}, '{{ goal.title|escapejs }}', '{{ goal.icon }}')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="completed-banner">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Goal Achieved! 🎉
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="icon-circle">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
+            <h3>No Savings Goals Yet</h3>
+            <p>Start your wealth journey! Create your first savings goal and watch your dreams come true.</p>
+            <a href="{% url 'create_goal' %}" class="btn-create">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Create Your First Goal
+            </a>
+        </div>
+        {% endif %}
+
+        {% if monthly_data %}
+        <div>
+            <h3 class="section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+                Monthly Savings Trend
+            </h3>
+            <div class="analytics-card">
+                <div class="bar-chart">
+                    {% for item in monthly_data %}
+                    {% with max_val=monthly_data.0.added %}
+                    <div class="bar-group" title="{{ item.month }} {{ item.year }}: +₹{{ item.added|floatformat:0 }}{% if item.withdrawn > 0 %} / -₹{{ item.withdrawn|floatformat:0 }}{% endif %}">
+                        <div class="bar-value" style="color:#059669;">{% if item.net > 0 %}₹{{ item.net|floatformat:0 }}{% endif %}</div>
+                        <div class="bar add" style="height:{% widthratio item.added max_val|default:1 140 %}px;"></div>
+                        {% if item.withdrawn > 0 %}<div class="bar withdraw" style="height:{% widthratio item.withdrawn max_val|default:1 140 %}px;"></div>{% endif %}
+                        <div class="bar-label">{{ item.month|slice:":3" }}</div>
+                    </div>
+                    {% endwith %}
+                    {% endfor %}
+                </div>
+                <div class="chart-legend">
+                    <span><span class="dot" style="background:linear-gradient(to top,#3b82f6,#9333ea);"></span> Added</span>
+                    <span><span class="dot" style="background:#ef4444;"></span> Withdrawn</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div>
+            <h3 class="section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+                Savings Insights
+            </h3>
+            <div class="insights-grid">
+                <div class="insight-card" style="animation-delay:0.05s">
+                    <div class="insight-icon" style="background:linear-gradient(135deg,#3b82f6,#9333ea);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    </div>
+                    <div class="insight-text">
+                        {% if stats.monthly_savings > 0 %}
+                            You saved <strong>₹{{ stats.monthly_savings|indian_currency }}</strong> this month! Keep up the momentum 🚀
+                        {% else %}
+                            Start building your savings habit this month! Every rupee counts 💪
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="insight-card" style="animation-delay:0.1s">
+                    <div class="insight-icon" style="background:linear-gradient(135deg,#f59e0b,#ea580c);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"></path></svg>
+                    </div>
+                    <div class="insight-text">
+                        {% if stats.active_goals > 0 %}
+                            You have <strong>{{ stats.active_goals }} active goal{{ stats.active_goals|pluralize }}</strong>. Focus on one at a time for best results! 🎯
+                        {% else %}
+                            Create your first savings goal to start tracking progress! 🎯
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="insight-card" style="animation-delay:0.15s">
+                    <div class="insight-icon" style="background:linear-gradient(135deg,#10b981,#059669);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    </div>
+                    <div class="insight-text">
+                        {% if stats.completed_goals > 0 %}
+                            <strong>{{ stats.completed_goals }} goal{{ stats.completed_goals|pluralize }}</strong> completed! You're on fire! 🔥
+                        {% else %}
+                            Every completed goal is a step toward financial freedom! 💪
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="insight-card" style="animation-delay:0.2s">
+                    <div class="insight-icon" style="background:linear-gradient(135deg,#ec4899,#e11d48);">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+                    </div>
+                    <div class="insight-text">
+                        Savings health score: <strong>{{ stats.saving_health_score }}/100</strong>
+                        {% if stats.saving_health_score >= 70 %}
+                            — Excellent! You're a savings superstar! 🌟
+                        {% elif stats.saving_health_score >= 40 %}
+                            — Good progress! Keep pushing! 💪
+                        {% else %}
+                            — Time to level up your savings game! 🚀
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h3 class="section-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                Achievements
+            </h3>
+            {% with completed=stats.completed_goals active=stats.active_goals level=stats.level %}
+            <div class="achievement-grid">
+                <div class="achieve-card unlocked" style="animation-delay:0.05s">
+                    <div class="a-icon">🎯</div>
+                    <div class="a-title">Goal Setter</div>
+                    <div class="a-desc">Create your first goal</div>
+                    <div class="a-badge unlocked">✅ Unlocked</div>
+                </div>
+                <div class="achieve-card {% if completed > 0 %}unlocked{% else %}locked{% endif %}" style="animation-delay:0.1s">
+                    <div class="a-icon">{{ completed|yesno:"⚡,🔒" }}</div>
+                    <div class="a-title">Goal Crusher</div>
+                    <div class="a-desc">Complete your first goal</div>
+                    <div class="a-badge {% if completed > 0 %}unlocked{% else %}locked{% endif %}">{{ completed|yesno:"✅ Unlocked,🔒 Locked" }}</div>
+                </div>
+                <div class="achieve-card {% if stats.total_saved >= 50000 %}unlocked{% else %}locked{% endif %}" style="animation-delay:0.15s">
+                    <div class="a-icon">{{ stats.total_saved|default:0|yesno:",🔒" }}{% if stats.total_saved >= 50000 %}💰{% else %}🔒{% endif %}</div>
+                    <div class="a-title">₹50K Saver</div>
+                    <div class="a-desc">Save ₹50,000 in total</div>
+                    <div class="a-badge {% if stats.total_saved >= 50000 %}unlocked{% else %}locked{% endif %}">{% if stats.total_saved >= 50000 %}✅ Unlocked{% else %}🔒 Locked{% endif %}</div>
+                </div>
+                <div class="achieve-card {% if level >= 5 %}unlocked{% else %}locked{% endif %}" style="animation-delay:0.2s">
+                    <div class="a-icon">{{ level|yesno:",🔒" }}{% if level >= 5 %}⭐{% else %}🔒{% endif %}</div>
+                    <div class="a-title">Level 5 Saver</div>
+                    <div class="a-desc">Reach level 5</div>
+                    <div class="a-badge {% if level >= 5 %}unlocked{% else %}locked{% endif %}">{% if level >= 5 %}✅ Unlocked{% else %}🔒 Locked{% endif %}</div>
+                </div>
+            </div>
+            {% endwith %}
+        </div>
+
+        <a href="{% url 'create_goal' %}" class="fab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </a>
+    </div>
+
+    <!-- Delete Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-card">
+            <div class="modal-icon" id="deleteModalIcon">🎯</div>
+            <h3>Delete this goal?</h3>
+            <p>This action cannot be undone. All savings in this goal will remain in the vault.</p>
+            <div class="goal-preview">
+                <span class="g-emoji" id="deleteModalEmoji">🎯</span>
+                <span class="g-title" id="deleteModalTitle">Goal Name</span>
+            </div>
+            <form method="post" id="deleteForm">
+                {% csrf_token %}
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+                    <button type="submit" class="btn btn-danger" id="deleteConfirmBtn">Delete Goal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% include "includes/mobile_nav.html" with active_page="savings" %}
+
+    <script>
+        function openDeleteModal(pk, title, icon) {
+            document.getElementById('deleteModal').classList.add('active');
+            document.getElementById('deleteModalIcon').textContent = icon;
+            document.getElementById('deleteModalEmoji').textContent = icon;
+            document.getElementById('deleteModalTitle').textContent = title;
+            document.getElementById('deleteForm').action = '/savings/' + pk + '/delete/';
+        }
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+        }
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteModal();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeDeleteModal();
+        });
+    </script>
+</body>
+</html>

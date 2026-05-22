@@ -1,0 +1,146 @@
+{% load currency_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>{{ goal.title }} - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem 8rem; }
+
+        .header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(24px); background: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.2); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .header-inner { max-width: 1280px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; height: 4rem; }
+
+        .back-link { display: inline-flex; align-items: center; gap: 0.5rem; color: #6b7280; text-decoration: none; font-size: 0.875rem; margin-bottom: 1rem; }
+        .back-link:hover { color: #374151; }
+
+        .goal-header-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1.5rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 2rem; margin-bottom: 2rem; }
+        .goal-header-top { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+        .goal-emoji-lg { font-size: 3rem; width: 4rem; height: 4rem; display: flex; align-items: center; justify-content: center; background: rgba(243,244,246,0.8); border-radius: 1rem; }
+        .goal-meta h2 { font-size: 1.5rem; font-weight: 700; color: #111827; }
+        .goal-meta .status { font-size: 0.875rem; font-weight: 600; }
+
+        .progress-lg { margin-bottom: 1.5rem; }
+        .progress-lg .bar { height: 0.75rem; background: #e5e7eb; border-radius: 999px; overflow: hidden; }
+        .progress-lg .fill { height: 100%; border-radius: 999px; background: linear-gradient(to right, #3b82f6, #9333ea); transition: width 1s; }
+        .progress-lg .stats { display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280; }
+
+        .amount-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+        .amount-box { padding: 1rem; border-radius: 0.75rem; text-align: center; }
+        .amount-box .label { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; }
+        .amount-box .val { font-size: 1.25rem; font-weight: 700; }
+
+        .action-buttons { display: flex; gap: 0.75rem; }
+        .action-buttons .btn { flex: 1; padding: 0.75rem; border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem; text-align: center; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+
+        .txn-section { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1.5rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
+        .txn-section .header { padding: 1rem 1.5rem; border-bottom: 1px solid rgba(229,231,235,0.5); background: linear-gradient(to right, rgba(219,234,254,0.5), rgba(233,213,255,0.5)); }
+        .txn-section table { width: 100%; border-collapse: collapse; }
+        .txn-section th { padding: 0.75rem 1.5rem; text-align: left; font-size: 0.75rem; font-weight: 500; color: #6b7280; text-transform: uppercase; background: rgba(249,250,251,0.5); }
+        .txn-section td { padding: 0.75rem 1.5rem; font-size: 0.875rem; border-bottom: 1px solid rgba(229,231,235,0.3); }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem 0.75rem 8rem; }
+            .amount-grid { grid-template-columns: 1fr; }
+            .action-buttons { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    {% include "includes/nav.html" with active_page="savings" %}
+
+    <div class="container">
+        <a href="{% url 'saving_dashboard' %}" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Back to Savings
+        </a>
+
+        <div class="goal-header-card">
+            <div class="goal-header-top">
+                <div class="goal-emoji-lg">{{ goal.icon }}</div>
+                <div class="goal-meta">
+                    <h2>{{ goal.title }}</h2>
+                    <span class="status" style="color:{% if goal.status == 'ACTIVE' %}#2563eb{% elif goal.status == 'COMPLETED' %}#059669{% elif goal.status == 'PAUSED' %}#6b7280{% endif %};">{{ goal.get_status_display }}</span>
+                </div>
+                <div style="margin-left:auto;text-align:right;">
+                    {% if goal.deadline %}
+                    <div style="font-size:0.75rem;color:#6b7280;">Deadline</div>
+                    <div style="font-weight:700;">{{ goal.deadline|date:"d M, Y" }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="progress-lg">
+                <div class="bar">
+                    <div class="fill" style="width:{% widthratio goal.current_amount goal.target_amount 100 %}%"></div>
+                </div>
+                <div class="stats">
+                    <span>{{ goal.progress_percentage|floatformat:1 }}% complete</span>
+                    <span>{% widthratio goal.current_amount goal.target_amount 100 %}%</span>
+                </div>
+            </div>
+
+            <div class="amount-grid">
+                <div class="amount-box" style="background:#d1fae5;">
+                    <div class="label">Saved</div>
+                    <div class="val" style="color:#059669;">₹{{ goal.current_amount|currency }}</div>
+                </div>
+                <div class="amount-box" style="background:#dbeafe;">
+                    <div class="label">Target</div>
+                    <div class="val" style="color:#2563eb;">₹{{ goal.target_amount|currency }}</div>
+                </div>
+                <div class="amount-box" style="background:#f3f4f6;">
+                    <div class="label">Remaining</div>
+                    <div class="val" style="color:#6b7280;">₹{{ goal.remaining_amount|currency }}</div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="{% url 'add_saving' goal.pk %}" class="btn" style="background:linear-gradient(to right,#2563eb,#9333ea);color:white;">+ Add Money</a>
+                {% if goal.current_amount > 0 %}<a href="{% url 'withdraw_saving' goal.pk %}" class="btn" style="background:#f3f4f6;color:#374151;">Withdraw</a>{% endif %}
+                <a href="{% url 'edit_goal' goal.pk %}" class="btn" style="background:#f3f4f6;color:#374151;">Edit</a>
+            </div>
+        </div>
+
+        <div class="txn-section">
+            <div class="header">
+                <h3 style="font-size:1.125rem;font-weight:700;">Transaction History</h3>
+            </div>
+            {% if transactions %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Source</th>
+                        <th>Note</th>
+                        <th style="text-align:right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transactions %}
+                    <tr>
+                        <td>{{ t.date|date:"d M, Y" }}</td>
+                        <td><span style="padding:0.125rem 0.5rem;border-radius:999px;font-size:0.75rem;font-weight:600;{% if t.transaction_type == 'ADD' %}background:#d1fae5;color:#059669;{% else %}background:#fee2e2;color:#dc2626;{% endif %}">{{ t.transaction_type }}</span></td>
+                        <td>{{ t.source }}</td>
+                        <td>{{ t.note|default:"—" }}</td>
+                        <td style="text-align:right;font-weight:700;{% if t.transaction_type == 'ADD' %}color:#059669;{% else %}color:#dc2626;{% endif %}">
+                            {% if t.transaction_type == "ADD" %}+{% else %}-{% endif %}₹{{ t.amount|currency }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="padding:3rem;text-align:center;color:#6b7280;">No transactions yet. Start saving!</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include "includes/mobile_nav.html" with active_page="savings" %}
+</body>
+</html>

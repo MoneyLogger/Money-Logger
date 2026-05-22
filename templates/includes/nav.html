@@ -1,3 +1,42 @@
+<style>
+.header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(24px); background: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.2); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+.header-inner { max-width: 1280px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; height: 4rem; }
+.logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
+.logo-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: linear-gradient(to bottom right, #3b82f6, #9333ea); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.logo-text { font-weight: 700; font-size: 1.25rem; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.logo-subtitle { font-size: 0.75rem; color: #6b7280; }
+.nav-links { display: flex; align-items: center; gap: 0.5rem; }
+.nav-link { padding: 0.5rem 1rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; color: #4b5563; text-decoration: none; transition: all 0.2s; }
+.nav-link:hover { background: rgba(255,255,255,0.5); color: #111827; }
+.nav-link.active { color: #2563eb; background: linear-gradient(to right, #dbeafe, #e9d5ff); }
+.btn-add { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(to right, #2563eb, #9333ea); color: white; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: box-shadow 0.2s; white-space: nowrap; }
+.btn-add:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.whatif-toggle { margin: 0 0.5rem; }
+.whatif-btn { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); color: #6b7280; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.whatif-btn:hover { background: rgba(255,255,255,0.9); color: #374151; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.whatif-btn.active { background: linear-gradient(to right, #f59e0b, #ea580c); color: white; border-color: transparent; }
+.whatif-btn.active:hover { background: linear-gradient(to right, #d97706, #c2410c); }
+.settings-dropdown { position: relative; }
+.settings-btn { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(255,255,255,0.5); border: 1px solid rgba(229,231,235,0.5); cursor: pointer; transition: all 0.2s; }
+.settings-btn:hover { background: rgba(255,255,255,0.8); border-color: #e5e7eb; }
+.settings-btn svg { width: 1.25rem; height: 1.25rem; color: #6b7280; }
+.settings-menu { position: absolute; top: calc(100% + 0.5rem); right: 0; min-width: 200px; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 0.75rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; display: none; z-index: 100; animation: slideDown 0.2s ease-out; }
+.settings-menu.active { display: block; }
+@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+.settings-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #374151; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; background: transparent; width: 100%; text-align: left; }
+.settings-menu-item:hover { background: rgba(59,130,246,0.1); color: #2563eb; }
+.settings-menu-item svg { width: 1.125rem; height: 1.125rem; color: currentColor; }
+.settings-menu-divider { height: 1px; background: rgba(229,231,235,0.5); margin: 0.5rem 0; }
+.settings-menu-item.logout-item { color: #ef4444; }
+.settings-menu-item.logout-item:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
+@media (max-width: 768px) {
+    .nav-links { display: none; }
+    .settings-dropdown { display: none; }
+    .whatif-toggle { margin: 0 0.25rem; }
+    .btn-add { display: none; }
+    .header-inner { padding: 0 0.5rem; }
+}
+</style>
 <header class="header">
     <div class="header-inner">
         <a href="{% url 'dashboard' %}" class="logo">
@@ -26,6 +65,10 @@
             <a href="{% url 'budget_list' %}" class="nav-link{% if active_page == 'budget' %} active{% endif %}">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                 Budget
+            </a>
+            <a href="{% url 'saving_dashboard' %}" class="nav-link{% if active_page == 'savings' %} active{% endif %}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:5px;"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><path d="M12 18V6"></path></svg>
+                Savings
             </a>
             <a href="{% url 'notes_list' %}" class="nav-link{% if active_page == 'notes' %} active{% endif %}">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:5px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>

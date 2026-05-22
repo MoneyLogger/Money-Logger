@@ -1,0 +1,78 @@
+{% load currency_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>Withdraw - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
+        .container { max-width: 32rem; margin: 0 auto; padding: 2rem 1rem 6rem; }
+        .card { background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(254,226,226,0.2), rgba(254,202,202,0.2)); border: 1px solid rgba(239,68,68,0.2); border-radius: 1.5rem; box-shadow: 0 8px 16px rgba(0,0,0,0.05); padding: 2rem; }
+        .card h1 { font-size: 1.5rem; font-weight: 700; color: #dc2626; margin-bottom: 0.25rem; }
+        .card p.sub { color: #6b7280; font-size: 0.875rem; margin-bottom: 1.5rem; }
+        .goal-preview { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: rgba(243,244,246,0.5); border-radius: 0.75rem; margin-bottom: 1.5rem; }
+        .goal-preview .emoji { font-size: 2rem; }
+        .goal-preview .name { font-weight: 600; color: #111827; }
+        .goal-preview .bal { font-size: 0.875rem; color: #6b7280; }
+        .warning { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.75rem 1rem; background: #fef3c7; border: 1px solid #fcd34d; border-radius: 0.75rem; font-size: 0.875rem; color: #92400e; margin-bottom: 1.5rem; }
+        .warning svg { width: 1.25rem; height: 1.25rem; flex-shrink: 0; margin-top: 0.125rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
+        .form-input { width: 100%; padding: 0.75rem 1rem; background: white; border: 2px solid #e5e7eb; border-radius: 0.75rem; font-size: 1rem; outline: none; transition: all 0.2s; }
+        .form-input:focus { border-color: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.1); }
+        .amount-input { font-size: 1.5rem; font-weight: 700; text-align: center; padding: 1rem; }
+        .hint { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; }
+        .btn-row { display: flex; gap: 0.75rem; }
+        .btn { flex: 1; padding: 0.875rem; border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem; text-align: center; text-decoration: none; transition: all 0.2s; border: none; cursor: pointer; }
+        .btn-danger { background: linear-gradient(to right, #dc2626, #e11d48); color: white; }
+        .btn-danger:hover { box-shadow: 0 4px 12px rgba(220,38,38,0.3); }
+        .btn-secondary { background: white; color: #374151; border: 2px solid #e5e7eb; text-decoration: none; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+    {% include "includes/nav.html" with active_page="savings" %}
+    <div class="container">
+        <div class="card">
+            <h1>Withdraw Money</h1>
+            <p class="sub">Take money out of your savings goal</p>
+            <div class="goal-preview">
+                <div class="emoji">{{ goal.icon }}</div>
+                <div>
+                    <div class="name">{{ goal.title }}</div>
+                    <div class="bal">Available: ₹{{ goal.current_amount|indian_currency }}</div>
+                </div>
+            </div>
+            <div class="warning">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                Withdrawing reduces your goal progress. Money goes back to your spendable balance.
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="amount">Amount to Withdraw (₹)</label>
+                    <input type="number" name="amount" id="amount" class="form-input amount-input" placeholder="0" step="0.01" max="{{ goal.current_amount }}" required>
+                    <div class="hint">Max: ₹{{ goal.current_amount|indian_currency }}</div>
+                </div>
+                <div class="form-group">
+                    <label for="note">Reason (optional)</label>
+                    <input type="text" name="note" id="note" class="form-input" placeholder="e.g., Emergency expense">
+                </div>
+                <div class="btn-row">
+                    <a href="{% url 'saving_dashboard' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-danger" id="withdrawBtn">Withdraw ₹<span id="amountDisplay">0</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% include "includes/mobile_nav.html" with active_page="savings" %}
+    <script>
+    document.getElementById('amount').addEventListener('input', function() {
+        document.getElementById('amountDisplay').textContent = this.value || '0';
+    });
+    </script>
+</body>
+</html>

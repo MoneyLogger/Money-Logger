@@ -21,10 +21,15 @@
         .auth-links { text-align: center; margin-top: 20px; }
         .auth-links a { color: #2563eb; text-decoration: none; font-weight: 600; }
         .auth-links a:hover { text-decoration: underline; }
-        .messages { margin-bottom: 20px; }
-        .messages div { padding: 10px; border-radius: 8px; margin-bottom: 10px; }
-        .messages .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .messages .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .password-wrapper { position: relative; }
+        .password-wrapper input { padding-right: 45px !important; }
+        .toggle-pass {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; padding: 4px;
+            color: #95a5a6; display: flex; align-items: center;
+        }
+        .toggle-pass:hover { color: #2563eb; }
         .helptext { font-size: 0.85rem; color: #666; margin-top: 5px; }
         .errorlist { color: #e74c3c; font-size: 0.9rem; margin-top: 5px; }
     </style>
@@ -37,9 +42,9 @@
         </div>
         
         {% if messages %}
-            <div class="messages">
+            <div>
                 {% for message in messages %}
-                    <div class="{{ message.tags }}">{{ message }}</div>
+                    <div>{{ message }}</div>
                 {% endfor %}
             </div>
         {% endif %}
@@ -59,7 +64,12 @@
             
             <div class="form-group">
                 <label for="{{ form.password1.id_for_label }}">Password</label>
-                {{ form.password1 }}
+                <div class="password-wrapper">
+                    {{ form.password1 }}
+                    <button type="button" class="toggle-pass" onclick="togglePass('{{ form.password1.id_for_label }}', this)" tabindex="-1">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
                 {% if form.password1.help_text %}
                     <div class="helptext">{{ form.password1.help_text }}</div>
                 {% endif %}
@@ -70,7 +80,12 @@
             
             <div class="form-group">
                 <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
-                {{ form.password2 }}
+                <div class="password-wrapper">
+                    {{ form.password2 }}
+                    <button type="button" class="toggle-pass" onclick="togglePass('{{ form.password2.id_for_label }}', this)" tabindex="-1">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                </div>
                 {% if form.password2.help_text %}
                     <div class="helptext">{{ form.password2.help_text }}</div>
                 {% endif %}
@@ -86,5 +101,16 @@
             Already have an account? <a href="{% url 'login' %}">Sign In</a>
         </div>
     </div>
+    <script>
+        function togglePass(id, btn) {
+            const inp = document.getElementById(id);
+            if (!inp) return;
+            const isPass = inp.type === 'password';
+            inp.type = isPass ? 'text' : 'password';
+            btn.innerHTML = isPass
+                ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+                : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+        }
+    </script>
 </body>
 </html>

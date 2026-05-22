@@ -967,33 +967,6 @@
             }
         }
 
-        /* Messages */
-        .message {
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 24px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        .message.success {
-            background: rgba(22, 163, 74, 0.1);
-            border: 1px solid rgba(22, 163, 74, 0.2);
-            color: #166534;
-        }
-
-        .message.error {
-            background: rgba(220, 38, 38, 0.1);
-            border: 1px solid rgba(220, 38, 38, 0.2);
-            color: #991b1b;
-        }
-
-        .message.info {
-            background: rgba(147, 51, 234, 0.1);
-            border: 1px solid rgba(147, 51, 234, 0.2);
-            color: #6b21a8;
-        }
-
         /* Animations */
         @keyframes fadeInUp {
             from {
@@ -1186,7 +1159,7 @@
                 {% if messages %}
                     {% for message in messages %}
                         {% if 'What-If' not in message.message and 'what-if' not in message.message|lower and message.tags != 'success' %}
-                        <div class="message {% if message.tags == 'error' %}error{% else %}info{% endif %}">
+                        <div>
                             {{ message }}
                         </div>
                         {% endif %}
@@ -1194,7 +1167,7 @@
                 {% endif %}
 
                 {% if form.errors %}
-                    <div class="message error">
+                    <div>
                         {% for field, errors in form.errors.items %}
                             {% for error in errors %}
                                 <div>{{ field|title }}: {{ error }}</div>

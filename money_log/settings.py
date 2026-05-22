@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     "dashboard",
     "ledger",
     "notes",
+    "savings",
 ]
 
 MIDDLEWARE = [
