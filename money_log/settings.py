@@ -42,6 +42,18 @@ ENABLE_ENCRYPTION = os.getenv("ENABLE_ENCRYPTION", "false").lower() == "true"
 
 PRODUCTION_MODE = os.getenv("PRODUCTION_MODE", "false").lower() == "true"
 
+# reCAPTCHA (Google)
+# Preferred env vars: RECAPTCHA_SITE_KEY / RECAPTCHA_SECRET_KEY
+# Backward compatible: SITE_KEY / SECRET_KEY
+RECAPTCHA_SITE_KEY = os.getenv("RECAPTCHA_SITE_KEY") or os.getenv("SITE_KEY")
+RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY") or os.getenv("SECRET_KEY")
+RECAPTCHA_ENABLED = os.getenv("RECAPTCHA_ENABLED", "true").lower() == "true"
+RECAPTCHA_VERSION = os.getenv("RECAPTCHA_VERSION", "v2").lower()  # "v2" or "v3"
+try:
+    RECAPTCHA_MIN_SCORE = float(os.getenv("RECAPTCHA_MIN_SCORE", "0.5"))
+except ValueError:
+    RECAPTCHA_MIN_SCORE = 0.5
+
 if not ENABLE_ENCRYPTION:
     if SECRET_KEY is None:
         raise Exception("ENABLE_ENCRYPTION is True but SECRET_KEY is not set")
@@ -94,6 +106,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "accounts.context_processors.recaptcha_site_key",
             ],
         },
     },

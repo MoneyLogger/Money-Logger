@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/media/logo/logo.png">
     <title>Sign Up - Money Logger</title>
+    {% if RECAPTCHA_ENABLED and RECAPTCHA_SITE_KEY %}
+        {% if RECAPTCHA_VERSION == 'v3' %}
+            <script src="https://www.google.com/recaptcha/api.js?render={{ RECAPTCHA_SITE_KEY }}"></script>
+        {% else %}
+            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+        {% endif %}
+    {% endif %}
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
@@ -32,6 +39,12 @@
         .toggle-pass:hover { color: #2563eb; }
         .helptext { font-size: 0.85rem; color: #666; margin-top: 5px; }
         .errorlist { color: #e74c3c; font-size: 0.9rem; margin-top: 5px; }
+        .recaptcha-wrap { margin-top: 10px; margin-bottom: 10px; display: flex; justify-content: center; }
+        .recaptcha-wrap .g-recaptcha { transform: scale(0.85); transform-origin: top left; }
+
+        @media (max-width: 480px) {
+            .recaptcha-wrap .g-recaptcha { transform: scale(0.75); transform-origin: top left; }
+        }
     </style>
 </head>
 <body>
@@ -49,7 +62,7 @@
             </div>
         {% endif %}
         
-        <form method="post">
+        <form method="post" id="signup-form">
             {% csrf_token %}
             <div class="form-group">
                 <label for="{{ form.username.id_for_label }}">Username</label>
@@ -93,6 +106,16 @@
                     <div class="errorlist">{{ form.password2.errors.0 }}</div>
                 {% endif %}
             </div>
+
+            {% if RECAPTCHA_ENABLED and RECAPTCHA_SITE_KEY %}
+                {% if RECAPTCHA_VERSION == 'v3' %}
+                    <input type="hidden" name="g-recaptcha-response" id="recaptcha-token">
+                {% else %}
+                    <div class="recaptcha-wrap">
+                        <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}" data-size="compact"></div>
+                    </div>
+                {% endif %}
+            {% endif %}
             
             <button type="submit" class="btn">Create Account</button>
         </form>
@@ -111,6 +134,28 @@
                 ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
                 : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
         }
+
+        {% if RECAPTCHA_ENABLED and RECAPTCHA_SITE_KEY and RECAPTCHA_VERSION == 'v3' %}
+        (function () {
+            const form = document.getElementById('signup-form');
+            if (!form || typeof grecaptcha === 'undefined') return;
+
+            form.addEventListener('submit', async function (e) {
+                const tokenInput = document.getElementById('recaptcha-token');
+                if (!tokenInput) return;
+                if (tokenInput.value) return;
+
+                e.preventDefault();
+                try {
+                    const token = await grecaptcha.execute('{{ RECAPTCHA_SITE_KEY }}', { action: 'signup' });
+                    tokenInput.value = token;
+                } catch (_) {
+                    tokenInput.value = '';
+                }
+                form.submit();
+            });
+        })();
+        {% endif %}
     </script>
 </body>
 </html>

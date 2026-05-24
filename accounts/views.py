@@ -1,16 +1,50 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.views import LoginView
+from django.contrib.auth.forms import AuthenticationForm
+from django import forms
 from django.contrib import messages
 from .models import User
+from .recaptcha import verify_recaptcha
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
         model = User
         fields = ('username',)
 
+
+class RecaptchaAuthenticationForm(AuthenticationForm):
+    def clean(self):
+        token = self.data.get("g-recaptcha-response")
+        result = verify_recaptcha(
+            token=token,
+            remoteip=self.request.META.get("REMOTE_ADDR"),
+            expected_action="login",
+        )
+        if not result.ok:
+            raise forms.ValidationError("reCAPTCHA verification failed. Please try again.")
+        return super().clean()
+
+
+class RecaptchaLoginView(LoginView):
+    template_name = "accounts/login.html"
+    authentication_form = RecaptchaAuthenticationForm
+
+
 def signup(request):
     if request.method == 'POST':
+        token = request.POST.get("g-recaptcha-response")
+        result = verify_recaptcha(
+            token=token,
+            remoteip=request.META.get("REMOTE_ADDR"),
+            expected_action="signup",
+        )
+        if not result.ok:
+            messages.error(request, "reCAPTCHA verification failed. Please try again.")
+            form = CustomUserCreationForm(request.POST)
+            return render(request, "accounts/signup.html", {"form": form})
+
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
