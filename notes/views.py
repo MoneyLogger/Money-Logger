@@ -87,7 +87,8 @@ def note_edit(request, pk):
 def note_delete(request, pk):
     note = get_object_or_404(Note, pk=pk, user=request.user)
     if request.method == "POST":
-        note.delete()
+        note.is_active = False
+        note.save()
         messages.success(request, "Note deleted.")
     return redirect("notes_list")
 

@@ -1045,9 +1045,12 @@
     <script>
         let deleteTransactionId = null;
 
-        function editTransaction(transactionId) {
-            // Redirect to edit page
-            window.location.href = `/ledger/${transactionId}/edit/`;
+        function editTransaction(transactionId, transactionType) {
+            if (transactionType === 'SAVING') {
+                window.location.href = `/ledger/${transactionId}/edit-saving/`;
+            } else {
+                window.location.href = `/ledger/${transactionId}/edit/`;
+            }
         }
 
         function deleteTransaction(transactionId, transactionName) {

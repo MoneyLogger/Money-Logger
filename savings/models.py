@@ -2,6 +2,12 @@ from django.db import models
 from django.conf import settings
 
 
+class ActiveManager(models.Manager):
+    """Only returns active (non-soft-deleted) records."""
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
 class SavingGoal(models.Model):
     STATUS_CHOICES = [
         ("ACTIVE", "Active"),
@@ -21,8 +27,12 @@ class SavingGoal(models.Model):
     description = models.TextField(blank=True, null=True)
     deadline = models.DateField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="ACTIVE")
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = ActiveManager()
+    all_objects = models.Manager()
 
     class Meta:
         ordering = ["-created_at"]
@@ -70,8 +80,12 @@ class SavingTransaction(models.Model):
     source = models.CharField(max_length=20, choices=SOURCE_CHOICES)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     note = models.CharField(max_length=255, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     date = models.DateField()
+
+    objects = ActiveManager()
+    all_objects = models.Manager()
 
     class Meta:
         ordering = ["-date", "-created_at"]

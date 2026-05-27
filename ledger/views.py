@@ -189,7 +189,7 @@ def switch_money(request):
                     money_type=transaction.money_type,
                     switch_direction=transaction.switch_direction,
                     amount=transaction.amount,
-                    category=transaction.category,  # Use the category from form or None
+                    category=transaction.category,
                     description=transaction.description,
                     date=transaction.date,
                 )
@@ -197,7 +197,8 @@ def switch_money(request):
                 transaction.save()
             return redirect("dashboard")
     else:
-        form = SwitchForm()
+        from datetime import date
+        form = SwitchForm(initial={"date": date.today()})
 
     return render(request, "ledger/switch_money.html", {"form": form, "whatif": whatif})
 
@@ -339,9 +340,136 @@ def edit_transaction(request, pk):
 
 
 @login_required
+def edit_saving_transaction(request, pk):
+    transaction = get_object_or_404(Transaction, pk=pk, user=request.user)
+    if transaction.transaction_type != "SAVING" or not transaction.category.startswith("Savings: "):
+        messages.error(request, "This is not a savings transaction.")
+        return redirect("dashboard")
+
+    from savings.models import SavingGoal, SavingTransaction
+    goal_title = transaction.category.replace("Savings: ", "", 1)
+    goal = SavingGoal.all_objects.filter(user=request.user, title=goal_title).first()
+    st = None
+    if goal:
+        if transaction.amount >= 0:
+            st = SavingTransaction.all_objects.filter(
+                user=request.user, saving_goal=goal,
+                transaction_type="ADD", amount=transaction.amount,
+                date=transaction.date, is_active=True,
+            ).first()
+        else:
+            st = SavingTransaction.all_objects.filter(
+                user=request.user, saving_goal=goal,
+                transaction_type="WITHDRAW", amount=abs(transaction.amount),
+                date=transaction.date, is_active=True,
+            ).first()
+
+    real_qs = Transaction.objects.filter(user=request.user)
+    upi_income = real_qs.filter(transaction_type="INCOME", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0
+    upi_expense = real_qs.filter(transaction_type="EXPENSE", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0
+    upi_from_sw = real_qs.filter(transaction_type="SWITCH", switch_direction="HAND_TO_UPI").aggregate(t=Sum("amount"))["t"] or 0
+    upi_to_sw = real_qs.filter(transaction_type="SWITCH", switch_direction="UPI_TO_HAND").aggregate(t=Sum("amount"))["t"] or 0
+    upi_saving = real_qs.filter(transaction_type="SAVING", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0
+    upi_balance = upi_income - upi_expense + upi_from_sw - upi_to_sw - upi_saving
+    hand_income = real_qs.filter(transaction_type="INCOME", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0
+    hand_expense = real_qs.filter(transaction_type="EXPENSE", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0
+    hand_from_sw = real_qs.filter(transaction_type="SWITCH", switch_direction="UPI_TO_HAND").aggregate(t=Sum("amount"))["t"] or 0
+    hand_to_sw = real_qs.filter(transaction_type="SWITCH", switch_direction="HAND_TO_UPI").aggregate(t=Sum("amount"))["t"] or 0
+    hand_saving = real_qs.filter(transaction_type="SAVING", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0
+    hand_balance = hand_income - hand_expense + hand_from_sw - hand_to_sw - hand_saving
+    ctx = {"transaction": transaction, "goal": goal, "st": st, "upi_balance": upi_balance, "hand_balance": hand_balance}
+
+    if request.method == "POST":
+        new_amount = request.POST.get("amount")
+        new_money_type = request.POST.get("money_type")
+        new_date = request.POST.get("date")
+        new_description = request.POST.get("description", "")
+
+        if not new_amount:
+            messages.error(request, "Amount is required.")
+            return render(request, "ledger/edit_saving.html", ctx)
+        try:
+            new_amount = float(new_amount)
+            if new_amount <= 0:
+                messages.error(request, "Amount must be positive.")
+                return render(request, "ledger/edit_saving.html", ctx)
+        except ValueError:
+            messages.error(request, "Invalid amount.")
+            return render(request, "ledger/edit_saving.html", ctx)
+
+        if not new_date:
+            messages.error(request, "Date is required.")
+            return render(request, "ledger/edit_saving.html", ctx)
+
+        orig_abs_amount = float(abs(transaction.amount))
+        orig_date = transaction.date
+
+        if goal and st:
+            if new_amount != orig_abs_amount:
+                from decimal import Decimal
+                diff = Decimal(str(new_amount - orig_abs_amount))
+                if st.transaction_type == "ADD":
+                    goal.current_amount += diff
+                else:
+                    goal.current_amount -= diff
+                goal.save()
+                st.amount = Decimal(str(new_amount))
+            if new_money_type != st.source:
+                st.source = new_money_type
+            if new_date != str(orig_date):
+                from datetime import datetime
+                st.date = datetime.strptime(new_date, "%Y-%m-%d").date()
+            st.save()
+
+        transaction.amount = Decimal(str(new_amount)) if transaction.amount >= 0 else -Decimal(str(new_amount))
+        transaction.money_type = new_money_type
+        from datetime import datetime as dt
+        transaction.date = dt.strptime(new_date, "%Y-%m-%d").date()
+        transaction.description = new_description
+        transaction.save()
+
+        ActivityLog.objects.create(
+            user=request.user, action="EDIT",
+            transaction_type="SAVING", amount=transaction.amount,
+            category=transaction.category, description=transaction.description,
+            date=transaction.date, money_type=transaction.money_type or "",
+            changes="",
+        )
+        return redirect("dashboard")
+
+    return render(request, "ledger/edit_saving.html", ctx)
+
+
+@login_required
 def delete_transaction(request, pk):
     transaction = get_object_or_404(Transaction, pk=pk, user=request.user)
     if request.method == "POST":
+        if transaction.transaction_type == "SAVING" and transaction.category.startswith("Savings: "):
+            from savings.models import SavingGoal, SavingTransaction
+            goal_title = transaction.category.replace("Savings: ", "", 1)
+            goal = SavingGoal.all_objects.filter(user=request.user, title=goal_title).first()
+            if goal:
+                if transaction.amount >= 0:
+                    st = SavingTransaction.all_objects.filter(
+                        user=request.user, saving_goal=goal,
+                        transaction_type="ADD", amount=transaction.amount,
+                        date=transaction.date, is_active=True,
+                    ).first()
+                    adj = -transaction.amount
+                else:
+                    st = SavingTransaction.all_objects.filter(
+                        user=request.user, saving_goal=goal,
+                        transaction_type="WITHDRAW", amount=abs(transaction.amount),
+                        date=transaction.date, is_active=True,
+                    ).first()
+                    adj = abs(transaction.amount)
+                if st:
+                    st.is_active = False
+                    st.save()
+                    if goal.is_active:
+                        goal.current_amount += adj
+                        goal.save()
+
         ActivityLog.objects.create(
             user=request.user,
             action="DELETE",
@@ -353,10 +481,72 @@ def delete_transaction(request, pk):
             money_type=transaction.money_type or "",
             changes="",
         )
-        transaction.delete()
+        transaction.is_active = False
+        transaction.save()
         messages.success(request, "Transaction deleted.")
         return redirect("dashboard")
     return redirect("dashboard")
+
+
+@login_required
+def edit_whatif_transaction(request, pk):
+    wi = get_object_or_404(WhatIfTransaction, pk=pk, user=request.user)
+    from .forms import CATEGORY_CHOICES
+
+    real_qs = Transaction.objects.filter(user=request.user)
+    whatif = is_whatif_mode(request)
+    wi_qs = WhatIfTransaction.objects.filter(user=request.user) if whatif else WhatIfTransaction.objects.none()
+
+    upi_income = (real_qs.filter(transaction_type="INCOME", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0) + (wi_qs.filter(transaction_type="INCOME", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0)
+    upi_expense = (real_qs.filter(transaction_type="EXPENSE", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0) + (wi_qs.filter(transaction_type="EXPENSE", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0)
+    upi_from_switch = real_qs.filter(transaction_type="SWITCH", switch_direction="HAND_TO_UPI").aggregate(t=Sum("amount"))["t"] or 0
+    upi_to_switch = real_qs.filter(transaction_type="SWITCH", switch_direction="UPI_TO_HAND").aggregate(t=Sum("amount"))["t"] or 0
+    upi_balance = upi_income - upi_expense + upi_from_switch - upi_to_switch
+
+    hand_income = (real_qs.filter(transaction_type="INCOME", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0) + (wi_qs.filter(transaction_type="INCOME", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0)
+    hand_expense = (real_qs.filter(transaction_type="EXPENSE", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0) + (wi_qs.filter(transaction_type="EXPENSE", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0)
+    hand_from_switch = real_qs.filter(transaction_type="SWITCH", switch_direction="UPI_TO_HAND").aggregate(t=Sum("amount"))["t"] or 0
+    hand_to_switch = real_qs.filter(transaction_type="SWITCH", switch_direction="HAND_TO_UPI").aggregate(t=Sum("amount"))["t"] or 0
+    hand_balance = hand_income - hand_expense + hand_from_switch - hand_to_switch
+
+    ctx = {"wi": wi, "CATEGORY_CHOICES": CATEGORY_CHOICES, "upi_balance": upi_balance, "hand_balance": hand_balance}
+
+    if request.method == "POST":
+        transaction_type = request.POST.get("transaction_type")
+        amount = request.POST.get("amount")
+        money_type = request.POST.get("money_type")
+        category = request.POST.get("category")
+        description = request.POST.get("description", "")
+        date_str = request.POST.get("date")
+
+        if not all([transaction_type, amount, date_str]):
+            messages.error(request, "Required fields missing.")
+            return render(request, "ledger/edit_whatif.html", ctx)
+
+        try:
+            from decimal import Decimal
+            amount = Decimal(str(float(amount)))
+            if amount <= 0:
+                messages.error(request, "Amount must be positive.")
+                return render(request, "ledger/edit_whatif.html", ctx)
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid amount.")
+            return render(request, "ledger/edit_whatif.html", ctx)
+
+        from datetime import datetime
+        wi.transaction_type = transaction_type
+        wi.amount = amount
+        wi.money_type = money_type
+        wi.category = category
+        wi.description = description
+        wi.date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        if transaction_type == "SWITCH":
+            wi.switch_direction = request.POST.get("switch_direction", "")
+        wi.save()
+        messages.success(request, "Simulated transaction updated.")
+        return redirect("dashboard")
+
+    return render(request, "ledger/edit_whatif.html", ctx)
 
 
 @login_required

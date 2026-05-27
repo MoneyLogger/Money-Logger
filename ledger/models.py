@@ -1,8 +1,12 @@
-from django.db import models
-
-# Create your models here.
 from django.conf import settings
 from django.db import models
+
+
+class ActiveManager(models.Manager):
+    """Only returns active (non-soft-deleted) records."""
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
 
 class Transaction(models.Model):
     TRANSACTION_TYPE = (
@@ -36,6 +40,10 @@ class Transaction(models.Model):
     description = models.CharField(max_length=200, blank=True)
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    objects = ActiveManager()
+    all_objects = models.Manager()
 
     def __str__(self):
         return f"{self.user.username} - ₹{self.amount}"
@@ -111,12 +119,22 @@ class Budget(models.Model):
     month = models.IntegerField(default=1)  # 1-12 for monthly budgets
     year = models.IntegerField()
     alert_threshold = models.IntegerField(default=80)  # Alert when 80% spent
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    objects = ActiveManager()
+    all_objects = models.Manager()
+
     class Meta:
         ordering = ["-year", "-month", "category"]
-        unique_together = ["user", "category", "month", "year", "period"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "category", "month", "year", "period"],
+                condition=models.Q(is_active=True),
+                name="unique_active_budget"
+            )
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.category}: ₹{self.amount} ({self.period})"

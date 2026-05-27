@@ -1,12 +1,11 @@
 {% load currency_filters %}
-{% now "Y-m-d" as today_str %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/media/logo/logo.png">
-    <title>Add Transaction - Money Logger</title>
+    <title>Edit Simulated Transaction - Money Logger</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
@@ -21,7 +20,6 @@
             min-height: 100vh;
         }
 
-        /* Header Navigation */
         .header {
             position: sticky;
             top: 0;
@@ -54,7 +52,7 @@
             width: 2.5rem;
             height: 2.5rem;
             border-radius: 0.75rem;
-            background: linear-gradient(to bottom right, #3b82f6, #9333ea);
+            background: linear-gradient(to bottom right, #f59e0b, #ea580c);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -64,7 +62,7 @@
         .logo-text {
             font-weight: 700;
             font-size: 1.25rem;
-            background: linear-gradient(to right, #2563eb, #9333ea);
+            background: linear-gradient(to right, #d97706, #ea580c);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -106,7 +104,7 @@
             align-items: center;
             gap: 0.5rem;
             padding: 0.5rem 1rem;
-            background: linear-gradient(to right, #2563eb, #9333ea);
+            background: linear-gradient(to right, #f59e0b, #ea580c);
             color: white;
             border-radius: 0.75rem;
             font-size: 0.875rem;
@@ -118,8 +116,7 @@
         .btn-add:hover {
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        
-        /* Settings Dropdown */
+
         .settings-dropdown { position: relative; }
         .settings-btn { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(255,255,255,0.5); border: 1px solid rgba(229,231,235,0.5); cursor: pointer; transition: all 0.2s; }
         .settings-btn:hover { background: rgba(255,255,255,0.8); border-color: #e5e7eb; }
@@ -128,7 +125,7 @@
         .settings-menu.active { display: block; }
         @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
         .settings-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #374151; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; background: transparent; width: 100%; text-align: left; }
-        .settings-menu-item:hover { background: rgba(59,130,246,0.1); color: #2563eb; }
+        .settings-menu-item:hover { background: rgba(245,158,11,0.1); color: #d97706; }
         .settings-menu-item svg { width: 1.125rem; height: 1.125rem; color: currentColor; }
         .settings-menu-divider { height: 1px; background: rgba(229,231,235,0.5); margin: 0.5rem 0; }
         .settings-menu-item.logout-item { color: #ef4444; }
@@ -140,7 +137,6 @@
             padding: 0 20px 80px;
         }
 
-        /* Mobile-first responsive container */
         @media (max-width: 640px) {
             .container {
                 max-width: 100%;
@@ -162,7 +158,6 @@
             }
         }
 
-        /* Form Card */
         .form-card {
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(10px);
@@ -173,7 +168,6 @@
             animation: fadeInUp 0.6s ease-out;
         }
 
-        /* Mobile form card adjustments */
         @media (max-width: 640px) {
             .form-card {
                 border-radius: 20px;
@@ -191,14 +185,14 @@
 
         .form-header {
             padding: 32px;
-            background: linear-gradient(to right, rgba(219,234,254,0.5), rgba(233,213,255,0.5));
+            background: linear-gradient(to right, rgba(245,158,11,0.2), rgba(234,88,12,0.15));
             border-bottom: 1px solid rgba(229, 231, 235, 0.5);
         }
 
         .form-header h1 {
             font-size: 2rem;
             font-weight: 700;
-            background: linear-gradient(to right, #2563eb, #9333ea);
+            background: linear-gradient(to right, #d97706, #ea580c);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -210,29 +204,27 @@
             font-size: 1rem;
         }
 
-        /* Mobile form header */
         @media (max-width: 640px) {
             .form-header {
                 padding: 20px;
                 text-align: center;
             }
-            
+
             .form-header h1 {
                 font-size: 1.75rem;
                 line-height: 1.2;
             }
-            
+
             .form-header p {
                 font-size: 0.875rem;
             }
         }
 
-        /* Tablet form header */
         @media (min-width: 641px) and (max-width: 1024px) {
             .form-header {
                 padding: 28px;
             }
-            
+
             .form-header h1 {
                 font-size: 1.875rem;
             }
@@ -242,21 +234,18 @@
             padding: 32px;
         }
 
-        /* Mobile form content */
         @media (max-width: 640px) {
             .form-content {
                 padding: 20px;
             }
         }
 
-        /* Tablet form content */
         @media (min-width: 641px) and (max-width: 1024px) {
             .form-content {
                 padding: 28px;
             }
         }
 
-        /* Form Groups */
         .form-group {
             margin-bottom: 20px;
         }
@@ -269,7 +258,6 @@
             font-size: 0.8125rem;
         }
 
-        /* Transaction Type Toggle - Inline Tab Style */
         .type-toggle {
             display: flex;
             align-items: center;
@@ -311,7 +299,6 @@
             min-height: 48px;
         }
 
-        /* Separator between options */
         .type-option:not(:last-child)::after {
             content: '';
             position: absolute;
@@ -366,7 +353,6 @@
             transition: color 0.3s ease;
         }
 
-        /* Mobile adjustments */
         @media (max-width: 640px) {
             .type-toggle {
                 padding: 6px;
@@ -379,12 +365,12 @@
                 font-size: 0.875rem;
                 min-height: 44px;
             }
-            
+
             .type-icon {
                 width: 18px;
                 height: 18px;
             }
-            
+
             .type-text {
                 font-size: 0.875rem;
             }
@@ -394,7 +380,6 @@
             }
         }
 
-        /* Tablet adjustments */
         @media (min-width: 641px) and (max-width: 1024px) {
             .type-toggle {
                 padding: 7px;
@@ -404,14 +389,13 @@
                 padding: 13px 18px;
                 min-height: 46px;
             }
-            
+
             .type-icon {
                 width: 19px;
                 height: 19px;
             }
         }
 
-        /* Input Fields */
         .input-wrapper {
             position: relative;
         }
@@ -441,8 +425,8 @@
 
         .form-input:focus {
             outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
         }
 
         .form-input.amount {
@@ -453,16 +437,15 @@
             padding-left: 44px;
         }
 
-        /* Mobile input adjustments */
         @media (max-width: 640px) {
             .form-input {
                 padding: 12px;
                 padding-left: 44px;
-                font-size: 16px; /* Prevents zoom on iOS */
+                font-size: 16px;
                 border-radius: 10px;
                 min-height: 48px;
             }
-            
+
             .form-input.amount {
                 font-size: 1.25rem;
                 padding: 14px 12px;
@@ -470,7 +453,7 @@
                 min-height: 52px;
                 font-weight: 700;
             }
-            
+
             .input-icon {
                 left: 16px;
                 width: 18px;
@@ -478,21 +461,20 @@
             }
         }
 
-        /* Tablet input adjustments */
         @media (min-width: 641px) and (max-width: 1024px) {
             .form-input {
                 padding: 11px 14px;
                 padding-left: 44px;
                 min-height: 46px;
             }
-            
+
             .form-input.amount {
                 font-size: 1.3125rem;
                 padding: 13px 14px;
                 padding-left: 44px;
                 min-height: 50px;
             }
-            
+
             .input-icon {
                 width: 19px;
                 height: 19px;
@@ -515,8 +497,8 @@
 
         .form-textarea:focus {
             outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
         }
 
         .form-select {
@@ -539,39 +521,37 @@
 
         .form-select:focus {
             outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245,158,11,0.1);
         }
 
-        /* Mobile textarea and select adjustments */
         @media (max-width: 640px) {
             .form-textarea {
                 padding: 12px;
                 padding-left: 44px;
-                font-size: 16px; /* Prevents zoom on iOS */
+                font-size: 16px;
                 border-radius: 10px;
                 min-height: 70px;
                 line-height: 1.5;
             }
-            
+
             .form-select {
                 padding: 12px;
                 padding-left: 44px;
-                font-size: 16px; /* Prevents zoom on iOS */
+                font-size: 16px;
                 border-radius: 10px;
                 min-height: 48px;
                 background-position: right 12px center;
             }
         }
 
-        /* Tablet textarea and select adjustments */
         @media (min-width: 641px) and (max-width: 1024px) {
             .form-textarea {
                 padding: 11px 14px;
                 padding-left: 44px;
                 min-height: 72px;
             }
-            
+
             .form-select {
                 padding: 11px 14px;
                 padding-left: 44px;
@@ -579,11 +559,10 @@
             }
         }
 
-        /* Submit Button */
         .submit-btn {
             width: 100%;
             padding: 16px;
-            background: linear-gradient(to right, #2563eb, #9333ea);
+            background: linear-gradient(to right, #f59e0b, #ea580c);
             color: white;
             border: none;
             border-radius: 12px;
@@ -616,7 +595,6 @@
             background: linear-gradient(to right, #dc2626, #ec4899);
         }
 
-        /* Mobile submit button */
         @media (max-width: 640px) {
             .submit-btn {
                 padding: 18px 16px;
@@ -626,14 +604,13 @@
                 border-radius: 16px;
                 box-shadow: 0 12px 20px -3px rgba(0, 0, 0, 0.15);
             }
-            
+
             .submit-btn:hover {
                 transform: translateY(-1px);
                 box-shadow: 0 16px 25px -5px rgba(0, 0, 0, 0.15);
             }
         }
 
-        /* Tablet submit button */
         @media (min-width: 641px) and (max-width: 1024px) {
             .submit-btn {
                 padding: 17px 16px;
@@ -643,7 +620,31 @@
             }
         }
 
-        /* Switch Transfer Section */
+        .whatif-header-badge {
+            background: linear-gradient(to right, rgba(245,158,11,0.15), rgba(234,88,12,0.1));
+            border: 1px solid rgba(245,158,11,0.2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .whatif-header-badge svg {
+            width: 20px;
+            height: 20px;
+            color: #d97706;
+            flex-shrink: 0;
+        }
+
+        .whatif-header-badge span {
+            font-size: 0.875rem;
+            color: #92400e;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
         .switch-container {
             padding: 16px;
             background: linear-gradient(to bottom right, rgba(219,234,254,0.5), rgba(233,213,255,0.5));
@@ -690,26 +691,18 @@
             padding-left: 16px !important;
         }
 
-        .switch-balance {
-            text-align: center;
-            font-size: 0.8125rem;
-            color: #6b7280;
-            font-weight: 500;
-        }
-
-        /* Mobile switch transfer */
         @media (max-width: 640px) {
             .switch-container {
                 padding: 14px 12px;
                 border-radius: 10px;
             }
-            
+
             .switch-row {
                 flex-direction: column;
                 gap: 14px;
                 align-items: stretch;
             }
-            
+
             .switch-arrow {
                 width: 24px;
                 height: 24px;
@@ -717,36 +710,29 @@
                 transform: rotate(90deg);
                 margin: 6px 0;
             }
-            
+
             .switch-from,
             .switch-to {
                 width: 100%;
             }
-            
-            .switch-balance {
-                font-size: 0.75rem;
-                margin-top: 6px;
-            }
         }
 
-        /* Tablet switch transfer */
         @media (min-width: 641px) and (max-width: 1024px) {
             .switch-container {
                 padding: 15px 16px;
                 border-radius: 11px;
             }
-            
+
             .switch-row {
                 gap: 14px;
             }
-            
+
             .switch-arrow {
                 width: 26px;
                 height: 26px;
             }
         }
 
-        /* Payment Method Cards */
         .payment-cards {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -785,9 +771,9 @@
         }
 
         .payment-card input[type="radio"]:checked + .payment-card-content {
-            border-color: #2563eb;
-            background: linear-gradient(to bottom right, rgba(219,234,254,0.3), rgba(233,213,255,0.2));
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+            border-color: #f59e0b;
+            background: linear-gradient(to bottom right, rgba(245,158,11,0.2), rgba(234,88,12,0.1));
+            box-shadow: 0 4px 12px rgba(245,158,11,0.15);
         }
 
         .payment-card-header {
@@ -819,7 +805,7 @@
         }
 
         .payment-card.upi input[type="radio"]:checked + .payment-card-content .payment-card-icon {
-            background: linear-gradient(to bottom right, #2563eb, #9333ea);
+            background: linear-gradient(to bottom right, #6366f1, #9333ea);
         }
 
         .payment-card.hand input[type="radio"]:checked + .payment-card-content .payment-card-icon {
@@ -849,8 +835,8 @@
         }
 
         .payment-card input[type="radio"]:checked + .payment-card-content .payment-card-check {
-            border-color: #2563eb;
-            background: #2563eb;
+            border-color: #f59e0b;
+            background: #f59e0b;
         }
 
         .payment-card-check svg {
@@ -879,7 +865,7 @@
         }
 
         .payment-card input[type="radio"]:checked + .payment-card-content .payment-card-title {
-            color: #2563eb;
+            color: #d97706;
         }
 
         .payment-card-balance {
@@ -895,7 +881,6 @@
             font-weight: 500;
         }
 
-        /* Mobile payment cards */
         @media (max-width: 640px) {
             .payment-cards {
                 grid-template-columns: repeat(2, 1fr);
@@ -942,7 +927,6 @@
             }
         }
 
-        /* Tablet payment cards */
         @media (min-width: 641px) and (max-width: 1024px) {
             .payment-cards {
                 gap: 14px;
@@ -968,7 +952,6 @@
             }
         }
 
-        /* Animations */
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -980,21 +963,18 @@
             }
         }
 
-
-
-        /* Floating Action Button */
         .fab {
             position: fixed;
             bottom: 80px;
             right: 24px;
             width: 56px;
             height: 56px;
-            background: linear-gradient(to right, #2563eb, #9333ea);
+            background: linear-gradient(to right, #f59e0b, #ea580c);
             border-radius: 50%;
             display: none;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 8px 25px rgba(245,158,11,0.3);
             z-index: 40;
             transition: all 0.3s ease;
             text-decoration: none;
@@ -1003,7 +983,7 @@
 
         .fab:hover {
             transform: scale(1.1);
-            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 12px 30px rgba(245,158,11,0.4);
         }
 
         .fab:active {
@@ -1015,21 +995,20 @@
             height: 28px;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
             }
             .settings-dropdown { display: none; }
             .btn-add {
-                display: none; /* Hide desktop add button on mobile */
+                display: none;
             }
             .header-inner {
                 padding: 0 1rem;
                 height: 4rem;
             }
             .container {
-                padding: 0 1rem 100px; /* Extra bottom padding for mobile nav */
+                padding: 0 1rem 100px;
             }
             .form-header {
                 padding: 20px;
@@ -1047,145 +1026,160 @@
             .form-input.amount {
                 font-size: 1.5rem;
             }
-            
-            /* Show mobile navigation */
             .mobile-nav {
                 display: block;
             }
-            
-            /* Mobile-specific enhancements */
             .logo-icon {
                 width: 2.5rem;
                 height: 2.5rem;
             }
-            
             .logo-text {
                 font-size: 1.25rem;
             }
-            
             .logo-subtitle {
                 font-size: 0.75rem;
             }
         }
 
-        /* Hide FAB on add transaction page (current page) */
         .fab.hide-on-add {
             display: none !important;
         }
 
-        /* Enhanced mobile interactions */
         @media (max-width: 640px) {
-            /* Touch-friendly tap targets */
             .type-option label {
                 -webkit-tap-highlight-color: transparent;
                 user-select: none;
             }
-            
+
             .type-option label:active {
                 transform: scale(0.98);
             }
-            
+
             .submit-btn {
                 -webkit-tap-highlight-color: transparent;
                 user-select: none;
             }
-            
+
             .submit-btn:active {
                 transform: scale(0.98);
             }
-            
-            /* Improved form spacing on mobile */
+
             .form-group {
                 margin-bottom: 20px;
             }
-            
+
             .form-label {
                 font-size: 0.8125rem;
                 font-weight: 600;
                 margin-bottom: 10px;
             }
-            
-            /* Better visual hierarchy on mobile */
+
             .form-header h1 {
                 line-height: 1.2;
                 margin-bottom: 6px;
             }
-            
+
             .form-header p {
                 font-size: 0.8125rem;
                 line-height: 1.4;
             }
         }
 
-        /* Tablet-specific optimizations */
         @media (min-width: 641px) and (max-width: 1024px) {
             .header-inner {
                 padding: 0 1.5rem;
             }
-            
+
             .container {
                 padding: 0 1.5rem 80px;
             }
-            
+
             .form-group {
                 margin-bottom: 22px;
             }
-            
+
             .form-label {
                 font-size: 0.875rem;
                 margin-bottom: 11px;
             }
         }
+
+        .inline-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .inline-group {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+        }
+
+        .messages-container {
+            margin-bottom: 20px;
+        }
+
+        .message-item {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .message-item.error {
+            background: #fce7f3;
+            color: #9d174d;
+        }
+
+        .message-item.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .message-item.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
     </style>
 </head>
 <body>
-    {% include "includes/nav.html" with active_page="add_transaction" action_url="add_transaction" action_text="Add Transaction" show_whatif=False %}
+    {% include "includes/nav.html" with active_page="dashboard" hide_whatif=True %}
 
     <div class="container">
         <div class="form-card">
-            <!-- Form Header -->
             <div class="form-header">
-                {% if request.session.whatif_mode %}
-                <div style="background: linear-gradient(to right, #f59e0b, #ea580c); color: white; padding: 0.75rem 1rem; border-radius: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 1.25rem;">🧪</span>
-                    <span style="font-size: 0.875rem; font-weight: 500;">What-If Mode Active — This transaction is temporary</span>
-                </div>
-                {% endif %}
-                <h1>Add Transaction</h1>
-                <p>Record your income, expense, or transfer money</p>
+                <h1>⚡ Edit Simulated</h1>
+                <p>Update your What-If transaction</p>
             </div>
 
             <div class="form-content">
-                <!-- Messages (excluding What-If mode and success messages) -->
-                {% if messages %}
-                    {% for message in messages %}
-                        {% if 'What-If' not in message.message and 'what-if' not in message.message|lower and message.tags != 'success' %}
-                        <div>
-                            {{ message }}
-                        </div>
-                        {% endif %}
-                    {% endfor %}
-                {% endif %}
+                <div class="whatif-header-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    <span>This is a simulated transaction — no real balance is affected</span>
+                </div>
 
-                {% if form.errors %}
-                    <div>
-                        {% for field, errors in form.errors.items %}
-                            {% for error in errors %}
-                                <div>{{ field|title }}: {{ error }}</div>
-                            {% endfor %}
-                        {% endfor %}
-                    </div>
+                {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                    <div class="message-item {{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
                 {% endif %}
 
                 <form method="post" id="transactionForm">
                     {% csrf_token %}
-                    
-                    <!-- Transaction Type -->
+
                     <div class="form-group">
                         <label class="form-label">Transaction Type</label>
                         <div class="type-toggle" style="grid-template-columns: repeat(3, 1fr);">
                             <div class="type-option income">
-                                <input type="radio" id="income" name="{{ form.transaction_type.name }}" value="INCOME" {% if form.transaction_type.value == 'INCOME' %}checked{% endif %}>
+                                <input type="radio" id="income" name="transaction_type" value="INCOME" {% if wi.transaction_type == 'INCOME' %}checked{% endif %}>
                                 <label for="income">
                                     <svg class="type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <circle cx="12" cy="12" r="10"></circle>
@@ -1196,7 +1190,7 @@
                                 </label>
                             </div>
                             <div class="type-option expense">
-                                <input type="radio" id="expense" name="{{ form.transaction_type.name }}" value="EXPENSE" {% if form.transaction_type.value == 'EXPENSE' or not form.transaction_type.value %}checked{% endif %}>
+                                <input type="radio" id="expense" name="transaction_type" value="EXPENSE" {% if wi.transaction_type == 'EXPENSE' %}checked{% endif %}>
                                 <label for="expense">
                                     <svg class="type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <circle cx="12" cy="12" r="10"></circle>
@@ -1207,7 +1201,7 @@
                                 </label>
                             </div>
                             <div class="type-option switch">
-                                <input type="radio" id="switch" name="{{ form.transaction_type.name }}" value="SWITCH" {% if form.transaction_type.value == 'SWITCH' %}checked{% endif %}>
+                                <input type="radio" id="switch" name="transaction_type" value="SWITCH" {% if wi.transaction_type == 'SWITCH' %}checked{% endif %}>
                                 <label for="switch">
                                     <svg class="type-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <polyline points="17 1 21 5 17 9"></polyline>
@@ -1221,9 +1215,8 @@
                         </div>
                     </div>
 
-                    <!-- Amount -->
                     <div class="form-group">
-                        <label class="form-label" for="{{ form.amount.id_for_label }}">Amount</label>
+                        <label class="form-label" for="amountField">Amount</label>
                         <div class="input-wrapper">
                             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M6 3h12"></path>
@@ -1232,26 +1225,23 @@
                                 <path d="M6 13h3"></path>
                                 <path d="M9 13c6.667 0 6.667-10 0-10"></path>
                             </svg>
-                            <input type="number" id="{{ form.amount.id_for_label }}" name="{{ form.amount.name }}" 
-                                   class="form-input amount" placeholder="0.00" step="0.01" required 
-                                   value="{{ form.amount.value|default:'' }}">
+                            <input type="number" id="amountField" name="amount" class="form-input amount" placeholder="0.00" step="0.01" min="0.01" required value="{{ wi.amount|floatformat:2 }}">
                         </div>
                     </div>
 
-                    <!-- Switch Transfer UI (shown only when Switch is selected) -->
                     <div class="form-group" id="switchTransferSection" style="display: none;">
-                        <input type="hidden" id="switchDirectionInput" name="{{ form.switch_direction.name }}" value="">
+                        <input type="hidden" id="switchDirectionInput" name="switch_direction" value="{{ wi.switch_direction }}">
                         <div class="switch-container">
                             <div class="switch-content">
                                 <div class="switch-row">
                                     <div class="switch-from">
                                         <label class="form-label" style="margin-bottom: 8px;">From</label>
                                         <select id="fromMethod" class="form-select switch-select">
-                                            <option value="UPI CASH">UPI Cash</option>
-                                            <option value="HAND CASH">Hand Cash</option>
+                                            <option value="UPI CASH" {% if wi.switch_direction == 'HAND_TO_UPI' %}selected{% endif %}>UPI Cash</option>
+                                            <option value="HAND CASH" {% if wi.switch_direction == 'UPI_TO_HAND' %}selected{% endif %}>Hand Cash</option>
                                         </select>
                                     </div>
-                                    
+
                                     <div class="switch-arrow">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                             <polyline points="17 1 21 5 17 9"></polyline>
@@ -1260,48 +1250,54 @@
                                             <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
                                         </svg>
                                     </div>
-                                    
+
                                     <div class="switch-to">
                                         <label class="form-label" style="margin-bottom: 8px;">To</label>
                                         <select id="toMethod" class="form-select switch-select">
-                                            <option value="HAND CASH">Hand Cash</option>
-                                            <option value="UPI CASH">UPI Cash</option>
+                                            <option value="HAND CASH" {% if wi.switch_direction == 'HAND_TO_UPI' %}selected{% endif %}>Hand Cash</option>
+                                            <option value="UPI CASH" {% if wi.switch_direction == 'UPI_TO_HAND' %}selected{% endif %}>UPI Cash</option>
                                         </select>
                                     </div>
-                                </div>
-                                
-                                <div class="switch-balance">
-                                    <span id="availableBalance">Available balance will be shown here</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Regular Income/Expense Fields (hidden when Switch is selected) -->
                     <div id="regularFields">
-                        <!-- Category -->
-                        <div class="form-group">
-                            <label class="form-label" for="{{ form.category.id_for_label }}">Category</label>
-                            <div class="input-wrapper">
-                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
-                                </svg>
-                                <select id="{{ form.category.id_for_label }}" name="{{ form.category.name }}" class="form-select" required>
-                                    {% for value, label in form.category.field.choices %}
-                                        <option value="{{ value }}" {% if form.category.value == value %}selected{% endif %}>{{ label }}</option>
-                                    {% endfor %}
-                                </select>
+                        <div class="inline-group">
+                            <div class="form-group">
+                                <label class="form-label" for="categoryField">Category</label>
+                                <div class="input-wrapper">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                                        <line x1="7" y1="7" x2="7.01" y2="7"></line>
+                                    </svg>
+                                    <select id="categoryField" name="category" class="form-select" required>
+                                        {% for c in CATEGORY_CHOICES %}
+                                        <option value="{{ c.0 }}" {% if wi.category == c.0 %}selected{% endif %}>{{ c.1 }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="dateField">Date</label>
+                                <div class="input-wrapper">
+                                    <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                    <input type="date" id="dateField" name="date" class="form-input" required value="{{ wi.date|date:'Y-m-d' }}">
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Payment Method -->
                         <div class="form-group">
                             <label class="form-label">Payment Method</label>
                             <div class="payment-cards">
-                                <!-- UPI Cash Card -->
                                 <div class="payment-card upi">
-                                    <input type="radio" id="upi_cash" name="{{ form.money_type.name }}" value="UPI CASH" {% if form.money_type.value == 'UPI CASH' or not form.money_type.value %}checked{% endif %}>
+                                    <input type="radio" id="upi_cash" name="money_type" value="UPI CASH" {% if wi.money_type == 'UPI CASH' or not wi.money_type %}checked{% endif %}>
                                     <label for="upi_cash" class="payment-card-content">
                                         <div class="payment-card-header">
                                             <div class="payment-card-icon">
@@ -1324,9 +1320,8 @@
                                     </label>
                                 </div>
 
-                                <!-- Hand Cash Card -->
                                 <div class="payment-card hand">
-                                    <input type="radio" id="hand_cash" name="{{ form.money_type.name }}" value="HAND CASH" {% if form.money_type.value == 'HAND CASH' %}checked{% endif %}>
+                                    <input type="radio" id="hand_cash" name="money_type" value="HAND CASH" {% if wi.money_type == 'HAND CASH' %}checked{% endif %}>
                                     <label for="hand_cash" class="payment-card-content">
                                         <div class="payment-card-header">
                                             <div class="payment-card-icon">
@@ -1351,9 +1346,8 @@
                         </div>
                     </div>
 
-                    <!-- Description -->
                     <div class="form-group">
-                        <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+                        <label class="form-label" for="descriptionField">Description</label>
                         <div class="input-wrapper">
                             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -1362,42 +1356,17 @@
                                 <line x1="16" y1="17" x2="8" y2="17"></line>
                                 <polyline points="10,9 9,9 8,9"></polyline>
                             </svg>
-                            <textarea id="{{ form.description.id_for_label }}" name="{{ form.description.name }}" 
-                                      class="form-textarea" placeholder="Enter a description (optional)...">{{ form.description.value|default:'' }}</textarea>
+                            <textarea id="descriptionField" name="description" class="form-textarea" placeholder="Enter a description (optional)...">{{ wi.description }}</textarea>
                         </div>
                     </div>
 
-                    <!-- Date -->
-                    <div class="form-group">
-                        <label class="form-label" for="{{ form.date.id_for_label }}">Date</label>
-                        <div class="input-wrapper">
-                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                <line x1="16" y1="2" x2="16" y2="6"></line>
-                                <line x1="8" y1="2" x2="8" y2="6"></line>
-                                <line x1="3" y1="10" x2="21" y2="10"></line>
-                            </svg>
-                            <input type="date" id="{{ form.date.id_for_label }}" name="{{ form.date.name }}" 
-                                   class="form-input" required value="{{ form.date.value|date:'Y-m-d'|default:today_str }}">
-                        </div>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <button type="submit" class="submit-btn" id="submitBtn">
-                        💾 Save Transaction
-                    </button>
+                    <button type="submit" class="submit-btn" id="submitBtn">💾 Save Changes</button>
                 </form>
             </div>
         </div>
     </div>
 
     <script>
-        // Export transactions (placeholder)
-        function exportTransactions() {
-            window.location.href = '{% url "dashboard" %}';
-        }
-        
-        // Dynamic UI based on transaction type
         function updateFormUI() {
             const submitBtn = document.getElementById('submitBtn');
             const incomeRadio = document.getElementById('income');
@@ -1405,208 +1374,86 @@
             const switchRadio = document.getElementById('switch');
             const switchSection = document.getElementById('switchTransferSection');
             const regularFields = document.getElementById('regularFields');
-            
+
             if (switchRadio.checked) {
-                // Show switch UI, hide regular fields
                 switchSection.style.display = 'block';
                 regularFields.style.display = 'none';
                 submitBtn.className = 'submit-btn';
-                submitBtn.style.background = 'linear-gradient(to right, #2563eb, #9333ea)';
-                submitBtn.innerHTML = '🔄 Transfer Money';
+                submitBtn.innerHTML = '🔄 Update Transfer';
             } else {
-                // Show regular fields, hide switch UI
                 switchSection.style.display = 'none';
                 regularFields.style.display = 'block';
-                
                 if (incomeRadio.checked) {
                     submitBtn.className = 'submit-btn income';
-                    submitBtn.innerHTML = '💰 Add Income';
+                    submitBtn.innerHTML = '💰 Save Income';
                 } else if (expenseRadio.checked) {
                     submitBtn.className = 'submit-btn expense';
-                    submitBtn.innerHTML = '💸 Add Expense';
+                    submitBtn.innerHTML = '💸 Save Expense';
                 }
             }
         }
 
-        // Update available balance display for switch transfers
-        function updateAvailableBalance() {
-            const fromMethod = document.getElementById('fromMethod').value;
-            const balanceSpan = document.getElementById('availableBalance');
-            
-            // You would need to pass balance data from Django context
-            // For now, showing placeholder text
-            balanceSpan.textContent = `Available ${fromMethod.toLowerCase()}: ₹0`;
-        }
-
-        // Add event listeners
         document.addEventListener('DOMContentLoaded', function() {
             const incomeRadio = document.getElementById('income');
             const expenseRadio = document.getElementById('expense');
             const switchRadio = document.getElementById('switch');
             const fromMethod = document.getElementById('fromMethod');
             const toMethod = document.getElementById('toMethod');
-            
-            // Transaction type change handlers
+            const switchDirectionInput = document.getElementById('switchDirectionInput');
+
             incomeRadio.addEventListener('change', updateFormUI);
             expenseRadio.addEventListener('change', updateFormUI);
             switchRadio.addEventListener('change', updateFormUI);
-            
-            // Switch method change handlers
+
+            function updateSwitchDirection() {
+                if (fromMethod.value === 'UPI CASH' && toMethod.value === 'HAND CASH') {
+                    switchDirectionInput.value = 'UPI_TO_HAND';
+                } else if (fromMethod.value === 'HAND CASH' && toMethod.value === 'UPI CASH') {
+                    switchDirectionInput.value = 'HAND_TO_UPI';
+                }
+            }
+
             fromMethod.addEventListener('change', function() {
-                updateAvailableBalance();
-                // Ensure to/from are different
                 if (fromMethod.value === toMethod.value) {
                     toMethod.value = fromMethod.value === 'UPI CASH' ? 'HAND CASH' : 'UPI CASH';
                 }
+                updateSwitchDirection();
             });
-            
+
             toMethod.addEventListener('change', function() {
-                // Ensure to/from are different
                 if (fromMethod.value === toMethod.value) {
                     fromMethod.value = toMethod.value === 'UPI CASH' ? 'HAND CASH' : 'UPI CASH';
-                    updateAvailableBalance();
                 }
+                updateSwitchDirection();
             });
-            
-            // Set initial UI state
+
             updateFormUI();
-            updateAvailableBalance();
+            updateSwitchDirection();
         });
 
-        // Enhanced amount input with calculation support
-        (function () {
-            const amountInput = document.getElementById('{{ form.amount.id_for_label }}');
-            if (!amountInput) return;
-
-            // Create hint element
-            const hint = document.createElement('div');
-            hint.style.cssText = 'font-size:0.75rem;color:#6b7280;margin-top:8px;';
-            hint.textContent = '💡 Tip: Type expressions like 100+200 or 2100-20*100/2 and press Enter to calculate';
-            amountInput.parentNode.appendChild(hint);
-
-            // Create preview element
-            const preview = document.createElement('div');
-            preview.style.cssText = 'font-size:0.875rem;color:#16a34a;font-weight:600;margin-top:6px;display:none;';
-            amountInput.parentNode.insertBefore(preview, hint);
-
-            function isExpression(val) {
-                return /[+\-*\/]/.test(val) && /[0-9]/.test(val);
-            }
-
-            function safeEval(expr) {
-                // Only allow digits, operators, decimals, spaces, parentheses
-                if (!/^[\d\s\+\-\*\/\.\(\)]+$/.test(expr)) return null;
-                try {
-                    // Use Function to evaluate with proper BODMAS
-                    const result = Function('"use strict"; return (' + expr + ')')();
-                    if (typeof result === 'number' && isFinite(result) && result >= 0) {
-                        return parseFloat(result.toFixed(2));
-                    }
-                } catch (e) {}
-                return null;
-            }
-
-            // Switch to text when user starts typing an expression
-            amountInput.addEventListener('keydown', function (e) {
-                const operators = ['+', '-', '*', '/'];
-                if (operators.includes(e.key)) {
-                    amountInput.type = 'text';
-                }
-
-                if (e.key === 'Enter') {
-                    const val = this.value.trim();
-                    if (isExpression(val)) {
-                        e.preventDefault();
-                        const result = safeEval(val);
-                        if (result !== null) {
-                            amountInput.type = 'number';
-                            this.value = result;
-                            preview.style.display = 'none';
-                            hint.textContent = '✅ Calculated!';
-                            hint.style.color = '#16a34a';
-                            setTimeout(() => {
-                                hint.textContent = '💡 Tip: Type expressions like 100+200 or 2100-20*100/2 and press Enter to calculate';
-                                hint.style.color = '#6b7280';
-                            }, 2000);
-                        } else {
-                            preview.textContent = '⚠️ Invalid expression';
-                            preview.style.color = '#dc2626';
-                            preview.style.display = 'block';
-                            setTimeout(() => { 
-                                preview.style.color = '#16a34a'; 
-                                preview.style.display = 'none'; 
-                            }, 2000);
-                        }
-                    } else {
-                        amountInput.type = 'number';
-                    }
-                }
-
-                if (e.key === 'Escape') {
-                    amountInput.type = 'number';
-                    preview.style.display = 'none';
-                }
-            });
-
-            // Live preview while typing
-            amountInput.addEventListener('input', function () {
-                const val = this.value.trim();
-                if (isExpression(val)) {
-                    const result = safeEval(val);
-                    if (result !== null) {
-                        preview.textContent = '= ₹' + result.toLocaleString('en-IN');
-                        preview.style.color = '#16a34a';
-                        preview.style.display = 'block';
-                    } else {
-                        preview.style.display = 'none';
-                    }
-                } else {
-                    preview.style.display = 'none';
-                }
-            });
-        })();
-
-        // Form validation and submission
         document.getElementById('transactionForm').addEventListener('submit', function(e) {
-            const amount = document.getElementById('{{ form.amount.id_for_label }}').value;
+            const amount = document.getElementById('amountField').value;
             const switchRadio = document.getElementById('switch');
-            
+
             if (!amount || parseFloat(amount) <= 0) {
                 e.preventDefault();
                 alert('Please enter a valid amount');
                 return;
             }
-            
-            // Additional validation for switch transfers
+
             if (switchRadio.checked) {
                 const fromMethod = document.getElementById('fromMethod').value;
                 const toMethod = document.getElementById('toMethod').value;
-                
+
                 if (fromMethod === toMethod) {
                     e.preventDefault();
                     alert('Cannot transfer to the same payment method');
                     return;
                 }
-                
-                // Set the money_type field to the fromMethod for switch transactions
-                const moneyTypeSelect = document.getElementById('{{ form.money_type.id_for_label }}');
-                if (moneyTypeSelect) {
-                    moneyTypeSelect.value = fromMethod;
-                }
-
-                // Set switch_direction based on fromMethod -> toMethod
-                const switchDirectionInput = document.getElementById('switchDirectionInput');
-                if (switchDirectionInput) {
-                    if (fromMethod === 'UPI CASH' && toMethod === 'HAND CASH') {
-                        switchDirectionInput.value = 'UPI_TO_HAND';
-                    } else if (fromMethod === 'HAND CASH' && toMethod === 'UPI CASH') {
-                        switchDirectionInput.value = 'HAND_TO_UPI';
-                    }
-                }
             }
         });
     </script>
 
-    {% include "includes/mobile_nav.html" with active_page="add_transaction" %}
+    {% include "includes/mobile_nav.html" with active_page="dashboard" %}
 </body>
 </html>

@@ -2,6 +2,12 @@ from django.conf import settings
 from django.db import models
 
 
+class ActiveManager(models.Manager):
+    """Only returns active (non-soft-deleted) records."""
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
 class Note(models.Model):
     COLOR_CHOICES = (
         ("blue", "Blue"),
@@ -35,9 +41,13 @@ class Note(models.Model):
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default="ideas")
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default="med")
     is_pinned = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    objects = ActiveManager()
+    all_objects = models.Manager()
 
     class Meta:
         ordering = ["-updated_at"]

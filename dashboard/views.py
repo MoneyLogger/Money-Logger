@@ -674,9 +674,65 @@ def budget_delete(request, budget_id):
     
     budget = get_object_or_404(Budget, id=budget_id, user=request.user)
     category_name = budget.category
-    budget.delete()
+    budget.is_active = False
+    budget.save()
     messages.success(request, f'Budget for {category_name} deleted successfully!')
     return redirect('budget_list')
+
+
+@login_required
+def trash_view(request):
+    """Superuser-only trash view to see and restore soft-deleted items."""
+    if not request.user.is_superuser:
+        messages.error(request, "Access denied. Superuser only.")
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        model_type = request.POST.get("model_type")
+        item_id = request.POST.get("item_id")
+        if model_type and item_id:
+            from ledger.models import Transaction, Budget
+            from notes.models import Note
+            from savings.models import SavingGoal, SavingTransaction
+            model_map = {
+                "transaction": (Transaction, []),
+                "budget": (Budget, []),
+                "note": (Note, []),
+                "saving_goal": (SavingGoal, []),
+                "saving_transaction": (SavingTransaction, []),
+            }
+            entry = model_map.get(model_type)
+            if entry:
+                model_cls, related = entry
+                try:
+                    obj = model_cls.all_objects.get(pk=item_id)
+                    obj.is_active = True
+                    obj.save()
+                    if model_type == "saving_goal":
+                        SavingTransaction.all_objects.filter(saving_goal=obj).update(is_active=True)
+                    messages.success(request, f"{model_cls.__name__} restored successfully.")
+                except model_cls.DoesNotExist:
+                    messages.error(request, "Item not found.")
+        return redirect("trash_view")
+
+    from ledger.models import Transaction, Budget
+    from notes.models import Note
+    from savings.models import SavingGoal, SavingTransaction
+
+    deleted_transactions = Transaction.all_objects.filter(is_active=False)
+    deleted_budgets = Budget.all_objects.filter(is_active=False)
+    deleted_notes = Note.all_objects.filter(is_active=False)
+    deleted_goals = SavingGoal.all_objects.filter(is_active=False)
+    deleted_saving_txns = SavingTransaction.all_objects.filter(is_active=False)
+
+    context = {
+        "deleted_transactions": deleted_transactions,
+        "deleted_budgets": deleted_budgets,
+        "deleted_notes": deleted_notes,
+        "deleted_goals": deleted_goals,
+        "deleted_saving_txns": deleted_saving_txns,
+    }
+    return render(request, "dashboard/trash.html", context)
 
 
 @login_required
@@ -724,7 +780,8 @@ def budget_delete_ajax(request):
             
             budget = get_object_or_404(Budget, id=budget_id, user=request.user)
             category_name = budget.category
-            budget.delete()
+            budget.is_active = False
+            budget.save()
             
             return JsonResponse({
                 'success': True,

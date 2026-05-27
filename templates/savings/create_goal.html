@@ -1,4 +1,5 @@
 {% load currency_filters %}
+{% now "Y-m-d" as today_str %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -94,7 +95,7 @@
 
                 <div class="form-group">
                     <label for="id_deadline">Target Date</label>
-                    <input type="date" name="deadline" id="id_deadline" class="form-input input-lg" value="{{ form.deadline.value|date:'Y-m-d'|default:'' }}" onchange="updatePreview()">
+                    <input type="date" name="deadline" id="id_deadline" class="form-input input-lg" value="{{ form.deadline.value|date:'Y-m-d'|default:today_str }}" onchange="updatePreview()">
                     {% if form.deadline.errors %}{{ form.deadline.errors }}{% endif %}
                 </div>
 

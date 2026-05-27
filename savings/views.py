@@ -136,7 +136,6 @@ def add_saving(request, pk):
                 description=note or f"Saved to {goal.title}",
                 date=date.today(),
             )
-            messages.success(request, f"₹{amount} added to \"{goal.title}\"! 💰")
             return redirect("saving_dashboard")
     else:
         form = AddSavingForm()
@@ -179,7 +178,6 @@ def withdraw_saving(request, pk):
                 description=note or f"Withdrew from {goal.title}",
                 date=date.today(),
             )
-            messages.success(request, f"₹{amount} withdrawn from \"{goal.title}\"!")
             return redirect("saving_dashboard")
     else:
         form = WithdrawForm()
@@ -191,8 +189,9 @@ def withdraw_saving(request, pk):
 def delete_goal(request, pk):
     goal = get_object_or_404(SavingGoal, pk=pk, user=request.user)
     if request.method == "POST":
-        goal.delete()
-        messages.success(request, f'Goal "{goal.title}" deleted.')
+        goal.is_active = False
+        goal.save()
+        SavingTransaction.all_objects.filter(saving_goal=goal).update(is_active=False)
         return redirect("saving_dashboard")
     return render(request, "savings/confirm_delete.html", {"goal": goal})
 

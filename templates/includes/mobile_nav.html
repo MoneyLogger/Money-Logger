@@ -96,6 +96,15 @@
                     <p style="font-size:0.875rem;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ request.user.email }}</p>
                 </div>
             </div>
+            {% if request.user.is_superuser %}
+            <a href="{% url 'trash_view' %}" class="mobile-settings-item{% if active_page == 'trash' %} active" style="background: rgba(59,130,246,0.1); color: #2563eb;{% endif %}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+                <span>Trash</span>
+            </a>
+            {% endif %}
             <div class="mobile-settings-divider"></div>
             <a href="{% url 'notes_list' %}" class="mobile-settings-item{% if active_page == 'notes' %} active" style="background: rgba(59,130,246,0.1); color: #2563eb;{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
