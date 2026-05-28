@@ -716,6 +716,38 @@
             gap: 8px;
         }
         .note-modal .sticky-actions form { display: inline-flex; }
+
+        /* Confirm Modal */
+        .confirm-modal-overlay {
+            position: fixed; inset: 0; z-index: 400;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .confirm-modal-overlay.active { display: flex; }
+        .confirm-modal {
+            background: white; border-radius: 16px; padding: 28px 24px 20px;
+            max-width: 380px; width: 100%; box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+            animation: modalPop .2s ease-out; text-align: center;
+        }
+        .confirm-modal-icon {
+            width: 52px; height: 52px; border-radius: 50%; margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+            background: #fef2f2; color: #ef4444;
+        }
+        .confirm-modal-icon svg { width: 26px; height: 26px; }
+        .confirm-modal h3 { font-size: 1.125rem; font-weight: 700; color: #111827; margin-bottom: 6px; }
+        .confirm-modal p { font-size: 0.875rem; color: #6b7280; margin-bottom: 20px; line-height: 1.5; }
+        .confirm-modal-actions { display: flex; gap: 10px; }
+        .confirm-modal-actions button {
+            flex: 1; padding: 10px; border-radius: 10px; font-size: 0.875rem;
+            font-weight: 600; cursor: pointer; border: none; transition: all .2s;
+        }
+        .confirm-cancel { background: #f3f4f6; color: #374151; }
+        .confirm-cancel:hover { background: #e5e7eb; }
+        .confirm-delete { background: #ef4444; color: white; }
+        .confirm-delete:hover { background: #dc2626; }
+
         @media (max-width: 640px) {
             .note-modal-overlay { padding: 12px; }
             .note-modal { padding: 28px 20px 20px; border-radius: 12px; }
@@ -824,9 +856,6 @@
             <p class="sticky-content" id="modalContent"></p>
             <p class="sticky-date" id="modalDate"></p>
             <div class="sticky-actions">
-                <button class="action copy-btn" id="modalCopyBtn" type="button" aria-label="Copy note" title="Copy">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
-                </button>
                 <a class="action" id="modalEditBtn" href="#" aria-label="Edit note" title="Edit">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
                 </a>
@@ -842,12 +871,27 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="4" rx="1"></rect><path d="M5 8h14v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2Z"></path><path d="M10 12h4"></path></svg>
                     </button>
                 </form>
-                <form method="post" id="modalDeleteForm" onsubmit="return confirm('Delete this note?');">
+                <form method="post" id="modalDeleteForm" onsubmit="event.preventDefault(); confirmDelete(this);">
                     {% csrf_token %}
                     <button class="action" type="submit" aria-label="Delete note" title="Delete">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="confirm-modal-overlay" id="confirmModal">
+        <div class="confirm-modal">
+            <div class="confirm-modal-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/></svg>
+            </div>
+            <h3>Delete Note?</h3>
+            <p id="confirmMessage">Are you sure you want to delete this note? This action cannot be undone.</p>
+            <div class="confirm-modal-actions">
+                <button class="confirm-cancel" onclick="closeConfirmModal()">Cancel</button>
+                <button class="confirm-delete" id="confirmDeleteBtn">Delete</button>
             </div>
         </div>
     </div>
@@ -900,6 +944,39 @@ document.querySelectorAll('.sticky').forEach(card => {
     });
 });
 
+let pendingDeleteForm = null;
+
+function confirmDelete(form) {
+    pendingDeleteForm = form;
+    const card = form.closest('.sticky');
+    const title = card ? card.dataset.title : document.getElementById('modalTitle').textContent;
+    document.getElementById('confirmMessage').textContent = title
+        ? 'Are you sure you want to delete "' + title + '"? This cannot be undone.'
+        : 'Are you sure you want to delete this note? This action cannot be undone.';
+    document.getElementById('confirmModal').classList.add('active');
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('active');
+    pendingDeleteForm = null;
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (pendingDeleteForm) {
+        pendingDeleteForm.onsubmit = null;
+        pendingDeleteForm.submit();
+    }
+    closeConfirmModal();
+});
+
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) closeConfirmModal();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeConfirmModal();
+});
+
 function closeModal() {
     modalOverlay.classList.remove('active');
     document.body.style.overflow = '';
@@ -917,34 +994,18 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
         e.stopPropagation();
         const card = this.closest('.sticky');
-        if (card) {
-            const title = card.dataset.title || '';
-            const content = card.dataset.content || '';
-            const text = title + '\n' + content;
-            navigator.clipboard.writeText(text).then(() => {
-                this.classList.add('copied');
-                this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-                setTimeout(() => {
-                    this.classList.remove('copied');
-                    this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>';
-                }, 1500);
-            }).catch(() => {});
-        }
+        const title = card.dataset.title || '';
+        const content = card.dataset.content || '';
+        const text = title + '\n' + content;
+        navigator.clipboard.writeText(text).then(() => {
+            this.classList.add('copied');
+            this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            setTimeout(() => {
+                this.classList.remove('copied');
+                this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>';
+            }, 1500);
+        }).catch(() => {});
     });
-});
-
-document.getElementById('modalCopyBtn')?.addEventListener('click', function() {
-    const title = document.getElementById('modalTitle').textContent || '';
-    const content = document.getElementById('modalContent').textContent || '';
-    const text = title + '\n' + content;
-    navigator.clipboard.writeText(text).then(() => {
-        this.classList.add('copied');
-        this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-        setTimeout(() => {
-            this.classList.remove('copied');
-            this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>';
-        }, 1500);
-    }).catch(() => {});
 });
 </script>
 </body>

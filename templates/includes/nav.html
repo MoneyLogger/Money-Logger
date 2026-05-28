@@ -106,15 +106,6 @@
                         <p style="font-size:0.75rem;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ request.user.email }}</p>
                     </div>
                 </div>
-                {% if request.user.is_superuser %}
-                <a href="{% url 'trash_view' %}" class="settings-menu-item{% if active_page == 'trash' %} active" style="background: rgba(59,130,246,0.1); color: #2563eb;{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                    </svg>
-                    <span>Trash</span>
-                </a>
-                {% endif %}
                 <div class="settings-menu-divider"></div>
                 <a href="{% url 'saving_dashboard' %}" class="settings-menu-item{% if active_page == 'savings' %} active" style="background: rgba(59,130,246,0.1); color: #2563eb;{% endif %}">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><path d="M12 18V6"></path></svg>
