@@ -263,14 +263,16 @@
 
         .date-filter-form {
             display: flex;
-            flex-direction: column;
-            gap: 16px;
+            flex-direction: row;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         .date-inputs {
             display: flex;
-            align-items: end;
-            gap: 16px;
+            align-items: center;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
@@ -293,7 +295,7 @@
             font-size: 0.875rem;
             background: white;
             transition: all 0.2s;
-            min-width: 140px;
+            min-width: 130px;
         }
 
         .date-input:focus {
@@ -620,6 +622,22 @@
         }
 
         /* Responsive */
+        @media (max-width: 378px) {
+            .date-filter-section { padding: 12px; }
+            .date-filter-form { gap: 8px; }
+            .date-inputs { gap: 4px; }
+            .date-input-group label { font-size: 0.75rem; }
+            .date-input { min-width: 100px; padding: 6px 8px; font-size: 0.8rem; }
+            .date-separator { margin: 0; }
+            .date-filter-actions { gap: 6px; }
+            .filter-btn { padding: 6px 10px; font-size: 0.75rem; gap: 4px; }
+            .quick-filter-btn { padding: 4px 8px; font-size: 0.7rem; }
+            .search-box { min-width: 100%; }
+            .search-box input { font-size: 0.875rem; padding: 0.5rem 0.5rem 0.5rem 2rem; }
+            .filter-group select { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
+            .filter-group { gap: 4px; }
+        }
+
         @media (max-width: 768px) {
             .container { padding: 1rem 0.5rem 100px; } /* Extra bottom padding for mobile nav */
             .header-inner { padding: 0 0.5rem; }
@@ -637,21 +655,6 @@
             th, td { padding: 0.75rem 0.5rem; font-size: 0.875rem; } /* Increased from 0.75rem to 0.875rem */
             .table-wrapper { overflow-x: scroll; }
             table { min-width: 700px; }
-            
-            /* Date filter responsive */
-            .date-inputs {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .date-separator {
-                display: none;
-            }
-            
-            .date-filter-actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
             
             .quick-filters {
                 margin-left: 0;
@@ -970,6 +973,7 @@
                         
                         <div class="quick-filters">
                             <button type="button" class="quick-filter-btn" onclick="setQuickFilter('today')">Today</button>
+                            <button type="button" class="quick-filter-btn" onclick="setQuickFilter('yesterday')">Yesterday</button>
                             <button type="button" class="quick-filter-btn" onclick="setQuickFilter('week')">This Week</button>
                             <button type="button" class="quick-filter-btn" onclick="setQuickFilter('month')">This Month</button>
                         </div>
@@ -1146,6 +1150,11 @@
             switch(period) {
                 case 'today':
                     startDate = endDate = today.toISOString().split('T')[0];
+                    break;
+                case 'yesterday':
+                    const yesterday = new Date(today);
+                    yesterday.setDate(today.getDate() - 1);
+                    startDate = endDate = yesterday.toISOString().split('T')[0];
                     break;
                 case 'week':
                     const weekStart = new Date(today);

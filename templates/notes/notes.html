@@ -824,6 +824,9 @@
             <p class="sticky-content" id="modalContent"></p>
             <p class="sticky-date" id="modalDate"></p>
             <div class="sticky-actions">
+                <button class="action copy-btn" id="modalCopyBtn" type="button" aria-label="Copy note" title="Copy">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>
+                </button>
                 <a class="action" id="modalEditBtn" href="#" aria-label="Edit note" title="Edit">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
                 </a>
@@ -914,18 +917,34 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
         e.stopPropagation();
         const card = this.closest('.sticky');
-        const title = card.dataset.title || '';
-        const content = card.dataset.content || '';
-        const text = title + '\n' + content;
-        navigator.clipboard.writeText(text).then(() => {
-            this.classList.add('copied');
-            this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-            setTimeout(() => {
-                this.classList.remove('copied');
-                this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>';
-            }, 1500);
-        }).catch(() => {});
+        if (card) {
+            const title = card.dataset.title || '';
+            const content = card.dataset.content || '';
+            const text = title + '\n' + content;
+            navigator.clipboard.writeText(text).then(() => {
+                this.classList.add('copied');
+                this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                setTimeout(() => {
+                    this.classList.remove('copied');
+                    this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>';
+                }, 1500);
+            }).catch(() => {});
+        }
     });
+});
+
+document.getElementById('modalCopyBtn')?.addEventListener('click', function() {
+    const title = document.getElementById('modalTitle').textContent || '';
+    const content = document.getElementById('modalContent').textContent || '';
+    const text = title + '\n' + content;
+    navigator.clipboard.writeText(text).then(() => {
+        this.classList.add('copied');
+        this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        setTimeout(() => {
+            this.classList.remove('copied');
+            this.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path></svg>';
+        }, 1500);
+    }).catch(() => {});
 });
 </script>
 </body>
