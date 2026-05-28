@@ -173,14 +173,14 @@ def dashboard(request):
     
     categories = Transaction.objects.filter(user=request.user).exclude(transaction_type__in=["SWITCH", "SAVING"]).values_list('category', flat=True).distinct().order_by('category')
     
-    balance_with_savings = balance + total_saved
+    balance_without_savings = balance - total_saved
 
     context = {
         "transactions": transactions_page,
         "total_income": total_income,
         "total_expense": total_expense,
         "balance": balance,
-        "balance_with_savings": balance_with_savings,
+        "balance_without_savings": balance_without_savings,
         "total_saved": total_saved,
         "spendable_balance": spendable_funds,
         "savings_rate": savings_rate,
