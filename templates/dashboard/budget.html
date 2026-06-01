@@ -82,7 +82,19 @@
         .page-title p { color: #6b7280; font-size: 0.875rem; }
         
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
+
+        /* Month Navigation */
+        .month-nav-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin-bottom: 2rem; animation: fadeInUp 0.55s ease-out; }
+        .month-nav { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+        .month-nav-btn { display: flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 0.75rem; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(229,231,235,0.5); color: #6b7280; text-decoration: none; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+        .month-nav-btn:hover { background: white; color: #9333ea; transform: scale(1.05); box-shadow: 0 4px 8px rgba(147,51,234,0.15); }
+        .month-nav-btn svg { width: 1.25rem; height: 1.25rem; }
+        .month-nav-label { display: flex; flex-direction: column; align-items: center; min-width: 180px; padding: 0.5rem 1.5rem; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 0.75rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 2px 4px rgba(0,0,0,0.04); }
+        .month-nav-label .month-name { font-size: 1.125rem; font-weight: 700; color: #111827; }
+        .month-nav-label .month-year { font-size: 0.75rem; color: #6b7280; }
+        .month-nav-today { font-size: 0.75rem; font-weight: 600; color: #9333ea; text-decoration: none; padding: 0.5rem 0.875rem; border-radius: 0.625rem; transition: all 0.2s; }
+        .month-nav-today:hover { background: rgba(147,51,234,0.1); }
+
         /* Overall Summary Card */
         .summary-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1rem; padding: 1.5rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 2rem; animation: fadeInUp 0.6s ease-out; animation-delay: 0.1s; animation-fill-mode: both; }
         .summary-card h2 { font-size: 1.25rem; font-weight: 700; color: #111827; margin-bottom: 1.5rem; }
@@ -253,6 +265,31 @@
                     <p>Track spending limits by category</p>
                 </div>
             </div>
+        </div>
+
+        <!-- Month Navigation -->
+        <div class="month-nav-wrap">
+            <div class="month-nav">
+                <a href="{% url 'budget_list' %}?month={{ prev_month }}&year={{ prev_year }}"
+                   class="month-nav-btn" title="{{ prev_month_name }} {{ prev_year }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </a>
+                <div class="month-nav-label">
+                    <span class="month-name">{{ month_name }}</span>
+                    <span class="month-year">{{ selected_year }}</span>
+                </div>
+                <a href="{% url 'budget_list' %}?month={{ next_month }}&year={{ next_year }}"
+                   class="month-nav-btn" title="{{ next_month_name }} {{ next_year }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </a>
+            </div>
+            {% if not is_current_period %}
+            <a href="{% url 'budget_list' %}?month={{ current_month }}&year={{ current_year }}" class="month-nav-today">Today</a>
+            {% endif %}
         </div>
 
         <!-- Overall Summary -->

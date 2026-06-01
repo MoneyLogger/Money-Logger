@@ -600,11 +600,16 @@ def budget_list(request):
         'month_name': _month_name[selected_month],
         'prev_month': prev_month_date.month,
         'prev_year': prev_month_date.year,
+        'prev_month_name': _month_name[prev_month_date.month],
         'next_month': next_month_date.month,
         'next_year': next_month_date.year,
+        'next_month_name': _month_name[next_month_date.month],
+        'current_month': today.month,
+        'current_year': today.year,
+        'is_current_period': selected_month == today.month and selected_year == today.year,
         'whatif': whatif,
     }
-    
+
     return render(request, 'dashboard/budget.html', context)
 
 
