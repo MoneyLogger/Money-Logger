@@ -1,16 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/media/logo/logo.png">
     <title>Login - Money Logger</title>
     {% if RECAPTCHA_ENABLED and RECAPTCHA_SITE_KEY %}
-        {% if RECAPTCHA_VERSION == 'v3' %}
-            <script src="https://www.google.com/recaptcha/api.js?render={{ RECAPTCHA_SITE_KEY }}"></script>
-        {% else %}
-            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-        {% endif %}
+    {% if RECAPTCHA_VERSION == 'v3' %}
+    <script src="https://www.google.com/recaptcha/api.js?render={{ RECAPTCHA_SITE_KEY }}"></script>
+    {% else %}
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    {% endif %}
     {% endif %}
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -135,8 +136,17 @@
             font-size: 0.9rem;
         }
 
-        .recaptcha-wrap { margin-top: 6px; margin-bottom: 10px; display: flex; justify-content: center; }
-        .recaptcha-wrap .g-recaptcha { transform: scale(0.85); transform-origin: top left; }
+        .recaptcha-wrap {
+            margin-top: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .recaptcha-wrap .g-recaptcha {
+            transform: scale(0.85);
+            transform-origin: top left;
+        }
 
         .forgot-password {
             text-align: center;
@@ -154,14 +164,31 @@
             text-decoration: underline;
         }
 
-        .password-wrapper { position: relative; }
-        .password-wrapper input { padding-right: 45px !important; }
-        .toggle-pass {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; cursor: pointer; padding: 4px;
-            color: #95a5a6; display: flex; align-items: center;
+        .password-wrapper {
+            position: relative;
         }
-        .toggle-pass:hover { color: #2563eb; }
+
+        .password-wrapper input {
+            padding-right: 45px !important;
+        }
+
+        .toggle-pass {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: #95a5a6;
+            display: flex;
+            align-items: center;
+        }
+
+        .toggle-pass:hover {
+            color: #2563eb;
+        }
 
         .divider {
             text-align: center;
@@ -223,7 +250,8 @@
 
             .form-group input {
                 padding: 12px 14px;
-                font-size: 16px; /* Prevents zoom on iOS */
+                font-size: 16px;
+                /* Prevents zoom on iOS */
             }
 
             .login-btn {
@@ -231,7 +259,10 @@
                 font-size: 0.95rem;
             }
 
-            .recaptcha-wrap .g-recaptcha { transform: scale(0.75); transform-origin: top left; }
+            .recaptcha-wrap .g-recaptcha {
+                transform: scale(0.75);
+                transform-origin: top left;
+            }
         }
 
         @media (max-width: 320px) {
@@ -256,6 +287,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="login-container">
         <div class="logo">
@@ -265,18 +297,18 @@
         </div>
 
         {% if form.errors %}
-            <div class="error-messages">
-                {% for field, errors in form.errors.items %}
-                    {% for error in errors %}
-                        <div>{{ error }}</div>
-                    {% endfor %}
-                {% endfor %}
-            </div>
+        <div class="error-messages">
+            {% for field, errors in form.errors.items %}
+            {% for error in errors %}
+            <div>{{ error }}</div>
+            {% endfor %}
+            {% endfor %}
+        </div>
         {% endif %}
 
         <form method="post" id="login-form">
             {% csrf_token %}
-            
+
             <div class="form-group">
                 <label for="{{ form.username.id_for_label }}">Username</label>
                 {{ form.username }}
@@ -286,20 +318,25 @@
                 <label for="{{ form.password.id_for_label }}">Password</label>
                 <div class="password-wrapper">
                     {{ form.password }}
-                    <button type="button" class="toggle-pass" onclick="togglePass('{{ form.password.id_for_label }}', this)" tabindex="-1">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <button type="button" class="toggle-pass"
+                        onclick="togglePass('{{ form.password.id_for_label }}', this)" tabindex="-1">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
                     </button>
                 </div>
             </div>
 
             {% if RECAPTCHA_ENABLED and RECAPTCHA_SITE_KEY %}
-                {% if RECAPTCHA_VERSION == 'v3' %}
-                    <input type="hidden" name="g-recaptcha-response" id="recaptcha-token">
-                {% else %}
-                    <div class="recaptcha-wrap">
-                        <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}" data-size="compact"></div>
-                    </div>
-                {% endif %}
+            {% if RECAPTCHA_VERSION == 'v3' %}
+            <input type="hidden" name="g-recaptcha-response" id="recaptcha-token">
+            {% else %}
+            <div class="recaptcha-wrap">
+                <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}" data-size="compact"></div>
+            </div>
+            {% endif %}
             {% endif %}
 
             <button type="submit" class="login-btn">Sign In</button>
@@ -312,6 +349,10 @@
         <div class="divider">
             <span>or</span>
         </div>
+
+        <a href="/accounts/google/login/">
+            Login with Google
+        </a>
 
         <div class="signup-link">
             Don't have an account? <a href="{% url 'signup' %}">Sign up</a>
@@ -351,4 +392,5 @@
         {% endif %}
     </script>
 </body>
+
 </html>
