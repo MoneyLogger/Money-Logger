@@ -9,3 +9,6 @@ whitenoise
 psycopg2-binary
 dj-database-url
 openpyxl
+python-decouple
+django-allauth
+pyjwt
