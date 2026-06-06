@@ -10,3 +10,7 @@ psycopg2-binary
 dj-database-url
 django-allauth
 python-decouple
+openpyxl
+python-decouple
+django-allauth
+pyjwt

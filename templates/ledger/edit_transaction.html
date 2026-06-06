@@ -1137,6 +1137,31 @@
                 margin-bottom: 11px;
             }
         }
+        .message-item {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .message-item.error {
+            background: #fce7f3;
+            color: #9d174d;
+        }
+
+        .message-item.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .message-item.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
     </style>
 </head>
 <body>
@@ -1152,7 +1177,7 @@
             <div class="form-content">
                 {% if messages %}
                     {% for message in messages %}
-                        <div>
+                        <div class="message-item {{ message.tags }}">
                             {{ message }}
                         </div>
                     {% endfor %}

@@ -1,41 +1,47 @@
 <style>
-.header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(24px); background: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.2); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 2rem; }
-.header-inner { max-width: 1280px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; height: 4rem; }
-.logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
-.logo-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: linear-gradient(to bottom right, #3b82f6, #9333ea); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-.logo-text { font-weight: 700; font-size: 1.25rem; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.logo-subtitle { font-size: 0.75rem; color: #6b7280; }
-.nav-links { display: flex; align-items: center; gap: 0.5rem; }
-.nav-link { padding: 0.5rem 1rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; color: #4b5563; text-decoration: none; transition: all 0.2s; }
-.nav-link:hover { background: rgba(255,255,255,0.5); color: #111827; }
-.nav-link.active { color: #2563eb; background: linear-gradient(to right, #dbeafe, #e9d5ff); }
-.btn-add { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(to right, #2563eb, #9333ea); color: white; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: box-shadow 0.2s; white-space: nowrap; }
-.btn-add:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-.whatif-toggle { margin: 0 0.5rem; }
-.whatif-btn { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); color: #6b7280; border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-.whatif-btn:hover { background: rgba(255,255,255,0.9); color: #374151; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.whatif-btn.active { background: linear-gradient(to right, #f59e0b, #ea580c); color: white; border-color: transparent; }
-.whatif-btn.active:hover { background: linear-gradient(to right, #d97706, #c2410c); }
-.settings-dropdown { position: relative; }
-.settings-btn { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(255,255,255,0.5); border: 1px solid rgba(229,231,235,0.5); cursor: pointer; transition: all 0.2s; }
-.settings-btn:hover { background: rgba(255,255,255,0.8); border-color: #e5e7eb; }
-.settings-btn svg { width: 1.25rem; height: 1.25rem; color: #6b7280; }
-.settings-menu { position: absolute; top: calc(100% + 0.5rem); right: 0; min-width: 200px; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 0.75rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; display: none; z-index: 100; animation: slideDown 0.2s ease-out; }
-.settings-menu.active { display: block; }
-@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-.settings-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #374151; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; background: transparent; width: 100%; text-align: left; }
-.settings-menu-item:hover { background: rgba(59,130,246,0.1); color: #2563eb; }
-.settings-menu-item svg { width: 1.125rem; height: 1.125rem; color: currentColor; }
-.settings-menu-divider { height: 1px; background: rgba(229,231,235,0.5); margin: 0.5rem 0; }
-.settings-menu-item.logout-item { color: #ef4444; }
-.settings-menu-item.logout-item:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
-@media (max-width: 768px) {
-    .nav-links { display: none; }
-    .settings-dropdown { display: none; }
-    .whatif-toggle { margin: 0 0.25rem; }
-    .btn-add { display: none; }
-    .header-inner { padding: 0 0.5rem; }
-}
+:root{--primary:#2563eb;--secondary:#9333ea;--brand:linear-gradient(to right,var(--primary),var(--secondary));--text:#374151;--text-muted:#6b7280;--border:#e5e7eb;--glass-bg:rgba(255,255,255,0.8);--glass-border:rgba(229,231,235,0.5);--radius-sm:0.5rem;--radius-md:0.75rem;--radius-lg:1rem;--shadow-sm:0 1px 3px rgba(0,0,0,0.05);--shadow-md:0 4px 6px rgba(0,0,0,0.05);--shadow-lg:0 10px 25px rgba(0,0,0,0.1);--blur:blur(10px);--transition:all 0.2s}
+.header{position:sticky;top:0;z-index:50;backdrop-filter:blur(24px);background:rgba(255,255,255,0.7);border-bottom:1px solid rgba(255,255,255,0.2);box-shadow:var(--shadow-sm);margin-bottom:2rem}
+.header-inner{max-width:1280px;margin:0 auto;padding:0 1rem;display:flex;align-items:center;justify-content:space-between;height:4rem}
+.logo{display:flex;align-items:center;gap:0.75rem;text-decoration:none}
+.logo-icon{width:2.5rem;height:2.5rem;border-radius:var(--radius-md);background:linear-gradient(to bottom right,#3b82f6,#9333ea);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 6px rgba(0,0,0,0.1)}
+.logo-text{font-weight:700;font-size:1.25rem;background:var(--brand);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-subtitle{font-size:0.75rem;color:var(--text-muted)}
+.nav-links{display:flex;align-items:center;gap:0.5rem}
+.nav-link{padding:0.5rem 1rem;border-radius:var(--radius-md);font-size:0.875rem;font-weight:500;color:#4b5563;text-decoration:none;transition:var(--transition)}
+.nav-link:hover{background:rgba(255,255,255,0.5);color:#111827}
+.nav-link.active{color:var(--primary);background:linear-gradient(to right,#dbeafe,#e9d5ff)}
+.btn-add{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;background:var(--brand);color:white;border-radius:var(--radius-md);font-size:0.875rem;font-weight:500;text-decoration:none;transition:box-shadow 0.2s;white-space:nowrap}
+.btn-add:hover{box-shadow:0 4px 6px rgba(0,0,0,0.1)}
+.whatif-toggle{margin:0 0.5rem}
+.whatif-btn{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;background:var(--glass-bg);backdrop-filter:var(--blur);color:var(--text-muted);border:1px solid var(--border);border-radius:var(--radius-md);font-size:0.875rem;font-weight:500;cursor:pointer;transition:var(--transition)}
+.whatif-btn:hover{background:rgba(255,255,255,0.9);color:var(--text);box-shadow:0 2px 4px rgba(0,0,0,0.1)}
+.whatif-btn.active{background:linear-gradient(to right,#f59e0b,#ea580c);color:white;border-color:transparent}
+.whatif-btn.active:hover{background:linear-gradient(to right,#d97706,#c2410c)}
+.settings-dropdown{position:relative}
+.settings-btn{display:flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;border-radius:var(--radius-md);background:rgba(255,255,255,0.5);border:1px solid var(--glass-border);cursor:pointer;transition:var(--transition)}
+.settings-btn:hover{background:var(--glass-bg);border-color:var(--border)}
+.settings-btn svg{width:1.25rem;height:1.25rem;color:var(--text-muted)}
+.settings-menu{position:absolute;top:calc(100% + 0.5rem);right:0;min-width:200px;background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);border-radius:var(--radius-md);border:1px solid var(--glass-border);box-shadow:var(--shadow-lg);padding:0.5rem;display:none;z-index:100;animation:slideDown 0.2s ease-out}
+.settings-menu.active{display:block}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.settings-menu-item{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;border-radius:var(--radius-sm);font-size:0.875rem;font-weight:500;color:var(--text);text-decoration:none;transition:var(--transition);cursor:pointer;border:none;background:transparent;width:100%;text-align:left}
+.settings-menu-item:hover{background:rgba(59,130,246,0.1);color:var(--primary)}
+.settings-menu-item svg{width:1.125rem;height:1.125rem;color:currentColor}
+.settings-menu-divider{height:1px;background:var(--glass-border);margin:0.5rem 0}
+.settings-menu-item.logout-item{color:#ef4444}
+.settings-menu-item.logout-item:hover{background:rgba(239,68,68,0.1);color:#dc2626}
+.avatar-circle{width:2.25rem;height:2.25rem;border-radius:50%;background:linear-gradient(to bottom right,#3b82f6,#9333ea);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.avatar-circle span{color:white;font-weight:700;font-size:0.875rem}
+.user-info{min-width:0}
+.user-name{font-weight:600;font-size:0.875rem;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-email{font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-link svg{display:inline-block;vertical-align:-3px;margin-right:5px}
+#loadingOverlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.35);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+#loadingOverlay.active{display:flex}
+.spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loadingOverlay p{color:white;font-weight:600;font-size:1rem}
+@media(max-width:768px){.nav-links{display:none}.settings-dropdown{display:none}.whatif-toggle{margin:0 0.25rem}.btn-add{display:none}.header-inner{padding:0 0.5rem}}
 </style>
 <header class="header">
     <div class="header-inner">
@@ -51,30 +57,30 @@
 
         <div class="nav-links">
             <a href="{% url 'dashboard' %}" class="nav-link{% if active_page == 'dashboard' %} active{% endif %}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:5px;"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
                 Dashboard
             </a>
             <a href="{% url 'survival' %}" class="nav-link{% if active_page == 'survival' %} active{% endif %}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:5px;"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"></path></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"></path></svg>
                 Survival
             </a>
             <a href="{% url 'analytics' %}" class="nav-link{% if active_page == 'analytics' %} active{% endif %}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:5px;"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
                 Analytics
             </a>
             <a href="{% url 'budget_list' %}" class="nav-link{% if active_page == 'budget' %} active{% endif %}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
                 Budget
             </a>
             <a href="{% url 'notes_list' %}" class="nav-link{% if active_page == 'notes' %} active{% endif %}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:-3px;margin-right:5px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
                 Notes
             </a>
         </div>
 
         {% if not hide_whatif %}
         <div class="whatif-toggle">
-            <form method="post" action="{% url 'toggle_whatif' %}" style="display: inline;">
+            <form method="post" action="{% url 'toggle_whatif' %}" style="display: inline;" data-no-loading>
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url whatif_next|default:'dashboard' %}">
                 <button type="submit" class="whatif-btn {% if request.session.whatif_mode %}active{% endif %}">
@@ -97,13 +103,13 @@
                 </svg>
             </button>
             <div class="settings-menu" id="settingsMenu">
-                <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;margin-bottom:0.25rem;">
-                    <div style="width:2.25rem;height:2.25rem;border-radius:50%;background:linear-gradient(to bottom right,#3b82f6,#9333ea);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <span style="color:white;font-weight:700;font-size:0.875rem;">{{ request.user.username|first|upper }}</span>
+                <div class="flex-row" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;margin-bottom:0.25rem;">
+                    <div class="avatar-circle" style="width:2.25rem;height:2.25rem">
+                        <span>{{ request.user.username|first|upper }}</span>
                     </div>
-                    <div style="min-width:0;">
-                        <p style="font-weight:600;font-size:0.875rem;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ request.user.username }}</p>
-                        <p style="font-size:0.75rem;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ request.user.email }}</p>
+                    <div class="user-info">
+                        <p class="user-name">{{ request.user.username }}</p>
+                        <p class="user-email">{{ request.user.email }}</p>
                     </div>
                 </div>
                 <div class="settings-menu-divider"></div>
@@ -121,14 +127,14 @@
                     </svg>
                     <span>Activity Log</span>
                 </a>
-                <button onclick="exportTransactions()" class="settings-menu-item">
+                <a href="{% url 'export_data' %}" class="settings-menu-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>
                         <line x1="12" y1="15" x2="12" y2="3"/>
                     </svg>
-                    <span>Export CSV</span>
-                </button>
+                    <span>Export Excel</span>
+                </a>
                 <div class="settings-menu-divider"></div>
                 <a href="{% url 'logout' %}" class="settings-menu-item logout-item">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -148,6 +154,10 @@
     </div>
 </header>
 
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+    <p>Processing...</p>
+</div>
 <script>
 function toggleSettingsMenu() {
     const menu = document.getElementById('settingsMenu');
@@ -159,5 +169,17 @@ document.addEventListener('click', function(event) {
     if (settingsDropdown && !settingsDropdown.contains(event.target)) {
         settingsMenu.classList.remove('active');
     }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const overlay = document.getElementById('loadingOverlay');
+    document.querySelectorAll('form:not([data-no-loading])').forEach(function(form) {
+        form.addEventListener('submit', function() {
+            var btn = form.querySelector('button[type="submit"]');
+            if (btn && btn.disabled) return;
+            overlay.classList.add('active');
+            if (btn) btn.disabled = true;
+        });
+    });
 });
 </script>

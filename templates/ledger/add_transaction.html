@@ -1136,31 +1136,50 @@
                 margin-bottom: 11px;
             }
         }
+        .message-item {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .message-item.error {
+            background: #fce7f3;
+            color: #9d174d;
+        }
+
+        .message-item.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .message-item.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
     </style>
 </head>
 <body>
-    {% include "includes/nav.html" with active_page="add_transaction" action_url="add_transaction" action_text="Add Transaction" show_whatif=False %}
+    {% include "includes/nav.html" with active_page="add" %}
 
     <div class="container">
         <div class="form-card">
-            <!-- Form Header -->
             <div class="form-header">
-                {% if request.session.whatif_mode %}
-                <div style="background: linear-gradient(to right, #f59e0b, #ea580c); color: white; padding: 0.75rem 1rem; border-radius: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 1.25rem;">🧪</span>
-                    <span style="font-size: 0.875rem; font-weight: 500;">What-If Mode Active — This transaction is temporary</span>
-                </div>
-                {% endif %}
-                <h1>Add Transaction</h1>
-                <p>Record your income, expense, or transfer money</p>
+                <h1>{% if whatif %}⚡ What-If Mode{% else %}💰 Add Transaction{% endif %}</h1>
+                <p>{% if whatif %}Simulate a transaction (temporary){% else %}Record your income or expense{% endif %}</p>
             </div>
 
             <div class="form-content">
-                <!-- Messages (excluding What-If mode and success messages) -->
+
+                <!-- Messages -->
                 {% if messages %}
                     {% for message in messages %}
                         {% if 'What-If' not in message.message and 'what-if' not in message.message|lower and message.tags != 'success' %}
-                        <div>
+                        <div class="message-item {{ message.tags }}">
                             {{ message }}
                         </div>
                         {% endif %}
@@ -1392,10 +1411,6 @@
     </div>
 
     <script>
-        // Export transactions (placeholder)
-        function exportTransactions() {
-            window.location.href = '{% url "dashboard" %}';
-        }
         
         // Dynamic UI based on transaction type
         function updateFormUI() {

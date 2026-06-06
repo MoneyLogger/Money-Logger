@@ -36,6 +36,10 @@ class SavingGoal(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=['user', 'is_active'], name='sg_active_idx'),
+            models.Index(fields=['user', 'status'], name='sg_status_idx'),
+        ]
 
     def progress_percentage(self):
         if self.target_amount == 0:
@@ -49,8 +53,12 @@ class SavingGoal(models.Model):
         return self.current_amount >= self.target_amount
 
     def save(self, *args, **kwargs):
-        if self.current_amount >= self.target_amount and self.status != "COMPLETED":
-            self.status = "COMPLETED"
+        if self.current_amount >= self.target_amount:
+            if self.status != "COMPLETED":
+                self.status = "COMPLETED"
+        else:
+            if self.status == "COMPLETED":
+                self.status = "ACTIVE"
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -89,6 +97,11 @@ class SavingTransaction(models.Model):
 
     class Meta:
         ordering = ["-date", "-created_at"]
+        indexes = [
+            models.Index(fields=['user', 'date'], name='st_user_date_idx'),
+            models.Index(fields=['user', 'is_active'], name='st_active_idx'),
+            models.Index(fields=['user', 'transaction_type'], name='st_type_idx'),
+        ]
 
     def __str__(self):
         return f"{self.user} - {self.amount}"

@@ -46,6 +46,15 @@ class Transaction(models.Model):
     objects = ActiveManager()
     all_objects = models.Manager()
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'date'], name='tx_user_date_idx'),
+            models.Index(fields=['user', 'transaction_type', 'money_type'], name='tx_type_money_idx'),
+            models.Index(fields=['user', 'is_active'], name='tx_active_idx'),
+            models.Index(fields=['user', 'is_pinned'], name='tx_pinned_idx'),
+            models.Index(fields=['user', 'category', 'transaction_type', 'date'], name='tx_budget_idx'),
+        ]
+
     def __str__(self):
         return f"{self.user.username} - ₹{self.amount}"
 
@@ -74,6 +83,10 @@ class ActivityLog(models.Model):
 
     class Meta:
         ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=['user', 'timestamp'], name='al_user_ts_idx'),
+            models.Index(fields=['user', 'action'], name='al_action_idx'),
+        ]
 
     def __str__(self):
         return f"{self.user.username} {self.action} ₹{self.amount} on {self.timestamp:%d %b %Y %H:%M}"
@@ -97,6 +110,10 @@ class WhatIfTransaction(models.Model):
 
     class Meta:
         ordering = ["-date", "-created_at"]
+        indexes = [
+            models.Index(fields=['user', 'date'], name='wi_user_date_idx'),
+            models.Index(fields=['user', 'transaction_type'], name='wi_type_idx'),
+        ]
 
     def __str__(self):
         return f"[WHAT-IF] {self.user.username} - ₹{self.amount}"
@@ -129,6 +146,10 @@ class Budget(models.Model):
 
     class Meta:
         ordering = ["-year", "-month", "category"]
+        indexes = [
+            models.Index(fields=['user', 'is_active'], name='budget_active_idx'),
+            models.Index(fields=['user', 'month', 'year'], name='budget_period_idx'),
+        ]
         constraints = [
             models.UniqueConstraint(
                 fields=["user", "category", "month", "year", "period"],
@@ -142,25 +163,17 @@ class Budget(models.Model):
 
     def get_spent_amount(self):
         """Calculate net spent in this budget period (expenses minus income)"""
-        from django.db.models import Sum
-        
-        expenses = Transaction.objects.filter(
-            user=self.user,
-            category=self.category,
-            transaction_type="EXPENSE",
-            date__year=self.year,
-            date__month=self.month
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        income = Transaction.objects.filter(
-            user=self.user,
-            category=self.category,
-            transaction_type="INCOME",
-            date__year=self.year,
-            date__month=self.month
-        ).aggregate(total=Sum('amount'))['total'] or 0
-        
-        return max(0, float(expenses) - float(income))
+        from django.db.models import Sum, Q
+
+        agg = Transaction.objects.filter(
+            user=self.user, category=self.category,
+            date__year=self.year, date__month=self.month,
+            transaction_type__in=["EXPENSE", "INCOME"],
+        ).aggregate(
+            expenses=Sum('amount', filter=Q(transaction_type="EXPENSE")),
+            income=Sum('amount', filter=Q(transaction_type="INCOME")),
+        )
+        return max(0, float(agg['expenses'] or 0) - float(agg['income'] or 0))
     
     def get_remaining_amount(self):
         """Calculate remaining budget"""

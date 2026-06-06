@@ -1,42 +1,19 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Sum, Q
-from django.db.models.functions import TruncMonth
+from django.db.models import Sum, Q, Count
+from django.db.models.functions import TruncDate, TruncMonth
 from datetime import datetime, date, timedelta
 import calendar
 import math
-from ledger.models import Transaction, WhatIfTransaction
+from ledger.models import Transaction, WhatIfTransaction, Budget
+from savings.models import SavingGoal, SavingTransaction
+from notes.models import Note
 from ledger.views import is_whatif_mode
+from ledger.balance_service import BalanceService
 from savings.views import get_savings_stats as _savings_stats
 from django.template.loader import render_to_string
-from django.http import JsonResponse
-
-
-# ── helpers ──────────────────────────────────────────────────────────────────
-
-def _wi(user, active):    return WhatIfTransaction.objects.filter(user=user) if active else WhatIfTransaction.objects.none()
-
-def _sum(qs, **f):
-    return qs.filter(**f).aggregate(t=Sum("amount"))["t"] or 0
-
-def _balances(real_qs, wi_qs):
-    """Return upi_balance, hand_balance using real + whatif data."""
-    upi_income  = _sum(real_qs, transaction_type="INCOME",  money_type="UPI CASH") + _sum(wi_qs, transaction_type="INCOME",  money_type="UPI CASH")
-    upi_expense = _sum(real_qs, transaction_type="EXPENSE", money_type="UPI CASH") + _sum(wi_qs, transaction_type="EXPENSE", money_type="UPI CASH")
-    upi_in_sw   = _sum(real_qs, transaction_type="SWITCH",  switch_direction="HAND_TO_UPI")
-    upi_out_sw  = _sum(real_qs, transaction_type="SWITCH",  switch_direction="UPI_TO_HAND")
-    upi_saving  = _sum(real_qs, transaction_type="SAVING",  money_type="UPI CASH")
-    upi_balance = upi_income - upi_expense + upi_in_sw - upi_out_sw - upi_saving
-
-    hand_income  = _sum(real_qs, transaction_type="INCOME",  money_type="HAND CASH") + _sum(wi_qs, transaction_type="INCOME",  money_type="HAND CASH")
-    hand_expense = _sum(real_qs, transaction_type="EXPENSE", money_type="HAND CASH") + _sum(wi_qs, transaction_type="EXPENSE", money_type="HAND CASH")
-    hand_in_sw   = _sum(real_qs, transaction_type="SWITCH",  switch_direction="UPI_TO_HAND")
-    hand_out_sw  = _sum(real_qs, transaction_type="SWITCH",  switch_direction="HAND_TO_UPI")
-    hand_saving  = _sum(real_qs, transaction_type="SAVING",  money_type="HAND CASH")
-    hand_balance = hand_income - hand_expense + hand_in_sw - hand_out_sw - hand_saving
-
-    return upi_balance, hand_balance
+from django.http import JsonResponse, HttpResponse
 
 
 def _survival_warning(available_funds, expense_mtd, days_passed, days_left, today_expense):
@@ -79,7 +56,8 @@ def _survival_warning(available_funds, expense_mtd, days_passed, days_left, toda
 @login_required
 def dashboard(request):
     whatif = is_whatif_mode(request)
-    wi_qs  = _wi(request.user, whatif)
+    base_wi  = WhatIfTransaction.objects.filter(user=request.user) if whatif else WhatIfTransaction.objects.none()
+    base_real = Transaction.objects.filter(user=request.user)
 
     start_date       = request.GET.get("start_date")
     end_date         = request.GET.get("end_date")
@@ -89,7 +67,8 @@ def dashboard(request):
     search           = request.GET.get("search", "").strip()
     page             = request.GET.get("page", 1)
 
-    real_qs = Transaction.objects.filter(user=request.user).order_by('-id')
+    real_qs = base_real.order_by('-id')
+    wi_qs   = base_wi
 
     if start_date:
         try:
@@ -142,17 +121,24 @@ def dashboard(request):
     paginator         = Paginator(combined, 10)
     transactions_page = paginator.get_page(page)
 
-    total_income  = _sum(real_qs, transaction_type="INCOME")  + _sum(wi_qs, transaction_type="INCOME")
-    total_expense = _sum(real_qs, transaction_type="EXPENSE") + _sum(wi_qs, transaction_type="EXPENSE")
+    # Use base (unfiltered) querysets for all aggregates
+    all_totals = base_real.aggregate(
+        income=Sum('amount', filter=Q(transaction_type="INCOME")),
+        expense=Sum('amount', filter=Q(transaction_type="EXPENSE")),
+    )
+    wi_totals = base_wi.aggregate(
+        income=Sum('amount', filter=Q(transaction_type="INCOME")),
+        expense=Sum('amount', filter=Q(transaction_type="EXPENSE")),
+    )
+    total_income  = (all_totals['income'] or 0) + (wi_totals['income'] or 0)
+    total_expense = (all_totals['expense'] or 0) + (wi_totals['expense'] or 0)
     balance       = total_income - total_expense
 
     # Calculate savings rate and financial health
     savings_rate = ((total_income - total_expense) / total_income * 100) if total_income > 0 else 0
     is_healthy = balance >= 0 and savings_rate > 20
 
-    all_real = Transaction.objects.filter(user=request.user)
-    all_wi   = _wi(request.user, whatif)
-    upi_balance, hand_balance = _balances(all_real, all_wi)
+    upi_balance, hand_balance = BalanceService(base_real, base_wi).compute()
     savings_data = _savings_stats(request.user) if request.user.is_authenticated else {"total_saved": 0}
     total_saved = savings_data["total_saved"]
 
@@ -161,17 +147,26 @@ def dashboard(request):
     days_passed  = max(1, today.day)
     days_left    = days_in_month - today.day
 
-    month_real = all_real.filter(date__year=today.year, date__month=today.month)
-    month_wi   = all_wi.filter(date__year=today.year, date__month=today.month)
-    expense_mtd   = _sum(month_real, transaction_type="EXPENSE", date__lte=today) + _sum(month_wi, transaction_type="EXPENSE", date__lte=today)
-    today_expense = float(_sum(month_real, transaction_type="EXPENSE", date=today) + _sum(month_wi, transaction_type="EXPENSE", date=today))
+    # Single aggregate for month expense data
+    month_real = base_real.filter(date__year=today.year, date__month=today.month)
+    month_wi   = base_wi.filter(date__year=today.year, date__month=today.month)
+    month_agg = month_real.aggregate(
+        expense_mtd=Sum('amount', filter=Q(transaction_type="EXPENSE", date__lte=today)),
+        today_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", date=today)),
+    )
+    month_wi_agg = month_wi.aggregate(
+        expense_mtd=Sum('amount', filter=Q(transaction_type="EXPENSE", date__lte=today)),
+        today_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", date=today)),
+    )
+    expense_mtd   = (month_agg['expense_mtd'] or 0) + (month_wi_agg['expense_mtd'] or 0)
+    today_expense = float((month_agg['today_expense'] or 0) + (month_wi_agg['today_expense'] or 0))
     spendable_funds = float(upi_balance) + float(hand_balance)
     available_funds = spendable_funds
 
     avg_daily, projected_end, survive, health, days_until_broke, broke_date, warning_message = \
         _survival_warning(available_funds, expense_mtd, days_passed, days_left, today_expense)
     
-    categories = Transaction.objects.filter(user=request.user).exclude(transaction_type__in=["SWITCH", "SAVING"]).values_list('category', flat=True).distinct().order_by('category')
+    categories = base_real.exclude(transaction_type__in=["SWITCH", "SAVING"]).values_list('category', flat=True).distinct().order_by('category')
     
     balance_without_savings = balance - total_saved
 
@@ -217,22 +212,43 @@ def analytics(request):
     selected_year  = int(request.GET.get('year', current_date.year))
 
     real_all = Transaction.objects.filter(user=request.user)
-    wi_all   = _wi(request.user, whatif)
+    wi_all   = WhatIfTransaction.objects.filter(user=request.user) if whatif else WhatIfTransaction.objects.none()
 
-    month_real = real_all.filter(date__year=selected_year, date__month=selected_month)
-    month_wi   = wi_all.filter(date__year=selected_year,   date__month=selected_month)
-
-    total_income  = _sum(real_all, transaction_type="INCOME")  + _sum(wi_all, transaction_type="INCOME")
-    total_expense = _sum(real_all, transaction_type="EXPENSE") + _sum(wi_all, transaction_type="EXPENSE")
+    # Single aggregate for all-time totals
+    all_agg = real_all.aggregate(
+        income=Sum('amount', filter=Q(transaction_type="INCOME")),
+        expense=Sum('amount', filter=Q(transaction_type="EXPENSE")),
+        count=Count('id'),
+    )
+    wi_agg = wi_all.aggregate(
+        income=Sum('amount', filter=Q(transaction_type="INCOME")),
+        expense=Sum('amount', filter=Q(transaction_type="EXPENSE")),
+        count=Count('id'),
+    )
+    total_income  = (all_agg['income'] or 0) + (wi_agg['income'] or 0)
+    total_expense = (all_agg['expense'] or 0) + (wi_agg['expense'] or 0)
     balance       = total_income - total_expense
-    total_transactions = real_all.count() + wi_all.count()
+    total_transactions = (all_agg['count'] or 0) + (wi_agg['count'] or 0)
 
-    month_income  = _sum(month_real, transaction_type="INCOME")  + _sum(month_wi, transaction_type="INCOME")
-    month_expense = _sum(month_real, transaction_type="EXPENSE") + _sum(month_wi, transaction_type="EXPENSE")
+    # Single aggregate for selected month totals
+    month_real = real_all.filter(date__year=selected_year, date__month=selected_month)
+    month_wi   = wi_all.filter(date__year=selected_year, date__month=selected_month)
+    month_agg = month_real.aggregate(
+        income=Sum('amount', filter=Q(transaction_type="INCOME")),
+        expense=Sum('amount', filter=Q(transaction_type="EXPENSE")),
+        count=Count('id'),
+    )
+    month_wi_agg = month_wi.aggregate(
+        income=Sum('amount', filter=Q(transaction_type="INCOME")),
+        expense=Sum('amount', filter=Q(transaction_type="EXPENSE")),
+        count=Count('id'),
+    )
+    month_income  = (month_agg['income'] or 0) + (month_wi_agg['income'] or 0)
+    month_expense = (month_agg['expense'] or 0) + (month_wi_agg['expense'] or 0)
     month_balance = month_income - month_expense
-    month_transaction_count = month_real.count() + month_wi.count()
+    month_transaction_count = (month_agg['count'] or 0) + (month_wi_agg['count'] or 0)
 
-    # Category breakdown
+    # Category breakdown — single bulk query per type
     from collections import defaultdict
     def category_totals(real_qs, wi_qs, ttype):
         d = defaultdict(float)
@@ -242,34 +258,38 @@ def analytics(request):
             d[row["category"]] += float(row["t"])
         return sorted([{"category": k, "total": v} for k, v in d.items()], key=lambda x: -x["total"])
 
-    category_expense = category_totals(month_real, month_wi, "EXPENSE")
-    category_income  = category_totals(month_real, month_wi, "INCOME")
-
-    # Daily chart
+    # Single bulk query for daily chart (2 queries instead of looping per type)
     days_in_month = calendar.monthrange(selected_year, selected_month)[1]
     daily_labels  = [str(i) for i in range(1, days_in_month + 1)]
     daily_income  = [0.0] * days_in_month
     daily_expense = [0.0] * days_in_month
 
-    for t in list(month_real.values('date', 'transaction_type', 'amount')) + list(month_wi.values('date', 'transaction_type', 'amount')):
+    daily_real = month_real.values('date', 'transaction_type').annotate(t=Sum('amount'))
+    daily_wi   = month_wi.values('date', 'transaction_type').annotate(t=Sum('amount'))
+    for t in list(daily_real) + list(daily_wi):
         idx = t['date'].day - 1
         if t['transaction_type'] == 'INCOME':
-            daily_income[idx] += float(t['amount'])
+            daily_income[idx] += float(t['t'])
         elif t['transaction_type'] == 'EXPENSE':
-            daily_expense[idx] += float(t['amount'])
+            daily_expense[idx] += float(t['t'])
 
-    # Yearly chart
+    # Yearly chart — single bulk query
     month_labels   = [_month_name[i] for i in range(1, 13)]
     yearly_income  = [0.0] * 12
     yearly_expense = [0.0] * 12
 
-    for qs in [real_all.filter(date__year=selected_year), wi_all.filter(date__year=selected_year)]:
-        for t in qs.values('date__month', 'transaction_type', 'amount'):
-            idx = t['date__month'] - 1
-            if t['transaction_type'] == 'INCOME':
-                yearly_income[idx] += float(t['amount'])
-            elif t['transaction_type'] == 'EXPENSE':
-                yearly_expense[idx] += float(t['amount'])
+    year_real = real_all.filter(date__year=selected_year).values('date__month', 'transaction_type').annotate(t=Sum('amount'))
+    year_wi   = wi_all.filter(date__year=selected_year).values('date__month', 'transaction_type').annotate(t=Sum('amount'))
+    for t in list(year_real) + list(year_wi):
+        idx = t['date__month'] - 1
+        if t['transaction_type'] == 'INCOME':
+            yearly_income[idx] += float(t['t'])
+        elif t['transaction_type'] == 'EXPENSE':
+            yearly_expense[idx] += float(t['t'])
+
+    # Category breakdown (2 queries total for both types)
+    category_expense = category_totals(month_real, month_wi, "EXPENSE")
+    category_income  = category_totals(month_real, month_wi, "INCOME")
 
     # Navigation
     current_month_date = datetime(selected_year, selected_month, 1)
@@ -282,14 +302,22 @@ def analytics(request):
     days_in_month_now = calendar.monthrange(today.year, today.month)[1]
     days_passed  = max(1, today.day)
     days_left    = days_in_month_now - today.day
-    upi_balance, hand_balance = _balances(real_all, wi_all)
+    upi_balance, hand_balance = BalanceService(real_all, wi_all).compute()
     savings_data_analytics = _savings_stats(request.user)
     spendable_funds_analytics = float(upi_balance) + float(hand_balance)
     available_funds = spendable_funds_analytics
     month_real_now = real_all.filter(date__year=today.year, date__month=today.month)
     month_wi_now   = wi_all.filter(date__year=today.year, date__month=today.month)
-    expense_mtd    = _sum(month_real_now, transaction_type="EXPENSE", date__lte=today) + _sum(month_wi_now, transaction_type="EXPENSE", date__lte=today)
-    today_expense  = float(_sum(month_real_now, transaction_type="EXPENSE", date=today) + _sum(month_wi_now, transaction_type="EXPENSE", date=today))
+    warn_agg = month_real_now.aggregate(
+        expense_mtd=Sum('amount', filter=Q(transaction_type="EXPENSE", date__lte=today)),
+        today_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", date=today)),
+    )
+    warn_wi_agg = month_wi_now.aggregate(
+        expense_mtd=Sum('amount', filter=Q(transaction_type="EXPENSE", date__lte=today)),
+        today_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", date=today)),
+    )
+    expense_mtd    = (warn_agg['expense_mtd'] or 0) + (warn_wi_agg['expense_mtd'] or 0)
+    today_expense  = float((warn_agg['today_expense'] or 0) + (warn_wi_agg['today_expense'] or 0))
     _, _, _, _, _, _, warning_message = _survival_warning(available_funds, expense_mtd, days_passed, days_left, today_expense)
 
     context = {
@@ -319,44 +347,69 @@ def survival_dashboard(request):
     days_left     = days_in_month - today.day
 
     real_all = Transaction.objects.filter(user=request.user)
-    wi_all   = _wi(request.user, whatif)
+    wi_all   = WhatIfTransaction.objects.filter(user=request.user) if whatif else WhatIfTransaction.objects.none()
 
+    # Single aggregate for current month
     month_real = real_all.filter(date__year=today.year, date__month=today.month)
-    month_wi   = wi_all.filter(date__year=today.year,   date__month=today.month)
+    month_wi   = wi_all.filter(date__year=today.year, date__month=today.month)
 
-    income_mtd  = _sum(month_real, transaction_type="INCOME")  + _sum(month_wi, transaction_type="INCOME")
-    expense_mtd = _sum(month_real, transaction_type="EXPENSE", date__lte=today) + _sum(month_wi, transaction_type="EXPENSE", date__lte=today)
+    m_agg = month_real.aggregate(
+        income=Sum('amount', filter=Q(transaction_type="INCOME")),
+        expense_mtd=Sum('amount', filter=Q(transaction_type="EXPENSE", date__lte=today)),
+        today_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", date=today)),
+    )
+    m_wi_agg = month_wi.aggregate(
+        income=Sum('amount', filter=Q(transaction_type="INCOME")),
+        expense_mtd=Sum('amount', filter=Q(transaction_type="EXPENSE", date__lte=today)),
+        today_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", date=today)),
+    )
+    income_mtd  = (m_agg['income'] or 0) + (m_wi_agg['income'] or 0)
+    expense_mtd = (m_agg['expense_mtd'] or 0) + (m_wi_agg['expense_mtd'] or 0)
     net_mtd     = income_mtd - expense_mtd
 
-    upi_balance, hand_balance = _balances(real_all, wi_all)
+    upi_balance, hand_balance = BalanceService(real_all, wi_all).compute()
     savings_data = _savings_stats(request.user)
     total_saved = savings_data["total_saved"]
     spendable_funds = float(upi_balance) + float(hand_balance)
     available_funds = spendable_funds
 
-    today_expense = float(_sum(month_real, transaction_type="EXPENSE", date=today) + _sum(month_wi, transaction_type="EXPENSE", date=today))
+    today_expense = float((m_agg['today_expense'] or 0) + (m_wi_agg['today_expense'] or 0))
 
     avg_daily, projected_end, survive, health_score, days_until_broke, broke_date, warning_message = \
         _survival_warning(available_funds, expense_mtd, days_passed, days_left, today_expense)
 
-    # Calculate spending difference for today's spending explanation
     spending_difference = today_expense - avg_daily
     remaining_budget = max(0, avg_daily - today_expense)
 
-    # Weekly spending and income
+    # Weekly spending and income — 2 bulk queries (real + wi) instead of 4
     week_start = today - timedelta(days=today.weekday())
+    week_end = week_start + timedelta(days=6)
+
+    real_week = month_real.filter(date__gte=week_start, date__lte=week_end)
+    wi_week = month_wi.filter(date__gte=week_start, date__lte=week_end)
+
+    week_exp = {}
+    for r in real_week.filter(transaction_type="EXPENSE").annotate(day=TruncDate('date')).values('day').annotate(t=Sum('amount')):
+        week_exp[r['day']] = float(r['t'])
+    for r in wi_week.filter(transaction_type="EXPENSE").annotate(day=TruncDate('date')).values('day').annotate(t=Sum('amount')):
+        week_exp[r['day']] = week_exp.get(r['day'], 0) + float(r['t'])
+
+    week_inc = {}
+    for r in real_week.filter(transaction_type="INCOME").annotate(day=TruncDate('date')).values('day').annotate(t=Sum('amount')):
+        week_inc[r['day']] = float(r['t'])
+    for r in wi_week.filter(transaction_type="INCOME").annotate(day=TruncDate('date')).values('day').annotate(t=Sum('amount')):
+        week_inc[r['day']] = week_inc.get(r['day'], 0) + float(r['t'])
+
     week_data = []
     for i in range(7):
         day = week_start + timedelta(days=i)
         if day.month == today.month:
-            expense_amt = float(_sum(month_real, transaction_type="EXPENSE", date=day) + _sum(month_wi, transaction_type="EXPENSE", date=day))
-            income_amt = float(_sum(month_real, transaction_type="INCOME", date=day) + _sum(month_wi, transaction_type="INCOME", date=day))
             week_data.append({
-                'day': day.strftime('%a'), 
-                'date': day.strftime('%m/%d'), 
+                'day': day.strftime('%a'),
+                'date': day.strftime('%m/%d'),
                 'full_date': day,
-                'expense': expense_amt, 
-                'income': income_amt,
+                'expense': week_exp.get(day, 0),
+                'income': week_inc.get(day, 0),
                 'is_today': day == today
             })
     week_total_expense = sum(d['expense'] for d in week_data)
@@ -369,10 +422,9 @@ def survival_dashboard(request):
     else:
         health_status, health_color = "Risk 🚨", "#e74c3c"
 
-    # AI Insights (Enhanced to match React design)
+    # AI Insights
     insights = []
     
-    # Insight 1: Daily spending vs safe limit
     if avg_daily > 0:
         if today_expense > avg_daily:
             overspend_pct = ((today_expense - avg_daily) / avg_daily * 100)
@@ -386,7 +438,6 @@ def survival_dashboard(request):
                 'message': f"Great job! You're spending wisely. Keep daily spending under ₹{avg_daily:.0f}."
             })
     
-    # Insight 2: Days until broke vs days remaining
     if days_until_broke and days_until_broke < days_left:
         insights.append({
             'type': 'danger',
@@ -399,7 +450,6 @@ def survival_dashboard(request):
             'message': f"You have enough funds to last {days_funds_last} days at your current spending rate."
         })
     
-    # Insight 3: Today's spending analysis
     if today_expense > avg_daily:
         insights.append({
             'type': 'warning',
@@ -418,11 +468,20 @@ def survival_dashboard(request):
                 'message': f"Today you've spent ₹{today_expense:.0f} - on track!"
             })
     
-    # Additional insights from existing logic
+    # Last month comparison — single aggregate
     last_month = today.replace(day=1) - timedelta(days=1)
     lm_real = real_all.filter(date__year=last_month.year, date__month=last_month.month)
-    lm_wi   = wi_all.filter(date__year=last_month.year,   date__month=last_month.month)
-    last_expense = _sum(lm_real, transaction_type="EXPENSE") + _sum(lm_wi, transaction_type="EXPENSE")
+    lm_wi   = wi_all.filter(date__year=last_month.year, date__month=last_month.month)
+    lm_agg = lm_real.aggregate(
+        expense=Sum('amount', filter=Q(transaction_type="EXPENSE")),
+        income=Sum('amount', filter=Q(transaction_type="INCOME")),
+    )
+    lm_wi_agg = lm_wi.aggregate(
+        expense=Sum('amount', filter=Q(transaction_type="EXPENSE")),
+        income=Sum('amount', filter=Q(transaction_type="INCOME")),
+    )
+    last_expense = (lm_agg['expense'] or 0) + (lm_wi_agg['expense'] or 0)
+    last_income = (lm_agg['income'] or 0) + (lm_wi_agg['income'] or 0)
 
     if last_expense > 0:
         chg = ((float(expense_mtd) - float(last_expense)) / float(last_expense)) * 100
@@ -437,10 +496,12 @@ def survival_dashboard(request):
                 'message': f"📉 Great! Reduced spending by {abs(chg):.0f}% from last month"
             })
 
+    # Category comparison — 2 bulk queries (last month + current month) instead of 4
     from collections import defaultdict
-    lm_cats = {r['category']: float(r['t']) for r in
-               list(lm_real.filter(transaction_type="EXPENSE").values("category").annotate(t=Sum("amount"))) +
-               list(lm_wi.filter(transaction_type="EXPENSE").values("category").annotate(t=Sum("amount")))}
+    lm_cats = {}
+    for r in list(lm_real.filter(transaction_type="EXPENSE").values("category").annotate(t=Sum("amount"))) + \
+             list(lm_wi.filter(transaction_type="EXPENSE").values("category").annotate(t=Sum("amount"))):
+        lm_cats[r['category']] = lm_cats.get(r['category'], 0) + float(r['t'])
 
     cur_cats_d = defaultdict(float)
     for r in list(month_real.filter(transaction_type="EXPENSE").values("category").annotate(t=Sum("amount"))) + \
@@ -454,7 +515,6 @@ def survival_dashboard(request):
                 'message': f"🔥 {cat} spike (+{((amt-last)/last*100):.0f}%)"
             })
 
-    last_income = _sum(lm_real, transaction_type="INCOME") + _sum(lm_wi, transaction_type="INCOME")
     cur_savings  = float(income_mtd) - float(expense_mtd)
     last_savings = float(last_income) - float(last_expense)
     if cur_savings > last_savings + 1000:
@@ -505,7 +565,7 @@ def budget_list(request):
     
     whatif = is_whatif_mode(request)
     real_all = Transaction.objects.filter(user=request.user)
-    wi_all = _wi(request.user, whatif)
+    wi_all = WhatIfTransaction.objects.filter(user=request.user) if whatif else WhatIfTransaction.objects.none()
     
     # Get current month and year
     today = datetime.now()
@@ -519,45 +579,38 @@ def budget_list(request):
         year=selected_year
     )
     
-    # Calculate spent amounts for each budget (includes What-If transactions)
+    # Calculate spent amounts for each budget (bulk query instead of N+1)
     budget_data = []
     total_budget = 0
     total_spent = 0
-    
+
+    # Bulk fetch all transactions for the selected period (2 queries instead of N*8)
+    all_txns = Transaction.objects.filter(
+        user=request.user,
+        date__year=selected_year,
+        date__month=selected_month,
+        transaction_type__in=["EXPENSE", "INCOME"]
+    ).values('category', 'transaction_type').annotate(t=Sum('amount'))
+
+    all_wi_txns = wi_all.filter(
+        date__year=selected_year,
+        date__month=selected_month,
+        transaction_type__in=["EXPENSE", "INCOME"]
+    ).values('category', 'transaction_type').annotate(t=Sum('amount'))
+
+    from collections import defaultdict
+    category_data = defaultdict(lambda: {'expense': 0.0, 'income': 0.0})
+    for row in all_txns:
+        key = 'expense' if row['transaction_type'] == 'EXPENSE' else 'income'
+        category_data[row['category']][key] += float(row['t'])
+    for row in all_wi_txns:
+        key = 'expense' if row['transaction_type'] == 'EXPENSE' else 'income'
+        category_data[row['category']][key] += float(row['t'])
+
     for budget in budgets:
-        # Query real expenses for this budget category/period
-        real_exp_qs = Transaction.objects.filter(
-            user=request.user,
-            category=budget.category,
-            transaction_type="EXPENSE",
-            date__year=budget.year,
-            date__month=budget.month,
-        )
-        # Query real income for the same period (offsets spending)
-        real_inc_qs = Transaction.objects.filter(
-            user=request.user,
-            category=budget.category,
-            transaction_type="INCOME",
-            date__year=budget.year,
-            date__month=budget.month,
-        )
-        # Query What-If transactions for the same period (if active)
-        wi_exp_qs = wi_all.filter(
-            category=budget.category,
-            transaction_type="EXPENSE",
-            date__year=budget.year,
-            date__month=budget.month,
-        )
-        wi_inc_qs = wi_all.filter(
-            category=budget.category,
-            transaction_type="INCOME",
-            date__year=budget.year,
-            date__month=budget.month,
-        )
-        expenses = float(real_exp_qs.aggregate(t=Sum('amount'))['t'] or 0) + \
-                   float(wi_exp_qs.aggregate(t=Sum('amount'))['t'] or 0)
-        income = float(real_inc_qs.aggregate(t=Sum('amount'))['t'] or 0) + \
-                 float(wi_inc_qs.aggregate(t=Sum('amount'))['t'] or 0)
+        cat = category_data.get(budget.category, {'expense': 0.0, 'income': 0.0})
+        expenses = cat['expense']
+        income = cat['income']
         spent = max(0, expenses - income)
         remaining = float(budget.amount) - spent
         percentage = (spent / float(budget.amount) * 100) if float(budget.amount) > 0 else 0
@@ -643,11 +696,9 @@ def budget_create(request):
                     existing.amount = budget.amount
                     existing.alert_threshold = budget.alert_threshold
                     existing.save()
-                    messages.success(request, f'Budget for {existing.category} restored successfully!')
                 return redirect('budget_list')
 
             budget.save()
-            messages.success(request, f'Budget for {budget.category} created successfully!')
             return redirect('budget_list')
         else:
             messages.error(request, 'Please correct the errors below.')
@@ -675,7 +726,6 @@ def budget_edit(request, budget_id):
         form = BudgetForm(request.POST, instance=budget, user=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, f'Budget for {budget.category} updated successfully!')
             return redirect('budget_list')
         else:
             messages.error(request, 'Please correct the errors below.')
@@ -701,7 +751,6 @@ def budget_delete(request, budget_id):
     category_name = budget.category
     budget.is_active = False
     budget.save()
-    messages.success(request, f'Budget for {category_name} deleted successfully!')
     return redirect('budget_list')
 
 
@@ -735,7 +784,6 @@ def trash_view(request):
                     obj.save()
                     if model_type == "saving_goal":
                         SavingTransaction.all_objects.filter(saving_goal=obj).update(is_active=True)
-                    messages.success(request, f"{model_cls.__name__} restored successfully.")
                 except model_cls.DoesNotExist:
                     messages.error(request, "Item not found.")
         return redirect("trash_view")
@@ -744,11 +792,11 @@ def trash_view(request):
     from notes.models import Note
     from savings.models import SavingGoal, SavingTransaction
 
-    deleted_transactions = Transaction.all_objects.filter(is_active=False)
-    deleted_budgets = Budget.all_objects.filter(is_active=False)
-    deleted_notes = Note.all_objects.filter(is_active=False)
-    deleted_goals = SavingGoal.all_objects.filter(is_active=False)
-    deleted_saving_txns = SavingTransaction.all_objects.filter(is_active=False)
+    deleted_transactions = Transaction.all_objects.filter(is_active=False).select_related('user')
+    deleted_budgets = Budget.all_objects.filter(is_active=False).select_related('user')
+    deleted_notes = Note.all_objects.filter(is_active=False).select_related('user')
+    deleted_goals = SavingGoal.all_objects.filter(is_active=False).select_related('user')
+    deleted_saving_txns = SavingTransaction.all_objects.filter(is_active=False).select_related('user', 'saving_goal')
 
     context = {
         "deleted_transactions": deleted_transactions,
@@ -816,3 +864,54 @@ def budget_delete_ajax(request):
             return JsonResponse({'success': False, 'error': str(e)})
     
     return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+
+@login_required
+def export_data(request):
+    import pandas as pd
+    from io import BytesIO
+
+    user = request.user
+    dfs = {}
+
+    qs = Transaction.objects.filter(user=user, is_active=True).values(
+        'date', 'transaction_type', 'category', 'amount', 'money_type',
+        'description', 'switch_direction', 'is_pinned'
+    )
+    dfs['Transactions'] = pd.DataFrame(list(qs))
+
+    qs = Budget.objects.filter(user=user, is_active=True).values(
+        'category', 'amount', 'period', 'month', 'year', 'alert_threshold'
+    )
+    dfs['Budgets'] = pd.DataFrame(list(qs))
+
+    qs = SavingGoal.objects.filter(user=user, is_active=True).values(
+        'title', 'icon', 'target_amount', 'current_amount',
+        'description', 'deadline', 'status'
+    )
+    dfs['Savings Goals'] = pd.DataFrame(list(qs))
+
+    qs = SavingTransaction.objects.filter(user=user, is_active=True).values(
+        'saving_goal__title', 'transaction_type', 'source', 'amount', 'note', 'date'
+    )
+    dfs['Savings Transactions'] = pd.DataFrame(list(qs))
+
+    qs = Note.objects.filter(user=user, is_active=True).values(
+        'title', 'content', 'color', 'category', 'priority', 'is_pinned', 'date'
+    )
+    dfs['Notes'] = pd.DataFrame(list(qs))
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        for name, df in dfs.items():
+            if not df.empty:
+                df.to_excel(writer, sheet_name=name, index=False)
+
+    output.seek(0)
+    today_str = date.today().isoformat()
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="MoneyLogger_{today_str}.xlsx"'
+    return response

@@ -759,14 +759,6 @@
         {% include "includes/nav.html" with active_page="notes" action_url="note_create" action_text="Add Note" whatif_next="notes_list" hide_whatif=True %}
 
         <main class="main">
-            {% if messages %}
-                <div class="flash-stack">
-                    {% for message in messages %}
-                        <div class="flash">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
             {% if request.session.whatif_mode %}
             <div class="whatif-banner" style="background: linear-gradient(to right, #f59e0b, #ea580c); border-radius: 1rem; padding: 1rem 1.5rem; color: white; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; box-shadow: 0 8px 16px rgba(245,158,11,0.2);">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -776,7 +768,7 @@
                         <p style="font-size: 0.875rem; opacity: 0.9;">All transactions are temporary and won't affect your real data</p>
                     </div>
                 </div>
-                <form method="post" action="{% url 'toggle_whatif' %}" style="display: inline;">
+                <form method="post" action="{% url 'toggle_whatif' %}" style="display: inline;" data-no-loading>
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{% url 'notes_list' %}">
                     <button type="submit" style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border: none; border-radius: 0.75rem; color: white; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.3s;">
@@ -871,7 +863,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="4" rx="1"></rect><path d="M5 8h14v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2Z"></path><path d="M10 12h4"></path></svg>
                     </button>
                 </form>
-                <form method="post" id="modalDeleteForm" onsubmit="event.preventDefault(); confirmDelete(this);">
+                <form method="post" id="modalDeleteForm" onsubmit="event.preventDefault(); confirmDelete(this);" data-no-loading>
                     {% csrf_token %}
                     <button class="action" type="submit" aria-label="Delete note" title="Delete">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -964,6 +956,7 @@ function closeConfirmModal() {
 document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
     if (pendingDeleteForm) {
         pendingDeleteForm.onsubmit = null;
+        document.getElementById('loadingOverlay').classList.add('active');
         pendingDeleteForm.submit();
     }
     closeConfirmModal();
