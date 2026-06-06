@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.http import JsonResponse
 from .forms import TransactionForm, SwitchForm
 from .models import Transaction, ActivityLog, WhatIfTransaction
@@ -11,20 +11,34 @@ def _user_balances(user, whatif=False):
     real_qs = Transaction.objects.filter(user=user)
     wi_qs = WhatIfTransaction.objects.filter(user=user) if whatif else WhatIfTransaction.objects.none()
 
-    upi_income = (real_qs.filter(transaction_type="INCOME", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0) + (wi_qs.filter(transaction_type="INCOME", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0)
-    upi_expense = (real_qs.filter(transaction_type="EXPENSE", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0) + (wi_qs.filter(transaction_type="EXPENSE", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0)
-    upi_from_switch = real_qs.filter(transaction_type="SWITCH", switch_direction="HAND_TO_UPI").aggregate(t=Sum("amount"))["t"] or 0
-    upi_to_switch = real_qs.filter(transaction_type="SWITCH", switch_direction="UPI_TO_HAND").aggregate(t=Sum("amount"))["t"] or 0
-    upi_saving = real_qs.filter(transaction_type="SAVING", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0
-    upi_balance = upi_income - upi_expense + upi_from_switch - upi_to_switch - upi_saving
+    agg = real_qs.aggregate(
+        upi_income=Sum('amount', filter=Q(transaction_type="INCOME", money_type="UPI CASH")),
+        upi_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", money_type="UPI CASH")),
+        upi_in_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="HAND_TO_UPI")),
+        upi_out_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="UPI_TO_HAND")),
+        upi_saving=Sum('amount', filter=Q(transaction_type="SAVING", money_type="UPI CASH")),
+        hand_income=Sum('amount', filter=Q(transaction_type="INCOME", money_type="HAND CASH")),
+        hand_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", money_type="HAND CASH")),
+        hand_in_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="UPI_TO_HAND")),
+        hand_out_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="HAND_TO_UPI")),
+        hand_saving=Sum('amount', filter=Q(transaction_type="SAVING", money_type="HAND CASH")),
+    )
 
-    hand_income = (real_qs.filter(transaction_type="INCOME", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0) + (wi_qs.filter(transaction_type="INCOME", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0)
-    hand_expense = (real_qs.filter(transaction_type="EXPENSE", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0) + (wi_qs.filter(transaction_type="EXPENSE", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0)
-    hand_from_switch = real_qs.filter(transaction_type="SWITCH", switch_direction="UPI_TO_HAND").aggregate(t=Sum("amount"))["t"] or 0
-    hand_to_switch = real_qs.filter(transaction_type="SWITCH", switch_direction="HAND_TO_UPI").aggregate(t=Sum("amount"))["t"] or 0
-    hand_saving = real_qs.filter(transaction_type="SAVING", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0
-    hand_balance = hand_income - hand_expense + hand_from_switch - hand_to_switch - hand_saving
+    if whatif:
+        wi_agg = wi_qs.aggregate(
+            upi_income=Sum('amount', filter=Q(transaction_type="INCOME", money_type="UPI CASH")),
+            upi_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", money_type="UPI CASH")),
+            hand_income=Sum('amount', filter=Q(transaction_type="INCOME", money_type="HAND CASH")),
+            hand_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", money_type="HAND CASH")),
+        )
+        for k in wi_agg:
+            agg[k] = (agg[k] or 0) + (wi_agg[k] or 0)
 
+    def v(key):
+        return float(agg.get(key) or 0)
+
+    upi_balance = v('upi_income') - v('upi_expense') + v('upi_in_sw') - v('upi_out_sw') - v('upi_saving')
+    hand_balance = v('hand_income') - v('hand_expense') + v('hand_in_sw') - v('hand_out_sw') - v('hand_saving')
     return upi_balance, hand_balance
 
 
@@ -49,7 +63,6 @@ def toggle_whatif(request):
 @login_required
 def add_transaction(request):
     whatif = is_whatif_mode(request)
-    upi_balance, hand_balance = _user_balances(request.user, whatif)
     
     if request.method == "POST":
         form = TransactionForm(request.POST, user=request.user)
@@ -57,8 +70,10 @@ def add_transaction(request):
             transaction = form.save(commit=False)
             transaction.user = request.user
 
+            # Only compute balances when needed (POST with validation)
+            upi_balance, hand_balance = _user_balances(request.user, whatif)
+
             if transaction.transaction_type == "SWITCH":
-                upi_balance, hand_balance = _user_balances(request.user, whatif)
                 transaction.category = "Money Transfer"
 
                 if transaction.switch_direction == "UPI_TO_HAND":
@@ -82,8 +97,6 @@ def add_transaction(request):
                         })
 
             elif transaction.transaction_type == "EXPENSE":
-                upi_balance, hand_balance = _user_balances(request.user, whatif)
-
                 if transaction.money_type == "UPI CASH":
                     if transaction.amount > upi_balance:
                         messages.error(request, f"⚠️ Insufficient UPI Cash balance! Available: ₹{upi_balance:.2f}, Required: ₹{transaction.amount}")
@@ -119,6 +132,7 @@ def add_transaction(request):
             return redirect("dashboard")
     else:
         form = TransactionForm(user=request.user)
+        upi_balance, hand_balance = _user_balances(request.user, whatif)
 
     return render(request, "ledger/add_transaction.html", {
         "form": form, 
@@ -138,25 +152,14 @@ def switch_money(request):
             transaction.user = request.user
             transaction.transaction_type = "SWITCH"
 
-            real_qs = Transaction.objects.filter(user=request.user)
-            wi_qs = WhatIfTransaction.objects.filter(user=request.user) if whatif else WhatIfTransaction.objects.none()
+            upi_balance, hand_balance = _user_balances(request.user, whatif)
 
             if transaction.switch_direction == "UPI_TO_HAND":
-                upi_income = (real_qs.filter(transaction_type="INCOME", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0) + (wi_qs.filter(transaction_type="INCOME", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0)
-                upi_expense = (real_qs.filter(transaction_type="EXPENSE", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0) + (wi_qs.filter(transaction_type="EXPENSE", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0)
-                upi_from_switch = real_qs.filter(transaction_type="SWITCH", switch_direction="HAND_TO_UPI").aggregate(t=Sum("amount"))["t"] or 0
-                upi_to_switch = real_qs.filter(transaction_type="SWITCH", switch_direction="UPI_TO_HAND").aggregate(t=Sum("amount"))["t"] or 0
-                upi_balance = upi_income - upi_expense + upi_from_switch - upi_to_switch
                 if transaction.amount > upi_balance:
                     messages.error(request, f"⚠️ Insufficient UPI Cash balance! Available: ₹{upi_balance:.2f}, Required: ₹{transaction.amount}")
                     return render(request, "ledger/switch_money.html", {"form": form, "whatif": whatif})
 
             elif transaction.switch_direction == "HAND_TO_UPI":
-                hand_income = (real_qs.filter(transaction_type="INCOME", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0) + (wi_qs.filter(transaction_type="INCOME", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0)
-                hand_expense = (real_qs.filter(transaction_type="EXPENSE", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0) + (wi_qs.filter(transaction_type="EXPENSE", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0)
-                hand_from_switch = real_qs.filter(transaction_type="SWITCH", switch_direction="UPI_TO_HAND").aggregate(t=Sum("amount"))["t"] or 0
-                hand_to_switch = real_qs.filter(transaction_type="SWITCH", switch_direction="HAND_TO_UPI").aggregate(t=Sum("amount"))["t"] or 0
-                hand_balance = hand_income - hand_expense + hand_from_switch - hand_to_switch
                 if transaction.amount > hand_balance:
                     messages.error(request, f"⚠️ Insufficient Hand Cash balance! Available: ₹{hand_balance:.2f}, Required: ₹{transaction.amount}")
                     return render(request, "ledger/switch_money.html", {"form": form, "whatif": whatif})
@@ -194,7 +197,7 @@ def edit_transaction(request, pk):
 
     # Capture original values before form binding modifies the instance
     orig_type = transaction.transaction_type
-    orig_amount = transaction.amount
+    orig_amount = float(transaction.amount)
     orig_money_type = transaction.money_type
     orig_switch_direction = transaction.switch_direction
 
@@ -322,19 +325,7 @@ def edit_saving_transaction(request, pk):
                 date=transaction.date, is_active=True,
             ).first()
 
-    real_qs = Transaction.objects.filter(user=request.user)
-    upi_income = real_qs.filter(transaction_type="INCOME", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0
-    upi_expense = real_qs.filter(transaction_type="EXPENSE", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0
-    upi_from_sw = real_qs.filter(transaction_type="SWITCH", switch_direction="HAND_TO_UPI").aggregate(t=Sum("amount"))["t"] or 0
-    upi_to_sw = real_qs.filter(transaction_type="SWITCH", switch_direction="UPI_TO_HAND").aggregate(t=Sum("amount"))["t"] or 0
-    upi_saving = real_qs.filter(transaction_type="SAVING", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0
-    upi_balance = upi_income - upi_expense + upi_from_sw - upi_to_sw - upi_saving
-    hand_income = real_qs.filter(transaction_type="INCOME", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0
-    hand_expense = real_qs.filter(transaction_type="EXPENSE", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0
-    hand_from_sw = real_qs.filter(transaction_type="SWITCH", switch_direction="UPI_TO_HAND").aggregate(t=Sum("amount"))["t"] or 0
-    hand_to_sw = real_qs.filter(transaction_type="SWITCH", switch_direction="HAND_TO_UPI").aggregate(t=Sum("amount"))["t"] or 0
-    hand_saving = real_qs.filter(transaction_type="SAVING", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0
-    hand_balance = hand_income - hand_expense + hand_from_sw - hand_to_sw - hand_saving
+    upi_balance, hand_balance = _user_balances(request.user)
     ctx = {"transaction": transaction, "goal": goal, "st": st, "upi_balance": upi_balance, "hand_balance": hand_balance}
 
     if request.method == "POST":

@@ -46,6 +46,15 @@ class Transaction(models.Model):
     objects = ActiveManager()
     all_objects = models.Manager()
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'date'], name='tx_user_date_idx'),
+            models.Index(fields=['user', 'transaction_type', 'money_type'], name='tx_type_money_idx'),
+            models.Index(fields=['user', 'is_active'], name='tx_active_idx'),
+            models.Index(fields=['user', 'is_pinned'], name='tx_pinned_idx'),
+            models.Index(fields=['user', 'category', 'transaction_type', 'date'], name='tx_budget_idx'),
+        ]
+
     def __str__(self):
         return f"{self.user.username} - ₹{self.amount}"
 
@@ -74,6 +83,9 @@ class ActivityLog(models.Model):
 
     class Meta:
         ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=['user', 'timestamp'], name='al_user_ts_idx'),
+        ]
 
     def __str__(self):
         return f"{self.user.username} {self.action} ₹{self.amount} on {self.timestamp:%d %b %Y %H:%M}"
@@ -97,6 +109,9 @@ class WhatIfTransaction(models.Model):
 
     class Meta:
         ordering = ["-date", "-created_at"]
+        indexes = [
+            models.Index(fields=['user', 'date'], name='wi_user_date_idx'),
+        ]
 
     def __str__(self):
         return f"[WHAT-IF] {self.user.username} - ₹{self.amount}"

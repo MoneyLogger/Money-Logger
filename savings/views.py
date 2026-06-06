@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum
+from django.db.models import Sum, Q, Count
 from datetime import date, datetime
 import calendar
 from .models import SavingGoal, SavingTransaction
@@ -15,42 +15,50 @@ POPULAR_EMOJIS = ['💻', '📱', '🏠', '🚗', '✈️', '🎮', '📚', '�
 def _balances(user):
     from ledger.models import Transaction
     qs = Transaction.objects.filter(user=user)
-    upi_income = qs.filter(transaction_type="INCOME", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0
-    upi_expense = qs.filter(transaction_type="EXPENSE", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0
-    upi_from_sw = qs.filter(transaction_type="SWITCH", switch_direction="HAND_TO_UPI").aggregate(t=Sum("amount"))["t"] or 0
-    upi_to_sw = qs.filter(transaction_type="SWITCH", switch_direction="UPI_TO_HAND").aggregate(t=Sum("amount"))["t"] or 0
-    upi_saving = qs.filter(transaction_type="SAVING", money_type="UPI CASH").aggregate(t=Sum("amount"))["t"] or 0
-    upi = upi_income - upi_expense + upi_from_sw - upi_to_sw - upi_saving
-
-    hand_income = qs.filter(transaction_type="INCOME", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0
-    hand_expense = qs.filter(transaction_type="EXPENSE", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0
-    hand_from_sw = qs.filter(transaction_type="SWITCH", switch_direction="UPI_TO_HAND").aggregate(t=Sum("amount"))["t"] or 0
-    hand_to_sw = qs.filter(transaction_type="SWITCH", switch_direction="HAND_TO_UPI").aggregate(t=Sum("amount"))["t"] or 0
-    hand_saving = qs.filter(transaction_type="SAVING", money_type="HAND CASH").aggregate(t=Sum("amount"))["t"] or 0
-    hand = hand_income - hand_expense + hand_from_sw - hand_to_sw - hand_saving
-    return float(upi), float(hand)
+    agg = qs.aggregate(
+        upi_income=Sum('amount', filter=Q(transaction_type="INCOME", money_type="UPI CASH")),
+        upi_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", money_type="UPI CASH")),
+        upi_in_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="HAND_TO_UPI")),
+        upi_out_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="UPI_TO_HAND")),
+        upi_saving=Sum('amount', filter=Q(transaction_type="SAVING", money_type="UPI CASH")),
+        hand_income=Sum('amount', filter=Q(transaction_type="INCOME", money_type="HAND CASH")),
+        hand_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", money_type="HAND CASH")),
+        hand_in_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="UPI_TO_HAND")),
+        hand_out_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="HAND_TO_UPI")),
+        hand_saving=Sum('amount', filter=Q(transaction_type="SAVING", money_type="HAND CASH")),
+    )
+    def v(key):
+        return float(agg.get(key) or 0)
+    upi = v('upi_income') - v('upi_expense') + v('upi_in_sw') - v('upi_out_sw') - v('upi_saving')
+    hand = v('hand_income') - v('hand_expense') + v('hand_in_sw') - v('hand_out_sw') - v('hand_saving')
+    return upi, hand
 
 
 def get_savings_stats(user):
-    add_qs = SavingTransaction.objects.filter(user=user, transaction_type="ADD")
-    withdraw_qs = SavingTransaction.objects.filter(user=user, transaction_type="WITHDRAW")
-
-    total_added = add_qs.aggregate(t=Sum("amount"))["t"] or 0
-    total_withdrawn = withdraw_qs.aggregate(t=Sum("amount"))["t"] or 0
-    total_saved = total_added - total_withdrawn
-
     today = date.today()
-    month_add = add_qs.filter(date__year=today.year, date__month=today.month).aggregate(t=Sum("amount"))["t"] or 0
-    month_withdraw = withdraw_qs.filter(date__year=today.year, date__month=today.month).aggregate(t=Sum("amount"))["t"] or 0
-    monthly_savings = month_add - month_withdraw
+    stats = SavingTransaction.objects.filter(user=user).aggregate(
+        total_added=Sum('amount', filter=Q(transaction_type="ADD")),
+        total_withdrawn=Sum('amount', filter=Q(transaction_type="WITHDRAW")),
+        month_add=Sum('amount', filter=Q(transaction_type="ADD", date__year=today.year, date__month=today.month)),
+        month_withdraw=Sum('amount', filter=Q(transaction_type="WITHDRAW", date__year=today.year, date__month=today.month)),
+    )
+    total_added = stats['total_added'] or 0
+    total_withdrawn = stats['total_withdrawn'] or 0
+    total_saved = total_added - total_withdrawn
+    monthly_savings = (stats['month_add'] or 0) - (stats['month_withdraw'] or 0)
 
     goals = SavingGoal.objects.filter(user=user)
-    active_count = goals.exclude(status="COMPLETED").count()
-    completed_count = goals.filter(status="COMPLETED").count()
+    goal_counts = goals.aggregate(
+        active_count=Count('id', filter=~Q(status="COMPLETED")),
+        completed_count=Count('id', filter=Q(status="COMPLETED")),
+    )
+    active_count = goal_counts['active_count'] or 0
+    completed_count = goal_counts['completed_count'] or 0
 
     avg_progress = 0
     if active_count > 0:
-        total_progress = sum(float(g.progress_percentage()) for g in goals.exclude(status="COMPLETED"))
+        active_goals = list(goals.exclude(status="COMPLETED"))
+        total_progress = sum(float(g.progress_percentage()) for g in active_goals)
         avg_progress = total_progress / active_count
 
     level = int(total_saved / 10000) + 1
@@ -217,21 +225,36 @@ def saving_analytics(request):
     goals = SavingGoal.objects.filter(user=request.user)
 
     today = date.today()
-    monthly_data = []
-    for i in range(6):
-        m = today.month - i
-        y = today.year
-        while m < 1:
-            m += 12
+    # Build list of (year, month) for last 6 months
+    months = []
+    m, y = today.month, today.year
+    for _ in range(6):
+        months.append((y, m))
+        m -= 1
+        if m < 1:
+            m = 12
             y -= 1
-        adds = SavingTransaction.objects.filter(
-            user=request.user, transaction_type="ADD",
-            date__year=y, date__month=m
-        ).aggregate(t=Sum("amount"))["t"] or 0
-        withdraws = SavingTransaction.objects.filter(
-            user=request.user, transaction_type="WITHDRAW",
-            date__year=y, date__month=m
-        ).aggregate(t=Sum("amount"))["t"] or 0
+
+    # Single bulk query for all 6 months
+    from django.db.models import Q
+    qs = SavingTransaction.objects.filter(
+        user=request.user,
+        date__year__in=[y for y, _ in months],
+        date__month__in=[m for _, m in months],
+    ).values('date__year', 'date__month', 'transaction_type').annotate(
+        total=Sum('amount')
+    )
+
+    # Build lookup dict
+    lookup = {}
+    for row in qs:
+        key = (row['date__year'], row['date__month'], row['transaction_type'])
+        lookup[key] = row['total']
+
+    monthly_data = []
+    for y, m in reversed(months):  # oldest first
+        adds = lookup.get((y, m, "ADD"), 0) or 0
+        withdraws = lookup.get((y, m, "WITHDRAW"), 0) or 0
         monthly_data.append({
             "month": calendar.month_name[m],
             "year": y,
@@ -239,6 +262,5 @@ def saving_analytics(request):
             "withdrawn": float(withdraws),
             "net": float(adds - withdraws),
         })
-    monthly_data.reverse()
 
     return render(request, "savings/analytics.html", {"stats": stats, "goals": goals, "monthly_data": monthly_data})

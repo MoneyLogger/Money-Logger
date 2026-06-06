@@ -759,14 +759,6 @@
         {% include "includes/nav.html" with active_page="notes" action_url="note_create" action_text="Add Note" whatif_next="notes_list" hide_whatif=True %}
 
         <main class="main">
-            {% if messages %}
-                <div class="flash-stack">
-                    {% for message in messages %}
-                        <div class="flash">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
             {% if request.session.whatif_mode %}
             <div class="whatif-banner" style="background: linear-gradient(to right, #f59e0b, #ea580c); border-radius: 1rem; padding: 1rem 1.5rem; color: white; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; box-shadow: 0 8px 16px rgba(245,158,11,0.2);">
                 <div style="display: flex; align-items: center; gap: 0.75rem;">
