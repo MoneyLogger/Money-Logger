@@ -78,17 +78,18 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
-    "accounts",
-    "dashboard",
-    "ledger",
-    "notes",
-    "savings",
     "django.contrib.sites",
 
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'allauth.socialaccount.providers.google'
+    'allauth.socialaccount.providers.google',
+
+    "accounts",
+    "dashboard",
+    "ledger",
+    "notes",
+    "savings",
 ]
 
 SITE_ID = 1
