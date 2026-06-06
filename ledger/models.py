@@ -41,6 +41,7 @@ class Transaction(models.Model):
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    is_pinned = models.BooleanField(default=False)
 
     objects = ActiveManager()
     all_objects = models.Manager()

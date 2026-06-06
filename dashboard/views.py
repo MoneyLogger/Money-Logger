@@ -137,7 +137,7 @@ def dashboard(request):
     wi_list   = [t for t in wi_qs.order_by('-date')]
     for t in wi_list:
         t.is_whatif = True          # flag for template badge
-    combined = sorted(real_list + wi_list, key=lambda t: (0 if getattr(t, 'is_whatif', False) else 1, -t.date.toordinal()))
+    combined = sorted(real_list + wi_list, key=lambda t: (-int(getattr(t, 'is_pinned', False)), 0 if getattr(t, 'is_whatif', False) else 1, -t.date.toordinal()))
 
     paginator         = Paginator(combined, 10)
     transactions_page = paginator.get_page(page)
@@ -626,12 +626,29 @@ def budget_create(request):
         if form.is_valid():
             budget = form.save(commit=False)
             budget.user = request.user
-            try:
-                budget.save()
-                messages.success(request, f'Budget for {budget.category} created successfully!')
+
+            existing = Budget.all_objects.filter(
+                user=request.user,
+                category=budget.category,
+                month=budget.month,
+                year=budget.year,
+                period=budget.period,
+            ).first()
+
+            if existing:
+                if existing.is_active:
+                    messages.error(request, f'Budget for {budget.category} already exists for this period.')
+                else:
+                    existing.is_active = True
+                    existing.amount = budget.amount
+                    existing.alert_threshold = budget.alert_threshold
+                    existing.save()
+                    messages.success(request, f'Budget for {existing.category} restored successfully!')
                 return redirect('budget_list')
-            except Exception as e:
-                messages.error(request, f'Budget for this category already exists for this period.')
+
+            budget.save()
+            messages.success(request, f'Budget for {budget.category} created successfully!')
+            return redirect('budget_list')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:

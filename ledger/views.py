@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Sum
+from django.http import JsonResponse
 from .forms import TransactionForm, SwitchForm
 from .models import Transaction, ActivityLog, WhatIfTransaction
 
@@ -443,6 +444,16 @@ def delete_transaction(request, pk):
         messages.success(request, "Transaction deleted.")
         return redirect("dashboard")
     return redirect("dashboard")
+
+
+@login_required
+def toggle_pin(request, pk):
+    if request.method == "POST" and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        transaction = get_object_or_404(Transaction, pk=pk, user=request.user)
+        transaction.is_pinned = not transaction.is_pinned
+        transaction.save(update_fields=['is_pinned'])
+        return JsonResponse({'success': True, 'is_pinned': transaction.is_pinned})
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
 
 @login_required
