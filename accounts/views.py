@@ -49,7 +49,6 @@ def signup(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, 'Account created successfully!')
             return redirect('dashboard')
     else:
         form = CustomUserCreationForm()
@@ -91,7 +90,6 @@ def forgot_password(request):
         user.set_password(password1)
         user.save()
         update_session_auth_hash(request, user)
-        messages.success(request, "Password reset successfully! Please log in.")
         return redirect("login")
 
     return render(request, "accounts/forgot_password.html")

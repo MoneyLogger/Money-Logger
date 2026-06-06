@@ -6,46 +6,14 @@ from django.db.models.functions import TruncDate, TruncMonth
 from datetime import datetime, date, timedelta
 import calendar
 import math
-from ledger.models import Transaction, WhatIfTransaction
+from ledger.models import Transaction, WhatIfTransaction, Budget
+from savings.models import SavingGoal, SavingTransaction
+from notes.models import Note
 from ledger.views import is_whatif_mode
+from ledger.balance_service import BalanceService
 from savings.views import get_savings_stats as _savings_stats
 from django.template.loader import render_to_string
-from django.http import JsonResponse
-
-
-# ── helpers ──────────────────────────────────────────────────────────────────
-
-def _wi(user, active):    return WhatIfTransaction.objects.filter(user=user) if active else WhatIfTransaction.objects.none()
-
-def _balances(real_qs, wi_qs):
-    """Return upi_balance, hand_balance using real + whatif data. (1-2 queries)"""
-    agg = real_qs.aggregate(
-        upi_income=Sum('amount', filter=Q(transaction_type="INCOME", money_type="UPI CASH")),
-        upi_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", money_type="UPI CASH")),
-        upi_in_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="HAND_TO_UPI")),
-        upi_out_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="UPI_TO_HAND")),
-        upi_saving=Sum('amount', filter=Q(transaction_type="SAVING", money_type="UPI CASH")),
-        hand_income=Sum('amount', filter=Q(transaction_type="INCOME", money_type="HAND CASH")),
-        hand_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", money_type="HAND CASH")),
-        hand_in_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="UPI_TO_HAND")),
-        hand_out_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="HAND_TO_UPI")),
-        hand_saving=Sum('amount', filter=Q(transaction_type="SAVING", money_type="HAND CASH")),
-    )
-    if wi_qs.exists():
-        wi_agg = wi_qs.aggregate(
-            upi_income=Sum('amount', filter=Q(transaction_type="INCOME", money_type="UPI CASH")),
-            upi_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", money_type="UPI CASH")),
-            hand_income=Sum('amount', filter=Q(transaction_type="INCOME", money_type="HAND CASH")),
-            hand_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", money_type="HAND CASH")),
-        )
-        for k in wi_agg:
-            agg[k] = (agg[k] or 0) + (wi_agg[k] or 0)
-
-    def v(key):
-        return float(agg.get(key) or 0)
-    upi_balance = v('upi_income') - v('upi_expense') + v('upi_in_sw') - v('upi_out_sw') - v('upi_saving')
-    hand_balance = v('hand_income') - v('hand_expense') + v('hand_in_sw') - v('hand_out_sw') - v('hand_saving')
-    return upi_balance, hand_balance
+from django.http import JsonResponse, HttpResponse
 
 
 def _survival_warning(available_funds, expense_mtd, days_passed, days_left, today_expense):
@@ -88,7 +56,7 @@ def _survival_warning(available_funds, expense_mtd, days_passed, days_left, toda
 @login_required
 def dashboard(request):
     whatif = is_whatif_mode(request)
-    base_wi  = _wi(request.user, whatif)
+    base_wi  = WhatIfTransaction.objects.filter(user=request.user) if whatif else WhatIfTransaction.objects.none()
     base_real = Transaction.objects.filter(user=request.user)
 
     start_date       = request.GET.get("start_date")
@@ -170,7 +138,7 @@ def dashboard(request):
     savings_rate = ((total_income - total_expense) / total_income * 100) if total_income > 0 else 0
     is_healthy = balance >= 0 and savings_rate > 20
 
-    upi_balance, hand_balance = _balances(base_real, base_wi)
+    upi_balance, hand_balance = BalanceService(base_real, base_wi).compute()
     savings_data = _savings_stats(request.user) if request.user.is_authenticated else {"total_saved": 0}
     total_saved = savings_data["total_saved"]
 
@@ -244,7 +212,7 @@ def analytics(request):
     selected_year  = int(request.GET.get('year', current_date.year))
 
     real_all = Transaction.objects.filter(user=request.user)
-    wi_all   = _wi(request.user, whatif)
+    wi_all   = WhatIfTransaction.objects.filter(user=request.user) if whatif else WhatIfTransaction.objects.none()
 
     # Single aggregate for all-time totals
     all_agg = real_all.aggregate(
@@ -334,7 +302,7 @@ def analytics(request):
     days_in_month_now = calendar.monthrange(today.year, today.month)[1]
     days_passed  = max(1, today.day)
     days_left    = days_in_month_now - today.day
-    upi_balance, hand_balance = _balances(real_all, wi_all)
+    upi_balance, hand_balance = BalanceService(real_all, wi_all).compute()
     savings_data_analytics = _savings_stats(request.user)
     spendable_funds_analytics = float(upi_balance) + float(hand_balance)
     available_funds = spendable_funds_analytics
@@ -379,7 +347,7 @@ def survival_dashboard(request):
     days_left     = days_in_month - today.day
 
     real_all = Transaction.objects.filter(user=request.user)
-    wi_all   = _wi(request.user, whatif)
+    wi_all   = WhatIfTransaction.objects.filter(user=request.user) if whatif else WhatIfTransaction.objects.none()
 
     # Single aggregate for current month
     month_real = real_all.filter(date__year=today.year, date__month=today.month)
@@ -399,7 +367,7 @@ def survival_dashboard(request):
     expense_mtd = (m_agg['expense_mtd'] or 0) + (m_wi_agg['expense_mtd'] or 0)
     net_mtd     = income_mtd - expense_mtd
 
-    upi_balance, hand_balance = _balances(real_all, wi_all)
+    upi_balance, hand_balance = BalanceService(real_all, wi_all).compute()
     savings_data = _savings_stats(request.user)
     total_saved = savings_data["total_saved"]
     spendable_funds = float(upi_balance) + float(hand_balance)
@@ -597,7 +565,7 @@ def budget_list(request):
     
     whatif = is_whatif_mode(request)
     real_all = Transaction.objects.filter(user=request.user)
-    wi_all = _wi(request.user, whatif)
+    wi_all = WhatIfTransaction.objects.filter(user=request.user) if whatif else WhatIfTransaction.objects.none()
     
     # Get current month and year
     today = datetime.now()
@@ -728,11 +696,9 @@ def budget_create(request):
                     existing.amount = budget.amount
                     existing.alert_threshold = budget.alert_threshold
                     existing.save()
-                    messages.success(request, f'Budget for {existing.category} restored successfully!')
                 return redirect('budget_list')
 
             budget.save()
-            messages.success(request, f'Budget for {budget.category} created successfully!')
             return redirect('budget_list')
         else:
             messages.error(request, 'Please correct the errors below.')
@@ -760,7 +726,6 @@ def budget_edit(request, budget_id):
         form = BudgetForm(request.POST, instance=budget, user=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, f'Budget for {budget.category} updated successfully!')
             return redirect('budget_list')
         else:
             messages.error(request, 'Please correct the errors below.')
@@ -786,7 +751,6 @@ def budget_delete(request, budget_id):
     category_name = budget.category
     budget.is_active = False
     budget.save()
-    messages.success(request, f'Budget for {category_name} deleted successfully!')
     return redirect('budget_list')
 
 
@@ -820,7 +784,6 @@ def trash_view(request):
                     obj.save()
                     if model_type == "saving_goal":
                         SavingTransaction.all_objects.filter(saving_goal=obj).update(is_active=True)
-                    messages.success(request, f"{model_cls.__name__} restored successfully.")
                 except model_cls.DoesNotExist:
                     messages.error(request, "Item not found.")
         return redirect("trash_view")
@@ -829,11 +792,11 @@ def trash_view(request):
     from notes.models import Note
     from savings.models import SavingGoal, SavingTransaction
 
-    deleted_transactions = Transaction.all_objects.filter(is_active=False)
-    deleted_budgets = Budget.all_objects.filter(is_active=False)
-    deleted_notes = Note.all_objects.filter(is_active=False)
-    deleted_goals = SavingGoal.all_objects.filter(is_active=False)
-    deleted_saving_txns = SavingTransaction.all_objects.filter(is_active=False)
+    deleted_transactions = Transaction.all_objects.filter(is_active=False).select_related('user')
+    deleted_budgets = Budget.all_objects.filter(is_active=False).select_related('user')
+    deleted_notes = Note.all_objects.filter(is_active=False).select_related('user')
+    deleted_goals = SavingGoal.all_objects.filter(is_active=False).select_related('user')
+    deleted_saving_txns = SavingTransaction.all_objects.filter(is_active=False).select_related('user', 'saving_goal')
 
     context = {
         "deleted_transactions": deleted_transactions,
@@ -901,3 +864,54 @@ def budget_delete_ajax(request):
             return JsonResponse({'success': False, 'error': str(e)})
     
     return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+
+@login_required
+def export_data(request):
+    import pandas as pd
+    from io import BytesIO
+
+    user = request.user
+    dfs = {}
+
+    qs = Transaction.objects.filter(user=user, is_active=True).values(
+        'date', 'transaction_type', 'category', 'amount', 'money_type',
+        'description', 'switch_direction', 'is_pinned'
+    )
+    dfs['Transactions'] = pd.DataFrame(list(qs))
+
+    qs = Budget.objects.filter(user=user, is_active=True).values(
+        'category', 'amount', 'period', 'month', 'year', 'alert_threshold'
+    )
+    dfs['Budgets'] = pd.DataFrame(list(qs))
+
+    qs = SavingGoal.objects.filter(user=user, is_active=True).values(
+        'title', 'icon', 'target_amount', 'current_amount',
+        'description', 'deadline', 'status'
+    )
+    dfs['Savings Goals'] = pd.DataFrame(list(qs))
+
+    qs = SavingTransaction.objects.filter(user=user, is_active=True).values(
+        'saving_goal__title', 'transaction_type', 'source', 'amount', 'note', 'date'
+    )
+    dfs['Savings Transactions'] = pd.DataFrame(list(qs))
+
+    qs = Note.objects.filter(user=user, is_active=True).values(
+        'title', 'content', 'color', 'category', 'priority', 'is_pinned', 'date'
+    )
+    dfs['Notes'] = pd.DataFrame(list(qs))
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        for name, df in dfs.items():
+            if not df.empty:
+                df.to_excel(writer, sheet_name=name, index=False)
+
+    output.seek(0)
+    today_str = date.today().isoformat()
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="MoneyLogger_{today_str}.xlsx"'
+    return response

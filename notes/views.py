@@ -16,23 +16,24 @@ def notes_list(request):
     category_filter = request.GET.get("category", "")
     search = request.GET.get("q", "").strip()
 
-    notes = Note.objects.filter(user=request.user)
+    notes_qs = Note.objects.filter(user=request.user).select_related('user')
     if category_filter:
-        notes = notes.filter(category=category_filter)
+        notes_qs = notes_qs.filter(category=category_filter)
     if search:
-        notes = notes.filter(Q(title__icontains=search) | Q(content__icontains=search))
+        notes_qs = notes_qs.filter(Q(title__icontains=search) | Q(content__icontains=search))
 
-    pinned_notes = notes.filter(is_pinned=True)
-    regular_notes = notes.filter(is_pinned=False)
-    total_notes = notes.count()
-    pinned_count = pinned_notes.count()
-    archived_count = notes.filter(category="archived").count()
+    all_notes = list(notes_qs)
+    pinned_notes = [n for n in all_notes if n.is_pinned]
+    regular_notes = [n for n in all_notes if not n.is_pinned]
+    total_notes = len(all_notes)
+    pinned_count = len(pinned_notes)
+    archived_count = sum(1 for n in all_notes if n.category == "archived")
 
     return render(
         request,
         "notes/notes.html",
         {
-            "notes": notes,
+            "notes": all_notes,
             "pinned_notes": pinned_notes,
             "regular_notes": regular_notes,
             "category_filter": category_filter,
@@ -53,7 +54,6 @@ def note_create(request):
             note = form.save(commit=False)
             note.user = request.user
             note.save()
-            messages.success(request, "Note saved.")
             return redirect("notes_list")
     else:
         form = NoteForm(
@@ -75,7 +75,6 @@ def note_edit(request, pk):
         form = NoteForm(request.POST, instance=note)
         if form.is_valid():
             form.save()
-            messages.success(request, "Note updated.")
             return redirect("notes_list")
     else:
         form = NoteForm(instance=note)
@@ -89,7 +88,6 @@ def note_delete(request, pk):
     if request.method == "POST":
         note.is_active = False
         note.save()
-        messages.success(request, "Note deleted.")
     return redirect("notes_list")
 
 
@@ -99,7 +97,6 @@ def note_toggle_pin(request, pk):
     if request.method == "POST":
         note.is_pinned = not note.is_pinned
         note.save()
-        messages.success(request, "Note pinned." if note.is_pinned else "Note unpinned.")
     return redirect("notes_list")
 
 
@@ -109,9 +106,7 @@ def note_archive(request, pk):
     if request.method == "POST":
         if note.category == ARCHIVED_CATEGORY:
             note.category = DEFAULT_CATEGORY
-            messages.success(request, "Note unarchived.")
         else:
             note.category = ARCHIVED_CATEGORY
-            messages.success(request, "Note archived.")
         note.save()
     return redirect("notes_list")

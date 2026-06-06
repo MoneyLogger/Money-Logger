@@ -724,12 +724,45 @@
                 margin-bottom: 0.5rem;
             }
         }
+        .message-item {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .message-item.error {
+            background: #fce7f3;
+            color: #9d174d;
+        }
+
+        .message-item.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .message-item.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
     </style>
 </head>
 <body>
     {% include "includes/nav.html" with active_page="dashboard" action_url="add_transaction" action_text="Add Transaction" whatif_next="dashboard" %}
 
     <div class="container">
+        <!-- Messages -->
+        {% if messages %}
+            <div class="messages-container" style="margin-bottom: 1.5rem;">
+                {% for message in messages %}
+                    <div class="message-item {{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
         <!-- What-If Mode Banner -->
         {% if request.session.whatif_mode %}
         <div class="whatif-banner" style="background: linear-gradient(to right, #f59e0b, #ea580c); border-radius: 1rem; padding: 1rem 1.5rem; color: white; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; box-shadow: 0 8px 16px rgba(245,158,11,0.2);">
@@ -740,7 +773,7 @@
                     <p style="font-size: 0.875rem; opacity: 0.9;">All transactions are temporary and won't affect your real data</p>
                 </div>
             </div>
-            <form method="post" action="{% url 'toggle_whatif' %}" style="display: inline;">
+            <form method="post" action="{% url 'toggle_whatif' %}" style="display: inline;" data-no-loading>
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'dashboard' %}">
                 <button type="submit" style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border: none; border-radius: 0.75rem; color: white; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.3s;">
@@ -874,7 +907,7 @@
 
         <!-- Filters & Search -->
         <div class="filters-section">
-            <form method="get" id="filterForm">
+            <form method="get" id="filterForm" data-no-loading>
                 <div class="filters-wrapper">
                     <div class="search-box">
                         <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
@@ -928,7 +961,7 @@
                     <h3>Filter by Date Range</h3>
                 </div>
                 
-                <form method="GET" class="date-filter-form" id="dateFilterForm">
+                <form method="GET" class="date-filter-form" id="dateFilterForm" data-no-loading>
                     <div class="date-inputs">
                         <div class="date-input-group">
                             <label for="start_date">Start Date</label>
@@ -1212,45 +1245,9 @@
         </svg>
     </a>
 
-    {% include "includes/mobile_nav.html" with active_page="dashboard" export_csv_function=True %}
+    {% include "includes/mobile_nav.html" with active_page="dashboard" %}
 
     <script>
-        // Export transactions to CSV
-        function exportTransactions() {
-            const transactions = [
-                ['Date', 'Type', 'Category', 'Amount', 'Money Type', 'Description']
-            ];
-            
-            // Get transaction data from the table
-            const rows = document.querySelectorAll('.transaction-row');
-            rows.forEach(row => {
-                const date = row.querySelector('.transaction-date')?.textContent?.trim() || '';
-                const type = row.querySelector('.transaction-type')?.textContent?.trim() || '';
-                const category = row.querySelector('.transaction-category')?.textContent?.trim() || '';
-                const amount = row.querySelector('.transaction-amount')?.textContent?.trim() || '';
-                const moneyType = row.querySelector('.transaction-money-type')?.textContent?.trim() || '';
-                const description = row.querySelector('.transaction-description')?.textContent?.trim() || '';
-                
-                transactions.push([date, type, category, amount, moneyType, description]);
-            });
-            
-            // Create CSV content
-            const csvContent = transactions.map(row => 
-                row.map(field => `"${field}"`).join(',')
-            ).join('\n');
-            
-            // Download CSV
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `transactions_${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
         // Add hover effects to quick action cards
         document.addEventListener('DOMContentLoaded', function() {
             const quickActionCards = document.querySelectorAll('.quick-action-card');

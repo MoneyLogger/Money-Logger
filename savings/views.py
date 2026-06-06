@@ -7,31 +7,10 @@ import calendar
 from .models import SavingGoal, SavingTransaction
 from .forms import CreateGoalForm, AddSavingForm, WithdrawForm
 from ledger.models import Transaction
+from ledger.balance_service import BalanceService
 
 
 POPULAR_EMOJIS = ['💻', '📱', '🏠', '🚗', '✈️', '🎮', '📚', '💍', '🏖️', '🎸', '📷', '⌚', '🏦', '💰', '🎯', '🌟']
-
-
-def _balances(user):
-    from ledger.models import Transaction
-    qs = Transaction.objects.filter(user=user)
-    agg = qs.aggregate(
-        upi_income=Sum('amount', filter=Q(transaction_type="INCOME", money_type="UPI CASH")),
-        upi_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", money_type="UPI CASH")),
-        upi_in_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="HAND_TO_UPI")),
-        upi_out_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="UPI_TO_HAND")),
-        upi_saving=Sum('amount', filter=Q(transaction_type="SAVING", money_type="UPI CASH")),
-        hand_income=Sum('amount', filter=Q(transaction_type="INCOME", money_type="HAND CASH")),
-        hand_expense=Sum('amount', filter=Q(transaction_type="EXPENSE", money_type="HAND CASH")),
-        hand_in_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="UPI_TO_HAND")),
-        hand_out_sw=Sum('amount', filter=Q(transaction_type="SWITCH", switch_direction="HAND_TO_UPI")),
-        hand_saving=Sum('amount', filter=Q(transaction_type="SAVING", money_type="HAND CASH")),
-    )
-    def v(key):
-        return float(agg.get(key) or 0)
-    upi = v('upi_income') - v('upi_expense') + v('upi_in_sw') - v('upi_out_sw') - v('upi_saving')
-    hand = v('hand_income') - v('hand_expense') + v('hand_in_sw') - v('hand_out_sw') - v('hand_saving')
-    return upi, hand
 
 
 def get_savings_stats(user):
@@ -47,17 +26,13 @@ def get_savings_stats(user):
     total_saved = total_added - total_withdrawn
     monthly_savings = (stats['month_add'] or 0) - (stats['month_withdraw'] or 0)
 
-    goals = SavingGoal.objects.filter(user=user)
-    goal_counts = goals.aggregate(
-        active_count=Count('id', filter=~Q(status="COMPLETED")),
-        completed_count=Count('id', filter=Q(status="COMPLETED")),
-    )
-    active_count = goal_counts['active_count'] or 0
-    completed_count = goal_counts['completed_count'] or 0
+    all_goals = list(SavingGoal.objects.filter(user=user))
+    active_goals = [g for g in all_goals if g.status != "COMPLETED"]
+    active_count = len(active_goals)
+    completed_count = len(all_goals) - active_count
 
     avg_progress = 0
     if active_count > 0:
-        active_goals = list(goals.exclude(status="COMPLETED"))
         total_progress = sum(float(g.progress_percentage()) for g in active_goals)
         avg_progress = total_progress / active_count
 
@@ -94,7 +69,6 @@ def create_goal(request):
             goal = form.save(commit=False)
             goal.user = request.user
             goal.save()
-            messages.success(request, f'Savings goal "{goal.title}" created! 🎯')
             return redirect("saving_dashboard")
     else:
         form = CreateGoalForm()
@@ -112,7 +86,7 @@ def goal_detail(request, pk):
 @login_required
 def add_saving(request, pk):
     goal = get_object_or_404(SavingGoal, pk=pk, user=request.user)
-    upi_balance, hand_balance = _balances(request.user)
+    upi_balance, hand_balance = BalanceService.for_user(request.user)
     goals = SavingGoal.objects.filter(user=request.user).exclude(status="COMPLETED")
 
     if request.method == "POST":
@@ -211,7 +185,6 @@ def edit_goal(request, pk):
         form = CreateGoalForm(request.POST, instance=goal)
         if form.is_valid():
             form.save()
-            messages.success(request, f'Goal "{goal.title}" updated!')
             return redirect("saving_dashboard")
     else:
         form = CreateGoalForm(instance=goal)

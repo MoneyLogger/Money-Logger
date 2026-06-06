@@ -768,7 +768,7 @@
                         <p style="font-size: 0.875rem; opacity: 0.9;">All transactions are temporary and won't affect your real data</p>
                     </div>
                 </div>
-                <form method="post" action="{% url 'toggle_whatif' %}" style="display: inline;">
+                <form method="post" action="{% url 'toggle_whatif' %}" style="display: inline;" data-no-loading>
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{% url 'notes_list' %}">
                     <button type="submit" style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border: none; border-radius: 0.75rem; color: white; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.3s;">
