@@ -8,197 +8,99 @@
     <title>Dashboard - Money Logger</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
-        .container { max-width: 1280px; margin: 0 auto; padding: 2rem 1rem; }
-        
-        /* Header */
-        .header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(24px); background: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.2); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 2rem; }
-        .header-inner { max-width: 1280px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; height: 4rem; }
-        .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
-        .logo-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: linear-gradient(to bottom right, #3b82f6, #9333ea); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .logo-text { font-weight: 700; font-size: 1.25rem; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .logo-subtitle { font-size: 0.75rem; color: #6b7280; }
-        .nav-links { display: flex; align-items: center; gap: 0.5rem; }
-        .nav-link { padding: 0.5rem 1rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; color: #4b5563; text-decoration: none; transition: all 0.2s; }
-        .nav-link:hover { background: rgba(255,255,255,0.5); color: #111827; }
-        .nav-link.active { color: #2563eb; background: linear-gradient(to right, #dbeafe, #e9d5ff); }
-        .btn-add { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: linear-gradient(to right, #2563eb, #9333ea); color: white; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; text-decoration: none; transition: box-shadow 0.2s; }
-        .btn-add:hover { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        
-        /* What-If Mode Toggle */
-        .whatif-toggle { margin: 0 0.5rem; }
-        .whatif-btn { 
-            display: flex; 
-            align-items: center; 
-            gap: 0.5rem; 
-            padding: 0.5rem 1rem; 
-            background: rgba(255,255,255,0.8); 
-            backdrop-filter: blur(10px); 
-            color: #6b7280; 
-            border: 1px solid #e5e7eb; 
-            border-radius: 0.75rem; 
-            font-size: 0.875rem; 
-            font-weight: 500; 
-            cursor: pointer; 
-            transition: all 0.2s; 
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #9333ea;
+            --brand: linear-gradient(to right, var(--primary), var(--secondary));
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+            --text: #374151;
+            --text-muted: #6b7280;
+            --text-light: #9ca3af;
+            --border: #e5e7eb;
+            --glass-bg: rgba(255,255,255,0.8);
+            --glass-border: rgba(229,231,235,0.5);
+            --radius-sm: 0.5rem;
+            --radius-md: 0.75rem;
+            --radius-lg: 1rem;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --blur: blur(10px);
+            --transition: all 0.2s;
         }
-        .whatif-btn:hover { 
-            background: rgba(255,255,255,0.9); 
-            color: #374151; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-        }
-        .whatif-btn.active { 
-            background: linear-gradient(to right, #f59e0b, #ea580c); 
-            color: white; 
-            border-color: transparent; 
-        }
-        .whatif-btn.active:hover { 
-            background: linear-gradient(to right, #d97706, #c2410c); 
-        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
+        body { background:linear-gradient(to bottom right,#eff6ff,#faf5ff,#fce7f3); min-height:100vh; }
+        .container { max-width:1280px; margin:0 auto; padding:2rem 1rem; }
+        .flex-center { display:flex; align-items:center; }
+        .flex-between { display:flex; align-items:center; justify-content:space-between; }
+        .glass { background:var(--glass-bg); backdrop-filter:var(--blur); border:1px solid var(--glass-border); }
         
-        /* Settings Dropdown */
-        .settings-dropdown {
-            position: relative;
-        }
+        .header { position:sticky; top:0; z-index:50; backdrop-filter:blur(24px); background:rgba(255,255,255,0.7); border-bottom:1px solid rgba(255,255,255,0.2); box-shadow:var(--shadow-sm); margin-bottom:2rem; }
+        .header-inner { max-width:1280px; margin:0 auto; padding:0 1rem; display:flex; align-items:center; justify-content:space-between; height:4rem; }
+        .logo { display:flex; align-items:center; gap:0.75rem; text-decoration:none; }
+        .logo-icon { width:2.5rem; height:2.5rem; border-radius:var(--radius-md); background:linear-gradient(to bottom right,#3b82f6,#9333ea); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+        .logo-text { font-weight:700; font-size:1.25rem; background:var(--brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .logo-subtitle { font-size:0.75rem; color:var(--text-muted); }
+        .nav-links { display:flex; align-items:center; gap:0.5rem; }
+        .nav-link { padding:0.5rem 1rem; border-radius:var(--radius-md); font-size:0.875rem; font-weight:500; color:#4b5563; text-decoration:none; transition:var(--transition); }
+        .nav-link:hover { background:rgba(255,255,255,0.5); color:#111827; }
+        .nav-link.active { color:var(--primary); background:linear-gradient(to right,#dbeafe,#e9d5ff); }
+        .btn-add { display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:var(--brand); color:white; border-radius:var(--radius-md); font-size:0.875rem; font-weight:500; text-decoration:none; transition:box-shadow 0.2s; }
+        .btn-add:hover { box-shadow:0 4px 6px rgba(0,0,0,0.1); }
         
-        .settings-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 0.75rem;
-            background: rgba(255,255,255,0.5);
-            border: 1px solid rgba(229,231,235,0.5);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+        .whatif-toggle { margin:0 0.5rem; }
+        .whatif-btn { display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:var(--glass-bg); backdrop-filter:var(--blur); color:var(--text-muted); border:1px solid var(--border); border-radius:var(--radius-md); font-size:0.875rem; font-weight:500; cursor:pointer; transition:var(--transition); }
+        .whatif-btn:hover { background:rgba(255,255,255,0.9); color:var(--text); box-shadow:0 2px 4px rgba(0,0,0,0.1); }
+        .whatif-btn.active { background:linear-gradient(to right,#f59e0b,#ea580c); color:white; border-color:transparent; }
+        .whatif-btn.active:hover { background:linear-gradient(to right,#d97706,#c2410c); }
         
-        .settings-btn:hover {
-            background: rgba(255,255,255,0.8);
-            border-color: #e5e7eb;
-        }
+        .settings-dropdown { position:relative; }
+        .settings-btn { display:flex; align-items:center; justify-content:center; width:2.5rem; height:2.5rem; border-radius:var(--radius-md); background:rgba(255,255,255,0.5); border:1px solid var(--glass-border); cursor:pointer; transition:var(--transition); }
+        .settings-btn:hover { background:var(--glass-bg); border-color:var(--border); }
+        .settings-btn svg { width:1.25rem; height:1.25rem; color:var(--text-muted); }
+        .settings-menu { position:absolute; top:calc(100% + 0.5rem); right:0; min-width:200px; background:rgba(255,255,255,0.95); backdrop-filter:blur(20px); border-radius:var(--radius-md); border:1px solid var(--glass-border); box-shadow:var(--shadow-lg); padding:0.5rem; display:none; z-index:100; animation:slideDown 0.2s ease-out; }
+        .settings-menu.active { display:block; }
+        .settings-menu-item { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--text); text-decoration:none; transition:var(--transition); cursor:pointer; border:none; background:transparent; width:100%; text-align:left; }
+        .settings-menu-item:hover { background:rgba(59,130,246,0.1); color:var(--primary); }
+        .settings-menu-item svg { width:1.125rem; height:1.125rem; color:currentColor; }
+        .settings-menu-divider { height:1px; background:var(--glass-border); margin:0.5rem 0; }
+        .settings-menu-item.logout-item { color:var(--danger); }
+        .settings-menu-item.logout-item:hover { background:rgba(239,68,68,0.1); color:var(--danger); }
         
-        .settings-btn svg {
-            width: 1.25rem;
-            height: 1.25rem;
-            color: #6b7280;
-        }
+        .insight-banner { position:relative; overflow:hidden; border-radius:var(--radius-lg); padding:1rem 1.5rem; color:white; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; box-shadow:0 8px 16px rgba(0,0,0,0.1); margin-bottom:2rem; animation:slideDown 0.5s ease-out; }
+        .insight-content { display:flex; align-items:center; gap:0.75rem; }
+        .insight-icon { font-size:1.5rem; }
+        .insight-text h3 { font-size:1.125rem; font-weight:700; margin-bottom:0.25rem; }
+        .insight-text p { font-size:0.875rem; opacity:0.8; }
+        .insight-btn { padding:0.5rem 1rem; background:rgba(255,255,255,0.2); backdrop-filter:var(--blur); border-radius:var(--radius-md); font-size:0.875rem; font-weight:500; color:white; text-decoration:none; transition:all 0.3s; }
+        .insight-btn:hover { background:rgba(255,255,255,0.3); }
         
-        .settings-menu {
-            position: absolute;
-            top: calc(100% + 0.5rem);
-            right: 0;
-            min-width: 200px;
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 0.75rem;
-            border: 1px solid rgba(229,231,235,0.5);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            padding: 0.5rem;
-            display: none;
-            z-index: 100;
-            animation: slideDown 0.2s ease-out;
-        }
-        
-        .settings-menu.active {
-            display: block;
-        }
-        
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .settings-menu-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #374151;
-            text-decoration: none;
-            transition: all 0.2s;
-            cursor: pointer;
-            border: none;
-            background: transparent;
-            width: 100%;
-            text-align: left;
-        }
-        
-        .settings-menu-item:hover {
-            background: rgba(59,130,246,0.1);
-            color: #2563eb;
-        }
-        
-        .settings-menu-item svg {
-            width: 1.125rem;
-            height: 1.125rem;
-            color: currentColor;
-        }
-        
-        .settings-menu-divider {
-            height: 1px;
-            background: rgba(229,231,235,0.5);
-            margin: 0.5rem 0;
-        }
-        
-        .settings-menu-item.logout-item {
-            color: #ef4444;
-        }
-        
-        .settings-menu-item.logout-item:hover {
-            background: rgba(239,68,68,0.1);
-            color: #dc2626;
-        }
-        
-        /* Insight Banner */
-        .insight-banner { position: relative; overflow: hidden; border-radius: 1rem; padding: 1rem 1.5rem; color: white; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin-bottom: 2rem; animation: slideDown 0.5s ease-out; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
-        .insight-content { display: flex; align-items: center; gap: 0.75rem; }
-        .insight-icon { font-size: 1.5rem; }
-        .insight-text h3 { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem; }
-        .insight-text p { font-size: 0.875rem; opacity: 0.8; }
-        .insight-btn { padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; color: white; text-decoration: none; transition: all 0.3s; }
-        .insight-btn:hover { background: rgba(255,255,255,0.3); }
-        
-        /* Summary Grid */
-        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { position: relative; overflow: hidden; border-radius: 1rem; padding: 1.5rem; backdrop-filter: blur(10px); background: rgba(255,255,255,0.8); border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: all 0.3s; animation: fadeInUp 0.6s ease-out; animation-fill-mode: both; }
-        .stat-card:nth-child(1) { animation-delay: 0.1s; }
-        .stat-card:nth-child(2) { animation-delay: 0.2s; }
-        .stat-card:nth-child(3) { animation-delay: 0.3s; }
-        .stat-card:nth-child(4) { animation-delay: 0.4s; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
-        .stat-card::before { content: ''; position: absolute; inset: 0; border-radius: 1rem; opacity: 0.1; z-index: -1; }
-        .stat-card.income::before { background: linear-gradient(to bottom right, #10b981, #059669); }
-        .stat-card.expense::before { background: linear-gradient(to bottom right, #ef4444, #dc2626); }
-        .stat-card.balance::before { background: linear-gradient(to bottom right, #3b82f6, #9333ea, #ec4899); }
-        .stat-card.methods::before { background: linear-gradient(to bottom right, #6366f1, #3b82f6); }
-        .stat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-        .stat-icon { width: 3rem; height: 3rem; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
-        .stat-card.income .stat-icon { background: #dcfce7; color: #16a34a; }
-        .stat-card.expense .stat-icon { background: #fee2e2; color: #dc2626; }
-        .stat-card.balance .stat-icon { background: linear-gradient(to bottom right, #dbeafe, #e9d5ff); }
-        .stat-card.methods .stat-icon { background: #e0e7ff; color: #6366f1; }
-        .stat-trend { font-size: 0.875rem; font-weight: 500; }
-        .stat-trend.positive { color: #16a34a; }
-        .stat-trend.negative { color: #dc2626; }
-        .stat-label { font-size: 0.875rem; color: #6b7280; margin-bottom: 0.25rem; }
-        .stat-value { font-size: 1.875rem; font-weight: 700; }
-        .stat-card.income .stat-value { color: #16a34a; }
-        .stat-card.expense .stat-value { color: #dc2626; }
-        .stat-card.balance .stat-value { background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+        .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.5rem; margin-bottom:2rem; }
+        .stat-card { position:relative; overflow:hidden; border-radius:var(--radius-lg); padding:1.5rem; backdrop-filter:var(--blur); background:var(--glass-bg); border:1px solid var(--glass-border); box-shadow:var(--shadow-md); transition:all 0.3s; animation:fadeInUp 0.6s ease-out; animation-fill-mode:both; }
+        @keyframes fadeInUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+        .stat-card:hover { transform:translateY(-4px); box-shadow:0 12px 24px rgba(0,0,0,0.1); }
+        .stat-card::before { content:''; position:absolute; inset:0; border-radius:var(--radius-lg); opacity:0.1; z-index:-1; }
+        .stat-card.income::before { background:linear-gradient(to bottom right,#10b981,#059669); }
+        .stat-card.expense::before { background:linear-gradient(to bottom right,#ef4444,#dc2626); }
+        .stat-card.balance::before { background:linear-gradient(to bottom right,#3b82f6,#9333ea,#ec4899); }
+        .stat-card.methods::before { background:linear-gradient(to bottom right,#6366f1,#3b82f6); }
+        .stat-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+        .stat-icon { width:3rem; height:3rem; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; font-size:1.5rem; }
+        .stat-card.income .stat-icon { background:#dcfce7; color:#16a34a; }
+        .stat-card.expense .stat-icon { background:#fee2e2; color:#dc2626; }
+        .stat-card.balance .stat-icon { background:linear-gradient(to bottom right,#dbeafe,#e9d5ff); }
+        .stat-card.methods .stat-icon { background:#e0e7ff; color:#6366f1; }
+        .stat-trend { font-size:0.875rem; font-weight:500; }
+        .stat-card.income .stat-value,.stat-card.income .stat-trend { color:#16a34a; }
+        .stat-card.expense .stat-value,.stat-trend.negative { color:#dc2626; }
+        .stat-trend.positive { color:#16a34a; }
+        .stat-label { font-size:0.875rem; color:var(--text-muted); margin-bottom:0.25rem; }
+        .stat-value { font-size:1.875rem; font-weight:700; }
+        .stat-card.balance .stat-value { background:var(--brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 
         /* Eye Toggle */
         .eye-toggle { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 0.5rem; border: none; background: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.2s; color: #6b7280; margin-left: 0.5rem; }
@@ -225,17 +127,31 @@
         .method-value.cash { color: #16a34a; } /* Green for Hand Cash */
         .method-divider { height: 1px; background: linear-gradient(to right, transparent, #e5e7eb, transparent); }
         
-        /* Filters */
-        .filters-section { margin-bottom: 1rem; }
-        .filters-wrapper { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
-        .search-box { flex: 1; min-width: 200px; position: relative; }
-        .search-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #9ca3af; }
-        .search-box input { width: 100%; padding: 0.75rem 0.75rem 0.75rem 2.5rem; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 1rem; transition: all 0.3s; }
-        .search-box input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-        .filter-group { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
-        .filter-icon { color: #9ca3af; }
-        .filter-group select { padding: 0.75rem 1rem; background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 0.875rem; cursor: pointer; transition: all 0.3s; }
-        .filter-group select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .flex-center { display:flex; align-items:center; }
+        .flex-between { display:flex; align-items:center; justify-content:space-between; }
+        .glass { background:var(--glass-bg); backdrop-filter:var(--blur); border:1px solid var(--glass-border); }
+        .mb-2 { margin-bottom:1.5rem; }
+        .whatif-banner { background:linear-gradient(to right,#f59e0b,#ea580c); border-radius:var(--radius-lg); padding:1rem 1.5rem; color:#fff; display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; box-shadow:0 8px 16px rgba(245,158,11,0.2); }
+        .whatif-banner-content { display:flex; align-items:center; gap:0.75rem; }
+        .whatif-banner-icon { font-size:1.5rem; }
+        .whatif-banner h3 { font-size:1.125rem; font-weight:700; margin-bottom:0.25rem; }
+        .whatif-banner p { font-size:0.875rem; opacity:0.9; }
+        .whatif-banner form { display:inline; }
+        .whatif-banner .exit-btn { padding:0.5rem 1rem; background:rgba(255,255,255,0.2); backdrop-filter:var(--blur); border:none; border-radius:var(--radius-md); color:#fff; font-size:0.875rem; font-weight:500; cursor:pointer; transition:all 0.3s; }
+        .method-icon-warning { background:#fef3c7; color:#d97706; }
+        .method-value-warning { color:#d97706; }
+        .svg-indigo { color:#6366f1; }
+        
+        .filters-section { margin-bottom:1rem; }
+        .filters-wrapper { display:flex; gap:1rem; flex-wrap:wrap; align-items:center; }
+        .search-box { flex:1; min-width:200px; position:relative; }
+        .search-icon { position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--text-light); }
+        .search-box input { width:100%; padding:0.75rem 0.75rem 0.75rem 2.5rem; background:var(--glass-bg); backdrop-filter:var(--blur); border:1px solid var(--border); border-radius:var(--radius-md); font-size:1rem; transition:all 0.3s; }
+        .search-box input:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
+        .filter-group { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
+        .filter-icon { color:var(--text-light); }
+        .filter-group select { padding:0.75rem 1rem; background:var(--glass-bg); backdrop-filter:var(--blur); border:1px solid var(--border); border-radius:var(--radius-md); font-size:0.875rem; cursor:pointer; transition:all 0.3s; }
+        .filter-group select:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
         
         /* Table */
         .table-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
@@ -757,7 +673,7 @@
     <div class="container">
         <!-- Messages -->
         {% if messages %}
-            <div class="messages-container" style="margin-bottom: 1.5rem;">
+            <div class="messages-container mb-2">
                 {% for message in messages %}
                     <div class="message-item {{ message.tags }}">{{ message }}</div>
                 {% endfor %}
@@ -765,20 +681,18 @@
         {% endif %}
         <!-- What-If Mode Banner -->
         {% if request.session.whatif_mode %}
-        <div class="whatif-banner" style="background: linear-gradient(to right, #f59e0b, #ea580c); border-radius: 1rem; padding: 1rem 1.5rem; color: white; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; box-shadow: 0 8px 16px rgba(245,158,11,0.2);">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <div style="font-size: 1.5rem;">🧪</div>
+        <div class="whatif-banner">
+            <div class="whatif-banner-content">
+                <div class="whatif-banner-icon">🧪</div>
                 <div>
-                    <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem;">What-If Mode Active</h3>
-                    <p style="font-size: 0.875rem; opacity: 0.9;">All transactions are temporary and won't affect your real data</p>
+                    <h3>What-If Mode Active</h3>
+                    <p>All transactions are temporary and won't affect your real data</p>
                 </div>
             </div>
-            <form method="post" action="{% url 'toggle_whatif' %}" style="display: inline;" data-no-loading>
+            <form method="post" action="{% url 'toggle_whatif' %}" data-no-loading>
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'dashboard' %}">
-                <button type="submit" style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border: none; border-radius: 0.75rem; color: white; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.3s;">
-                    Exit Mode
-                </button>
+                <button type="submit" class="exit-btn">Exit Mode</button>
             </form>
         </div>
         {% endif %}
@@ -851,11 +765,11 @@
                     <div class="stat-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="background: linear-gradient(to bottom right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
                     </div>
-                    <div style="display:flex;align-items:center;">
+                    <div class="flex-center">
                         <span class="stat-trend {% if balance >= 0 %}positive{% else %}negative{% endif %}">
                             {% if balance >= 0 %}+{% endif %}{% if total_income > 0 %}{% widthratio balance total_income 100 %}{% else %}0{% endif %}%
                         </span>
-                        <button class="eye-toggle" onclick="toggleSensitive()" title="Toggle sensitive info">
+                        <button class="eye-toggle" id="eyeToggleBtn" title="Toggle sensitive info">
                             <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                         </button>
@@ -870,7 +784,7 @@
 
             <!-- Payment Methods -->
             <div class="stat-card methods">
-                <h3 class="stat-label" style="margin-bottom: 0.75rem;">Payment Methods</h3>
+                <h3 class="stat-label" style="margin-bottom:0.75rem">Payment Methods</h3>
                 <div class="methods-breakdown">
                     <div class="method-item">
                         <div class="method-info">
@@ -894,12 +808,12 @@
                     <div class="method-divider savings-line"></div>
                     <div class="method-item savings-line">
                         <div class="method-info">
-                            <div class="method-icon" style="background: #fef3c7; color: #d97706;">
+                            <div class="method-icon method-icon-warning">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/></svg>
                             </div>
                             <span class="method-label">Savings Amount</span>
                         </div>
-                        <span class="method-value" style="color: #d97706;">₹{{ total_saved|indian_currency }}</span>
+                        <span class="method-value method-value-warning">₹{{ total_saved|indian_currency }}</span>
                     </div>
                 </div>
             </div>
@@ -952,7 +866,7 @@
             <!-- Date Filter Section -->
             <div class="date-filter-section">
                 <div class="date-filter-header">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #6366f1;">
+                    <svg class="svg-indigo" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                         <line x1="16" y1="2" x2="16" y2="6"></line>
                         <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -996,7 +910,7 @@
                             Apply Filter
                         </button>
                         
-                        <button type="button" class="filter-btn clear-btn" onclick="clearDateFilter()">
+                        <button type="button" class="filter-btn clear-btn" data-action="clear-dates">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
                                 <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1005,10 +919,10 @@
                         </button>
                         
                         <div class="quick-filters">
-                            <button type="button" class="quick-filter-btn" onclick="setQuickFilter('today')">Today</button>
-                            <button type="button" class="quick-filter-btn" onclick="setQuickFilter('yesterday')">Yesterday</button>
-                            <button type="button" class="quick-filter-btn" onclick="setQuickFilter('week')">This Week</button>
-                            <button type="button" class="quick-filter-btn" onclick="setQuickFilter('month')">This Month</button>
+                            <button type="button" class="quick-filter-btn" data-period="today">Today</button>
+                            <button type="button" class="quick-filter-btn" data-period="yesterday">Yesterday</button>
+                            <button type="button" class="quick-filter-btn" data-period="week">This Week</button>
+                            <button type="button" class="quick-filter-btn" data-period="month">This Month</button>
                         </div>
                     </div>
                     
@@ -1031,65 +945,6 @@
         </div>
     </div>
 
-    <script>
-        const filterForm = document.getElementById('filterForm');
-        const searchInput = document.getElementById('searchInput');
-        const typeFilter = document.getElementById('typeFilter');
-        const methodFilter = document.getElementById('methodFilter');
-        const categoryFilter = document.getElementById('categoryFilter');
-
-        let searchTimeout;
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => filterForm.submit(), 500);
-        });
-
-        typeFilter.addEventListener('change', () => filterForm.submit());
-        methodFilter.addEventListener('change', () => filterForm.submit());
-        categoryFilter.addEventListener('change', () => filterForm.submit());
-
-        // AJAX Pagination
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.pagination-link')) {
-                e.preventDefault();
-                const link = e.target.closest('.pagination-link');
-                const page = link.getAttribute('data-page');
-                loadPage(page);
-            }
-        });
-
-        function loadPage(page) {
-            const formData = new FormData(filterForm);
-            const params = new URLSearchParams(formData);
-            params.set('page', page);
-
-            // Show loading state
-            const container = document.getElementById('transactionsContainer');
-            container.style.opacity = '0.5';
-            container.style.pointerEvents = 'none';
-
-            fetch('{% url "dashboard" %}?' + params.toString(), {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                container.innerHTML = data.html;
-                container.style.opacity = '1';
-                container.style.pointerEvents = 'auto';
-                
-                // Scroll to transactions table smoothly
-                container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            })
-            .catch(error => {
-                console.error('Error loading page:', error);
-                container.style.opacity = '1';
-                container.style.pointerEvents = 'auto';
-            });
-        }
-    </script>
-
     <!-- Delete Confirmation Modal -->
     <div id="deleteModal" class="modal-overlay">
         <div class="modal-content">
@@ -1104,138 +959,11 @@
             <h3 class="modal-title">Delete Transaction</h3>
             <p class="modal-message">Are you sure you want to delete "<span id="transactionName"></span>"? This action cannot be undone.</p>
             <div class="modal-actions">
-                <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
-                <button class="modal-btn modal-btn-delete" onclick="confirmDelete()">Delete</button>
+                <button class="modal-btn modal-btn-cancel" data-action="close-modal">Cancel</button>
+                <button class="modal-btn modal-btn-delete" data-action="confirm-delete">Delete</button>
             </div>
         </div>
     </div>
-
-    <script>
-        let deleteTransactionId = null;
-
-        function editTransaction(transactionId, transactionType) {
-            if (transactionType === 'SAVING') {
-                window.location.href = `/ledger/${transactionId}/edit-saving/`;
-            } else {
-                window.location.href = `/ledger/${transactionId}/edit/`;
-            }
-        }
-
-        function deleteTransaction(transactionId, transactionName) {
-            deleteTransactionId = transactionId;
-            document.getElementById('transactionName').textContent = transactionName;
-            document.getElementById('deleteModal').classList.add('show');
-        }
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.remove('show');
-            deleteTransactionId = null;
-        }
-
-        function confirmDelete() {
-            if (deleteTransactionId) {
-                // Create a form and submit it
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/ledger/${deleteTransactionId}/delete/`;
-                
-                // Add CSRF token
-                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-                if (csrfToken) {
-                    const csrfInput = document.createElement('input');
-                    csrfInput.type = 'hidden';
-                    csrfInput.name = 'csrfmiddlewaretoken';
-                    csrfInput.value = csrfToken.value;
-                    form.appendChild(csrfInput);
-                }
-                
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-
-        // Close modal when clicking outside
-        document.getElementById('deleteModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeDeleteModal();
-            }
-        });
-
-        // Date filter functions
-        function clearDateFilter() {
-            document.getElementById('start_date').value = '';
-            document.getElementById('end_date').value = '';
-            document.getElementById('dateFilterForm').submit();
-        }
-
-        function setQuickFilter(period) {
-            const today = new Date();
-            let startDate, endDate;
-
-            // Remove active class from all quick filter buttons
-            document.querySelectorAll('.quick-filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // Add active class to clicked button
-            event.target.classList.add('active');
-
-            switch(period) {
-                case 'today':
-                    startDate = endDate = today.toISOString().split('T')[0];
-                    break;
-                case 'yesterday':
-                    const yesterday = new Date(today);
-                    yesterday.setDate(today.getDate() - 1);
-                    startDate = endDate = yesterday.toISOString().split('T')[0];
-                    break;
-                case 'week':
-                    const weekStart = new Date(today);
-                    weekStart.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
-                    startDate = weekStart.toISOString().split('T')[0];
-                    endDate = today.toISOString().split('T')[0];
-                    break;
-                case 'month':
-                    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-                    startDate = monthStart.toISOString().split('T')[0];
-                    endDate = today.toISOString().split('T')[0];
-                    break;
-            }
-
-            document.getElementById('start_date').value = startDate;
-            document.getElementById('end_date').value = endDate;
-            document.getElementById('dateFilterForm').submit();
-        }
-
-        // Auto-submit form when date inputs change
-        document.addEventListener('DOMContentLoaded', function() {
-            const startDateInput = document.getElementById('start_date');
-            const endDateInput = document.getElementById('end_date');
-            
-            let debounceTimer;
-            
-            function handleDateChange() {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(() => {
-                    if (startDateInput.value && endDateInput.value) {
-                        document.getElementById('dateFilterForm').submit();
-                    }
-                }, 500); // Wait 500ms after user stops typing
-            }
-            
-            if (startDateInput && endDateInput) {
-                startDateInput.addEventListener('change', handleDateChange);
-                endDateInput.addEventListener('change', handleDateChange);
-            }
-        });
-
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeDeleteModal();
-            }
-        });
-    </script>
 
     <!-- Floating Action Button (Mobile) -->
     <a href="{% url 'add_transaction' %}" class="fab">
@@ -1248,33 +976,169 @@
     {% include "includes/mobile_nav.html" with active_page="dashboard" %}
 
     <script>
-        // Add hover effects to quick action cards
-        document.addEventListener('DOMContentLoaded', function() {
-            const quickActionCards = document.querySelectorAll('.quick-action-card');
-            quickActionCards.forEach(card => {
-                card.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-2px)';
-                    this.style.boxShadow = '0 8px 16px rgba(0,0,0,0.1)';
-                });
-                card.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                    this.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
-                });
-            });
+        const filterForm = document.getElementById('filterForm');
+        let deleteTransactionId = null;
+        let searchTimer;
 
-            // Restore sensitive toggle state
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const typeFilter = document.getElementById('typeFilter');
+            const methodFilter = document.getElementById('methodFilter');
+            const categoryFilter = document.getElementById('categoryFilter');
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('end_date');
+            const eyeToggle = document.getElementById('eyeToggleBtn');
+            const deleteModal = document.getElementById('deleteModal');
+
+            // Search debounce
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(() => filterForm.submit(), 500);
+                });
+            }
+
+            if (typeFilter) typeFilter.addEventListener('change', () => filterForm.submit());
+            if (methodFilter) methodFilter.addEventListener('change', () => filterForm.submit());
+            if (categoryFilter) categoryFilter.addEventListener('change', () => filterForm.submit());
+
+            // Date range auto-submit
+            let dateTimer;
+            function onDateChange() {
+                clearTimeout(dateTimer);
+                dateTimer = setTimeout(() => {
+                    if (startDateInput.value && endDateInput.value) {
+                        document.getElementById('dateFilterForm').submit();
+                    }
+                }, 500);
+            }
+            if (startDateInput && endDateInput) {
+                startDateInput.addEventListener('change', onDateChange);
+                endDateInput.addEventListener('change', onDateChange);
+            }
+
+            // Sensitive toggle
             const sensitiveHidden = localStorage.getItem('sensitiveHidden') === 'true';
             const summaryGrid = document.querySelector('.summary-grid');
-            if (sensitiveHidden && summaryGrid) {
-                summaryGrid.classList.add('sensitive-hidden');
+            if (sensitiveHidden && summaryGrid) summaryGrid.classList.add('sensitive-hidden');
+            if (eyeToggle) {
+                eyeToggle.addEventListener('click', function() {
+                    if (!summaryGrid) return;
+                    summaryGrid.classList.toggle('sensitive-hidden');
+                    localStorage.setItem('sensitiveHidden', summaryGrid.classList.contains('sensitive-hidden'));
+                });
             }
         });
 
-        function toggleSensitive() {
-            const summaryGrid = document.querySelector('.summary-grid');
-            if (!summaryGrid) return;
-            summaryGrid.classList.toggle('sensitive-hidden');
-            localStorage.setItem('sensitiveHidden', summaryGrid.classList.contains('sensitive-hidden'));
+        // Event delegation for global handlers
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('[data-action]') || e.target.closest('.pagination-link') || e.target.closest('.quick-action-card') || e.target.closest('[data-period]');
+            if (!target) return;
+
+            // Pagination
+            if (target.matches('.pagination-link')) {
+                e.preventDefault();
+                loadPage(target.getAttribute('data-page'));
+                return;
+            }
+
+            // Quick filter buttons
+            if (target.matches('[data-period]')) {
+                setQuickFilter(target.getAttribute('data-period'), target);
+                return;
+            }
+
+            // Modal actions
+            const action = target.getAttribute('data-action');
+            if (action === 'close-modal') closeDeleteModal();
+            if (action === 'confirm-delete') confirmDelete();
+            if (action === 'clear-dates') clearDateFilter();
+        });
+
+        // Close modal on outside click & Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeDeleteModal();
+        });
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteModal();
+        });
+
+        function loadPage(page) {
+            const formData = new FormData(filterForm);
+            const params = new URLSearchParams(formData);
+            params.set('page', page);
+            const container = document.getElementById('transactionsContainer');
+            container.style.opacity = '0.5';
+            container.style.pointerEvents = 'none';
+            fetch('{% url "dashboard" %}?' + params.toString(), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                container.innerHTML = data.html;
+                container.style.opacity = '1';
+                container.style.pointerEvents = 'auto';
+                container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            })
+            .catch(() => {
+                container.style.opacity = '1';
+                container.style.pointerEvents = 'auto';
+            });
+        }
+
+        function editTransaction(id, type) {
+            window.location.href = type === 'SAVING' ? `/ledger/${id}/edit-saving/` : `/ledger/${id}/edit/`;
+        }
+
+        function deleteTransaction(id, name) {
+            deleteTransactionId = id;
+            document.getElementById('transactionName').textContent = name;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+            deleteTransactionId = null;
+        }
+
+        function confirmDelete() {
+            if (!deleteTransactionId) return;
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/ledger/${deleteTransactionId}/delete/`;
+            const csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (csrf) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'csrfmiddlewaretoken';
+                input.value = csrf.value;
+                form.appendChild(input);
+            }
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function clearDateFilter() {
+            document.getElementById('start_date').value = '';
+            document.getElementById('end_date').value = '';
+            document.getElementById('dateFilterForm').submit();
+        }
+
+        function setQuickFilter(period, btn) {
+            const today = new Date();
+            const fmt = d => d.toISOString().split('T')[0];
+            let s, e;
+            switch (period) {
+                case 'today': s = e = fmt(today); break;
+                case 'yesterday': { const y = new Date(today); y.setDate(today.getDate()-1); s = e = fmt(y); break; }
+                case 'week': { const ws = new Date(today); ws.setDate(today.getDate()-today.getDay()); s = fmt(ws); e = fmt(today); break; }
+                case 'month': { const ms = new Date(today.getFullYear(), today.getMonth(), 1); s = fmt(ms); e = fmt(today); break; }
+            }
+            document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('start_date').value = s;
+            document.getElementById('end_date').value = e;
+            document.getElementById('dateFilterForm').submit();
         }
     </script>
 </body>
