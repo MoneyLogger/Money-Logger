@@ -1,163 +1,110 @@
 {% load humanize %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="corporate">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/media/logo/logo.png">
     <title>{{ title }} - Money Logger</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        * { font-family: 'Inter', sans-serif; }
         body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
-        .container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
-        
-        /* Header */
-        .header { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(24px); background: rgba(255,255,255,0.7); border-bottom: 1px solid rgba(255,255,255,0.2); box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 2rem; }
-        .header-inner { max-width: 1280px; margin: 0 auto; padding: 0 1rem; display: flex; align-items: center; justify-content: space-between; height: 4rem; }
-        .logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; }
-        .logo-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: linear-gradient(to bottom right, #3b82f6, #9333ea); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .logo-text { font-weight: 700; font-size: 1.25rem; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .logo-subtitle { font-size: 0.75rem; color: #6b7280; }
-        .back-btn { padding: 0.5rem 1rem; background: rgba(255,255,255,0.8); border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; color: #4b5563; text-decoration: none; transition: all 0.2s; }
-        .back-btn:hover { background: rgba(255,255,255,1); color: #111827; }
-        
-        /* Form Card */
-        .form-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1rem; padding: 2rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .form-header { margin-bottom: 2rem; }
-        .form-header h1 { font-size: 1.875rem; font-weight: 800; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.5rem; }
-        .form-header p { color: #6b7280; font-size: 0.875rem; }
-        
-        /* Form Fields */
-        .form-group { margin-bottom: 1.5rem; }
-        .form-label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.5rem; }
-        .form-input, .form-select { width: 100%; padding: 0.75rem 1rem; background: rgba(255,255,255,0.9); border: 1px solid #e5e7eb; border-radius: 0.75rem; font-size: 1rem; transition: all 0.3s; }
-        .form-input:focus, .form-select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-        .form-help { font-size: 0.75rem; color: #6b7280; margin-top: 0.25rem; }
-        .form-error { font-size: 0.75rem; color: #ef4444; margin-top: 0.25rem; }
-        
-        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
-        
-        /* Buttons */
-        .form-actions { display: flex; gap: 1rem; margin-top: 2rem; }
-        .btn { padding: 0.75rem 1.5rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 600; text-decoration: none; transition: all 0.3s; border: none; cursor: pointer; }
-        .btn-primary { background: linear-gradient(to right, #2563eb, #9333ea); color: white; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-secondary { background: rgba(107,114,128,0.1); color: #6b7280; }
-        .btn-secondary:hover { background: rgba(107,114,128,0.2); }
-        
-        /* Messages */
-
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .container { padding: 1rem 0.5rem; }
-            .form-card { padding: 1.5rem; }
-            .form-row { grid-template-columns: 1fr; }
-        }
+        .brand-gradient { background: linear-gradient(to right, #2563eb, #9333ea); }
+        .brand-text { background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .glass { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(229,231,235,0.5); }
+        .glass-nav { background: rgba(255,255,255,0.75); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .form-field { width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 0.75rem; font-size: 1rem; transition: all 0.2s; background: white; }
+        .form-field:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="header-inner">
-            <a href="{% url 'dashboard' %}" class="logo">
-                <div class="logo-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+    <header class="glass-nav sticky top-0 z-50 shadow-sm mb-8">
+        <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
+            <a href="{% url 'dashboard' %}" class="flex items-center gap-3 no-underline">
+                <div class="w-10 h-10 rounded-xl brand-gradient flex items-center justify-center shadow-md">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
                 </div>
                 <div>
-                    <div class="logo-text">Money Logger</div>
-                    <div class="logo-subtitle">Financial Survival Tracker</div>
+                    <div class="font-bold text-xl brand-text leading-tight">Money Logger</div>
+                    <div class="text-xs text-base-content/50">Financial Survival Tracker</div>
                 </div>
             </a>
-            <a href="{% url 'budget_list' %}" class="back-btn">← Back to Budgets</a>
+            <a href="{% url 'budget_list' %}" class="btn btn-ghost btn-sm rounded-xl border border-base-200">← Back to Budgets</a>
         </div>
-    </div>
+    </header>
 
-    <div class="container">
-        <!-- Messages -->
+    <div class="max-w-2xl mx-auto px-4 pb-20">
         {% if messages %}
-        <div>
+        <div class="mb-4">
             {% for message in messages %}
-            <div>{{ message }}</div>
+            <div class="alert text-sm mb-2"><span>{{ message }}</span></div>
             {% endfor %}
         </div>
         {% endif %}
-        
-        <!-- Form Card -->
-        <div class="form-card">
-            <div class="form-header">
-                <h1>{{ title }}</h1>
-                <p>Set spending limits for different categories</p>
+
+        <div class="glass rounded-2xl p-8">
+            <div class="mb-8">
+                <h1 class="text-3xl font-extrabold brand-text mb-2">{{ title }}</h1>
+                <p class="text-base-content/60 text-sm">Set spending limits for different categories</p>
             </div>
-            
+
             <form method="post">
                 {% csrf_token %}
-                
-                <div class="form-group">
-                    <label class="form-label" for="id_category">Category *</label>
+                <div class="form-control mb-5">
+                    <label class="label"><span class="label-text font-semibold">Category *</span></label>
                     {{ form.category }}
-                    {% if form.category.errors %}
-                        <div class="form-error">{{ form.category.errors.0 }}</div>
-                    {% else %}
-                        <div class="form-help">Select from categories you've used in your transactions</div>
-                    {% endif %}
+                    {% if form.category.errors %}<p class="text-error text-xs mt-1">{{ form.category.errors.0 }}</p>
+                    {% else %}<p class="text-xs text-base-content/50 mt-1">Select from categories you've used in your transactions</p>{% endif %}
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="id_amount">Budget Amount (₹) *</label>
+                <div class="form-control mb-5">
+                    <label class="label"><span class="label-text font-semibold">Budget Amount (₹) *</span></label>
                     {{ form.amount }}
-                    {% if form.amount.errors %}
-                        <div class="form-error">{{ form.amount.errors.0 }}</div>
-                    {% else %}
-                        <div class="form-help">Maximum amount you want to spend in this category</div>
-                    {% endif %}
+                    {% if form.amount.errors %}<p class="text-error text-xs mt-1">{{ form.amount.errors.0 }}</p>
+                    {% else %}<p class="text-xs text-base-content/50 mt-1">Maximum amount you want to spend in this category</p>{% endif %}
                 </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label" for="id_period">Period *</label>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-semibold">Period *</span></label>
                         {{ form.period }}
-                        {% if form.period.errors %}
-                            <div class="form-error">{{ form.period.errors.0 }}</div>
-                        {% endif %}
+                        {% if form.period.errors %}<p class="text-error text-xs mt-1">{{ form.period.errors.0 }}</p>{% endif %}
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="id_month">Month *</label>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-semibold">Month *</span></label>
                         {{ form.month }}
-                        {% if form.month.errors %}
-                            <div class="form-error">{{ form.month.errors.0 }}</div>
-                        {% endif %}
+                        {% if form.month.errors %}<p class="text-error text-xs mt-1">{{ form.month.errors.0 }}</p>{% endif %}
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label" for="id_year">Year *</label>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-semibold">Year *</span></label>
                         {{ form.year }}
-                        {% if form.year.errors %}
-                            <div class="form-error">{{ form.year.errors.0 }}</div>
-                        {% endif %}
+                        {% if form.year.errors %}<p class="text-error text-xs mt-1">{{ form.year.errors.0 }}</p>{% endif %}
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label class="form-label" for="id_alert_threshold">Alert Threshold (%) *</label>
+                <div class="form-control mb-8">
+                    <label class="label"><span class="label-text font-semibold">Alert Threshold (%) *</span></label>
                     {{ form.alert_threshold }}
-                    {% if form.alert_threshold.errors %}
-                        <div class="form-error">{{ form.alert_threshold.errors.0 }}</div>
-                    {% else %}
-                        <div class="form-help">Get notified when you reach this percentage of your budget (default: 80%)</div>
-                    {% endif %}
+                    {% if form.alert_threshold.errors %}<p class="text-error text-xs mt-1">{{ form.alert_threshold.errors.0 }}</p>
+                    {% else %}<p class="text-xs text-base-content/50 mt-1">Get notified when you reach this percentage (default: 80%)</p>{% endif %}
                 </div>
-                
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">
+                <div class="flex gap-3">
+                    <button type="submit" class="btn btn-primary flex-1">
                         {% if budget %}Update Budget{% else %}Create Budget{% endif %}
                     </button>
-                    <a href="{% url 'budget_list' %}" class="btn btn-secondary">Cancel</a>
+                    <a href="{% url 'budget_list' %}" class="btn btn-ghost border border-base-300">Cancel</a>
                 </div>
             </form>
         </div>
     </div>
+    <style>
+        #id_category, #id_amount, #id_period, #id_month, #id_year, #id_alert_threshold {
+            width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 0.75rem;
+            font-size: 1rem; background: white; transition: all 0.2s;
+        }
+        #id_category:focus, #id_amount:focus, #id_period:focus, #id_month:focus, #id_year:focus, #id_alert_threshold:focus {
+            outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+    </style>
 </body>
 </html>

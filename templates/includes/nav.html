@@ -1,176 +1,125 @@
+<link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 <style>
-:root{--primary:#2563eb;--secondary:#9333ea;--brand:linear-gradient(to right,var(--primary),var(--secondary));--text:#374151;--text-muted:#6b7280;--border:#e5e7eb;--glass-bg:rgba(255,255,255,0.8);--glass-border:rgba(229,231,235,0.5);--radius-sm:0.5rem;--radius-md:0.75rem;--radius-lg:1rem;--shadow-sm:0 1px 3px rgba(0,0,0,0.05);--shadow-md:0 4px 6px rgba(0,0,0,0.05);--shadow-lg:0 10px 25px rgba(0,0,0,0.1);--blur:blur(10px);--transition:all 0.2s}
-.header{position:sticky;top:0;z-index:50;backdrop-filter:blur(24px);background:rgba(255,255,255,0.7);border-bottom:1px solid rgba(255,255,255,0.2);box-shadow:var(--shadow-sm);margin-bottom:2rem}
-.header-inner{max-width:1280px;margin:0 auto;padding:0 1rem;display:flex;align-items:center;justify-content:space-between;height:4rem}
-.logo{display:flex;align-items:center;gap:0.75rem;text-decoration:none}
-.logo-icon{width:2.5rem;height:2.5rem;border-radius:var(--radius-md);background:linear-gradient(to bottom right,#3b82f6,#9333ea);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 6px rgba(0,0,0,0.1)}
-.logo-text{font-weight:700;font-size:1.25rem;background:var(--brand);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.logo-subtitle{font-size:0.75rem;color:var(--text-muted)}
-.nav-links{display:flex;align-items:center;gap:0.5rem}
-.nav-link{padding:0.5rem 1rem;border-radius:var(--radius-md);font-size:0.875rem;font-weight:500;color:#4b5563;text-decoration:none;transition:var(--transition)}
-.nav-link:hover{background:rgba(255,255,255,0.5);color:#111827}
-.nav-link.active{color:var(--primary);background:linear-gradient(to right,#dbeafe,#e9d5ff)}
-.btn-add{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;background:var(--brand);color:white;border-radius:var(--radius-md);font-size:0.875rem;font-weight:500;text-decoration:none;transition:box-shadow 0.2s;white-space:nowrap}
-.btn-add:hover{box-shadow:0 4px 6px rgba(0,0,0,0.1)}
-.whatif-toggle{margin:0 0.5rem}
-.whatif-btn{display:flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;background:var(--glass-bg);backdrop-filter:var(--blur);color:var(--text-muted);border:1px solid var(--border);border-radius:var(--radius-md);font-size:0.875rem;font-weight:500;cursor:pointer;transition:var(--transition)}
-.whatif-btn:hover{background:rgba(255,255,255,0.9);color:var(--text);box-shadow:0 2px 4px rgba(0,0,0,0.1)}
-.whatif-btn.active{background:linear-gradient(to right,#f59e0b,#ea580c);color:white;border-color:transparent}
-.whatif-btn.active:hover{background:linear-gradient(to right,#d97706,#c2410c)}
-.settings-dropdown{position:relative}
-.settings-btn{display:flex;align-items:center;justify-content:center;width:2.5rem;height:2.5rem;border-radius:var(--radius-md);background:rgba(255,255,255,0.5);border:1px solid var(--glass-border);cursor:pointer;transition:var(--transition)}
-.settings-btn:hover{background:var(--glass-bg);border-color:var(--border)}
-.settings-btn svg{width:1.25rem;height:1.25rem;color:var(--text-muted)}
-.settings-menu{position:absolute;top:calc(100% + 0.5rem);right:0;min-width:200px;background:rgba(255,255,255,0.95);backdrop-filter:blur(20px);border-radius:var(--radius-md);border:1px solid var(--glass-border);box-shadow:var(--shadow-lg);padding:0.5rem;display:none;z-index:100;animation:slideDown 0.2s ease-out}
-.settings-menu.active{display:block}
-@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
-.settings-menu-item{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;border-radius:var(--radius-sm);font-size:0.875rem;font-weight:500;color:var(--text);text-decoration:none;transition:var(--transition);cursor:pointer;border:none;background:transparent;width:100%;text-align:left}
-.settings-menu-item:hover{background:rgba(59,130,246,0.1);color:var(--primary)}
-.settings-menu-item svg{width:1.125rem;height:1.125rem;color:currentColor}
-.settings-menu-divider{height:1px;background:var(--glass-border);margin:0.5rem 0}
-.settings-menu-item.logout-item{color:#ef4444}
-.settings-menu-item.logout-item:hover{background:rgba(239,68,68,0.1);color:#dc2626}
-.avatar-circle{width:2.25rem;height:2.25rem;border-radius:50%;background:linear-gradient(to bottom right,#3b82f6,#9333ea);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.avatar-circle span{color:white;font-weight:700;font-size:0.875rem}
-.user-info{min-width:0}
-.user-name{font-weight:600;font-size:0.875rem;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.user-email{font-size:0.75rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nav-link svg{display:inline-block;vertical-align:-3px;margin-right:5px}
-#loadingOverlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.35);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
-#loadingOverlay.active{display:flex}
-.spinner{width:48px;height:48px;border:4px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-#loadingOverlay p{color:white;font-weight:600;font-size:1rem}
-@media(max-width:768px){.nav-links{display:none}.settings-dropdown{display:none}.whatif-toggle{margin:0 0.25rem}.btn-add{display:none}.header-inner{padding:0 0.5rem}}
+    body { font-family: 'Inter', sans-serif; background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); }
+    .brand-gradient { background: linear-gradient(to right, #2563eb, #9333ea); }
+    .brand-text { background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .glass-nav { background: rgba(255,255,255,0.75); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.2); }
+    .nav-link-active { color: #2563eb !important; background: linear-gradient(to right, #dbeafe, #e9d5ff); border-radius: 0.75rem; }
+    .whatif-active { background: linear-gradient(to right, #f59e0b, #ea580c) !important; color: white !important; border-color: transparent !important; }
+    #loadingOverlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.35); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
+    #loadingOverlay.active { display: flex; }
+    .spinner { width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 </style>
-<header class="header">
-    <div class="header-inner">
-        <a href="{% url 'dashboard' %}" class="logo">
-            <div class="logo-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+
+<header class="glass-nav sticky top-0 z-50 shadow-sm mb-8">
+    <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
+        <!-- Logo -->
+        <a href="{% url 'dashboard' %}" class="flex items-center gap-3 no-underline">
+            <div class="w-10 h-10 rounded-xl brand-gradient flex items-center justify-center shadow-md">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
             </div>
             <div>
-                <div class="logo-text">Money Logger</div>
-                <div class="logo-subtitle">Financial Survival Tracker</div>
+                <div class="font-bold text-xl brand-text leading-tight">Money Logger</div>
+                <div class="text-xs text-base-content/50 leading-tight">Financial Survival Tracker</div>
             </div>
         </a>
 
-        <div class="nav-links">
-            <a href="{% url 'dashboard' %}" class="nav-link{% if active_page == 'dashboard' %} active{% endif %}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+        <!-- Desktop Nav Links -->
+        <nav class="hidden md:flex items-center gap-1">
+            <a href="{% url 'dashboard' %}" class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-base-content/70 hover:bg-white/50 hover:text-base-content transition-all {% if active_page == 'dashboard' %}nav-link-active{% endif %}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
                 Dashboard
             </a>
-            <a href="{% url 'survival' %}" class="nav-link{% if active_page == 'survival' %} active{% endif %}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"></path></svg>
+            <a href="{% url 'survival' %}" class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-base-content/70 hover:bg-white/50 hover:text-base-content transition-all {% if active_page == 'survival' %}nav-link-active{% endif %}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>
                 Survival
             </a>
-            <a href="{% url 'analytics' %}" class="nav-link{% if active_page == 'analytics' %} active{% endif %}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+            <a href="{% url 'analytics' %}" class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-base-content/70 hover:bg-white/50 hover:text-base-content transition-all {% if active_page == 'analytics' %}nav-link-active{% endif %}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
                 Analytics
             </a>
-            <a href="{% url 'budget_list' %}" class="nav-link{% if active_page == 'budget' %} active{% endif %}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            <a href="{% url 'budget_list' %}" class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-base-content/70 hover:bg-white/50 hover:text-base-content transition-all {% if active_page == 'budget' %}nav-link-active{% endif %}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                 Budget
             </a>
-            <a href="{% url 'notes_list' %}" class="nav-link{% if active_page == 'notes' %} active{% endif %}">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path></svg>
+            <a href="{% url 'notes_list' %}" class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-base-content/70 hover:bg-white/50 hover:text-base-content transition-all {% if active_page == 'notes' %}nav-link-active{% endif %}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                 Notes
             </a>
-        </div>
+        </nav>
 
-        {% if not hide_whatif %}
-        <div class="whatif-toggle">
+        <!-- Right side -->
+        <div class="flex items-center gap-2">
+            <!-- What-If Toggle -->
+            {% if not hide_whatif %}
             <form method="post" action="{% url 'toggle_whatif' %}" style="display: inline;" data-no-loading>
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url whatif_next|default:'dashboard' %}">
-                <button type="submit" class="whatif-btn {% if request.session.whatif_mode %}active{% endif %}">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                        <circle cx="12" cy="17" r="1"/>
-                    </svg>
+                <button type="submit" class="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium border border-base-200 bg-white/70 text-base-content/60 hover:bg-white/90 transition-all {% if request.session.whatif_mode %}whatif-active{% endif %}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><circle cx="12" cy="17" r="1"/></svg>
                     {% if request.session.whatif_mode %}Exit What-If{% else %}What-If{% endif %}
                 </button>
             </form>
-        </div>
-        {% endif %}
+            {% endif %}
 
-        <div class="settings-dropdown">
-            <button class="settings-btn" onclick="toggleSettingsMenu()">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="5" r="1.5"/>
-                    <circle cx="12" cy="12" r="1.5"/>
-                    <circle cx="12" cy="19" r="1.5"/>
-                </svg>
-            </button>
-            <div class="settings-menu" id="settingsMenu">
-                <div class="flex-row" style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;margin-bottom:0.25rem;">
-                    <div class="avatar-circle" style="width:2.25rem;height:2.25rem">
-                        <span>{{ request.user.username|first|upper }}</span>
-                    </div>
-                    <div class="user-info">
-                        <p class="user-name">{{ request.user.username }}</p>
-                        <p class="user-email">{{ request.user.email }}</p>
-                    </div>
+            <!-- Settings Dropdown (Desktop) -->
+            <div class="dropdown dropdown-end hidden md:block">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square rounded-xl bg-white/50 border border-base-200 hover:bg-white/80">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-base-content/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                    </svg>
                 </div>
-                <div class="settings-menu-divider"></div>
-                <a href="{% url 'saving_dashboard' %}" class="settings-menu-item{% if active_page == 'savings' %} active" style="background: rgba(59,130,246,0.1); color: #2563eb;{% endif %}">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"></path><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path><path d="M12 18V6"></path></svg>
-                    <span>Savings</span>
-                </a>
-                <a href="{% url 'activity_log' %}" class="settings-menu-item{% if active_page == 'activity_log' %} active" style="background: rgba(59,130,246,0.1); color: #2563eb;{% endif %}">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                        <polyline points="14 2 14 8 20 8"/>
-                        <line x1="16" y1="13" x2="8" y2="13"/>
-                        <line x1="16" y1="17" x2="8" y2="17"/>
-                        <polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                    <span>Activity Log</span>
-                </a>
-                <a href="{% url 'export_data' %}" class="settings-menu-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                    <span>Export Excel</span>
-                </a>
-                <div class="settings-menu-divider"></div>
-                <a href="{% url 'logout' %}" class="settings-menu-item logout-item">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                        <polyline points="16 17 21 12 16 7"/>
-                        <line x1="21" y1="12" x2="9" y2="12"/>
-                    </svg>
-                    <span>Logout</span>
-                </a>
+                <ul tabindex="0" class="dropdown-content z-[100] menu p-2 shadow-xl bg-base-100/95 backdrop-blur-lg rounded-xl w-56 border border-base-200 mt-2">
+                    <li class="mb-1">
+                        <div class="flex items-center gap-3 px-3 py-2 pointer-events-none">
+                            <div class="w-9 h-9 rounded-full brand-gradient flex items-center justify-center shrink-0">
+                                <span class="text-white font-bold text-sm">{{ request.user.username|first|upper }}</span>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="font-semibold text-sm truncate">{{ request.user.username }}</p>
+                                <p class="text-xs text-base-content/50 truncate">{{ request.user.email }}</p>
+                            </div>
+                        </div>
+                    </li>
+                    <div class="divider my-0.5"></div>
+                    <li><a href="{% url 'saving_dashboard' %}" class="{% if active_page == 'savings' %}active{% endif %}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
+                        Savings
+                    </a></li>
+                    <li><a href="{% url 'activity_log' %}" class="{% if active_page == 'activity_log' %}active{% endif %}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        Activity Log
+                    </a></li>
+                    <li><a href="{% url 'export_data' %}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Export Excel
+                    </a></li>
+                    <div class="divider my-0.5"></div>
+                    <li><a href="{% url 'logout' %}" class="text-error hover:bg-error/10">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Logout
+                    </a></li>
+                </ul>
             </div>
-        </div>
 
-        <a href="{% url action_url|default:'add_transaction' %}" class="btn-add{% if active_page == 'add_transaction' %} active{% endif %}">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            <span>{{ action_text|default:'Add Transaction' }}</span>
-        </a>
+            <!-- Add Button (Desktop) -->
+            <a href="{% url action_url|default:'add_transaction' %}" class="btn brand-gradient text-white border-0 btn-sm hidden md:flex items-center gap-2 rounded-xl hover:opacity-90 hover:shadow-md transition-all {% if active_page == 'add_transaction' %}opacity-90{% endif %}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>{{ action_text|default:'Add Transaction' }}</span>
+            </a>
+        </div>
     </div>
 </header>
 
+<!-- Loading Overlay -->
 <div id="loadingOverlay">
     <div class="spinner"></div>
-    <p>Processing...</p>
+    <p class="text-white font-semibold text-base">Processing...</p>
 </div>
-<script>
-function toggleSettingsMenu() {
-    const menu = document.getElementById('settingsMenu');
-    menu.classList.toggle('active');
-}
-document.addEventListener('click', function(event) {
-    const settingsDropdown = document.querySelector('.settings-dropdown');
-    const settingsMenu = document.getElementById('settingsMenu');
-    if (settingsDropdown && !settingsDropdown.contains(event.target)) {
-        settingsMenu.classList.remove('active');
-    }
-});
 
+<script>
 document.addEventListener('DOMContentLoaded', function() {
     const overlay = document.getElementById('loadingOverlay');
     document.querySelectorAll('form:not([data-no-loading])').forEach(function(form) {

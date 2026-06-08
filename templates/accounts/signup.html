@@ -1,129 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="corporate">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/media/logo/logo.png">
     <title>Sign Up - Money Logger</title>
     {% if RECAPTCHA_ENABLED and RECAPTCHA_SITE_KEY %}
-        {% if RECAPTCHA_VERSION == 'v3' %}
-            <script src="https://www.google.com/recaptcha/api.js?render={{ RECAPTCHA_SITE_KEY }}"></script>
-        {% else %}
-            <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-        {% endif %}
+    {% if RECAPTCHA_VERSION == 'v3' %}
+    <script src="https://www.google.com/recaptcha/api.js?render={{ RECAPTCHA_SITE_KEY }}"></script>
+    {% else %}
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     {% endif %}
+    {% endif %}
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .auth-container { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        .logo { text-align: center; margin-bottom: 30px; }
-        .logo img { height: 60px; margin-bottom: 10px; }
-        .logo h1 { color: #333; font-size: 1.8rem; font-weight: 600; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: 600; }
-        .form-group input { width: 100%; padding: 12px; border: 2px solid #e1e8ed; border-radius: 10px; font-size: 1rem; transition: border-color 0.3s; }
-        .form-group input:focus { outline: none; border-color: #2563eb; }
-        .btn { width: 100%; background: linear-gradient(135deg, #2563eb, #7c3aed); color: white; padding: 14px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.3s; }
-        .btn:hover { transform: translateY(-2px); }
-        .auth-links { text-align: center; margin-top: 20px; }
-        .auth-links a { color: #2563eb; text-decoration: none; font-weight: 600; }
-        .auth-links a:hover { text-decoration: underline; }
-
-        .password-wrapper { position: relative; }
-        .password-wrapper input { padding-right: 45px !important; }
-        .toggle-pass {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; cursor: pointer; padding: 4px;
-            color: #95a5a6; display: flex; align-items: center;
-        }
-        .toggle-pass:hover { color: #2563eb; }
-        .helptext { font-size: 0.85rem; color: #666; margin-top: 5px; }
-        .errorlist { color: #e74c3c; font-size: 0.9rem; margin-top: 5px; }
-        .recaptcha-wrap { margin-top: 10px; margin-bottom: 10px; display: flex; justify-content: center; }
-        .recaptcha-wrap .g-recaptcha { transform: scale(0.85); transform-origin: top left; }
-
-        @media (max-width: 480px) {
-            .recaptcha-wrap .g-recaptcha { transform: scale(0.75); transform-origin: top left; }
-        }
+        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); }
+        .brand-gradient { background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); }
+        .brand-text { background: linear-gradient(to right, #2563eb, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .glass-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); }
+        .form-input-field { width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 0.75rem; font-size: 1rem; transition: all 0.2s; background: white; }
+        .form-input-field:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .pass-field { padding-right: 2.75rem !important; }
     </style>
 </head>
-<body>
-    <div class="auth-container">
-        <div class="logo">
-            <img src="/media/logo/logo.png" alt="Logo" style="height:80px;margin-bottom:10px;">
-            <h1>Create Account</h1>
+<body class="min-h-screen flex items-center justify-center p-5">
+    <div class="glass-card w-full max-w-md rounded-2xl shadow-2xl p-10">
+        <div class="text-center mb-8">
+            <img src="/media/logo/logo.png" alt="Logo" class="h-20 mx-auto mb-3">
+            <h1 class="text-3xl font-bold brand-text">Create Account</h1>
         </div>
-        
+
         {% if messages %}
-            <div>
-                {% for message in messages %}
-                    <div>{{ message }}</div>
-                {% endfor %}
-            </div>
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="alert alert-info text-sm mb-2"><span>{{ message }}</span></div>
+            {% endfor %}
+        </div>
         {% endif %}
-        
+
         <form method="post" id="signup-form">
             {% csrf_token %}
-            <div class="form-group">
-                <label for="{{ form.username.id_for_label }}">Username</label>
+
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text font-semibold">Username</span></label>
                 {{ form.username }}
-                {% if form.username.help_text %}
-                    <div class="helptext">{{ form.username.help_text }}</div>
-                {% endif %}
-                {% if form.username.errors %}
-                    <div class="errorlist">{{ form.username.errors.0 }}</div>
-                {% endif %}
+                {% if form.username.help_text %}<p class="text-xs text-base-content/50 mt-1">{{ form.username.help_text }}</p>{% endif %}
+                {% if form.username.errors %}<p class="text-error text-xs mt-1">{{ form.username.errors.0 }}</p>{% endif %}
             </div>
-            
-            <div class="form-group">
-                <label for="{{ form.password1.id_for_label }}">Password</label>
-                <div class="password-wrapper">
+
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text font-semibold">Password</span></label>
+                <div class="relative">
                     {{ form.password1 }}
-                    <button type="button" class="toggle-pass" onclick="togglePass('{{ form.password1.id_for_label }}', this)" tabindex="-1">
+                    <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-primary" onclick="togglePass('{{ form.password1.id_for_label }}', this)" tabindex="-1">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     </button>
                 </div>
-                {% if form.password1.help_text %}
-                    <div class="helptext">{{ form.password1.help_text }}</div>
-                {% endif %}
-                {% if form.password1.errors %}
-                    <div class="errorlist">{{ form.password1.errors.0 }}</div>
-                {% endif %}
+                {% if form.password1.help_text %}<p class="text-xs text-base-content/50 mt-1">{{ form.password1.help_text }}</p>{% endif %}
+                {% if form.password1.errors %}<p class="text-error text-xs mt-1">{{ form.password1.errors.0 }}</p>{% endif %}
             </div>
-            
-            <div class="form-group">
-                <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
-                <div class="password-wrapper">
+
+            <div class="form-control mb-6">
+                <label class="label"><span class="label-text font-semibold">Confirm Password</span></label>
+                <div class="relative">
                     {{ form.password2 }}
-                    <button type="button" class="toggle-pass" onclick="togglePass('{{ form.password2.id_for_label }}', this)" tabindex="-1">
+                    <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-primary" onclick="togglePass('{{ form.password2.id_for_label }}', this)" tabindex="-1">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     </button>
                 </div>
-                {% if form.password2.help_text %}
-                    <div class="helptext">{{ form.password2.help_text }}</div>
-                {% endif %}
-                {% if form.password2.errors %}
-                    <div class="errorlist">{{ form.password2.errors.0 }}</div>
-                {% endif %}
+                {% if form.password2.errors %}<p class="text-error text-xs mt-1">{{ form.password2.errors.0 }}</p>{% endif %}
             </div>
 
             {% if RECAPTCHA_ENABLED and RECAPTCHA_SITE_KEY %}
-                {% if RECAPTCHA_VERSION == 'v3' %}
-                    <input type="hidden" name="g-recaptcha-response" id="recaptcha-token">
-                {% else %}
-                    <div class="recaptcha-wrap">
-                        <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}" data-size="compact"></div>
-                    </div>
-                {% endif %}
+            {% if RECAPTCHA_VERSION == 'v3' %}
+            <input type="hidden" name="g-recaptcha-response" id="recaptcha-token">
+            {% else %}
+            <div class="flex justify-center mb-4">
+                <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}" data-size="compact"></div>
+            </div>
             {% endif %}
-            
-            <button type="submit" class="btn">Create Account</button>
+            {% endif %}
+
+            <button type="submit" class="btn brand-gradient text-white border-0 w-full h-12 text-base font-semibold hover:opacity-90 hover:-translate-y-0.5 transition-all">Create Account</button>
         </form>
-        
-        <div class="auth-links">
-            Already have an account? <a href="{% url 'login' %}">Sign In</a>
-        </div>
+
+        <p class="text-center text-sm text-base-content/60 mt-5">
+            Already have an account? <a href="{% url 'login' %}" class="text-primary font-semibold hover:underline">Sign In</a>
+        </p>
     </div>
+
     <script>
         function togglePass(id, btn) {
             const inp = document.getElementById(id);
@@ -134,28 +100,29 @@
                 ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
                 : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
         }
-
         {% if RECAPTCHA_ENABLED and RECAPTCHA_SITE_KEY and RECAPTCHA_VERSION == 'v3' %}
         (function () {
             const form = document.getElementById('signup-form');
             if (!form || typeof grecaptcha === 'undefined') return;
-
             form.addEventListener('submit', async function (e) {
                 const tokenInput = document.getElementById('recaptcha-token');
-                if (!tokenInput) return;
-                if (tokenInput.value) return;
-
+                if (!tokenInput || tokenInput.value) return;
                 e.preventDefault();
-                try {
-                    const token = await grecaptcha.execute('{{ RECAPTCHA_SITE_KEY }}', { action: 'signup' });
-                    tokenInput.value = token;
-                } catch (_) {
-                    tokenInput.value = '';
-                }
+                try { tokenInput.value = await grecaptcha.execute('{{ RECAPTCHA_SITE_KEY }}', { action: 'signup' }); } catch (_) { tokenInput.value = ''; }
                 form.submit();
             });
         })();
         {% endif %}
     </script>
+    <style>
+        input[name="{{ form.username.html_name }}"], input[name="{{ form.password1.html_name }}"], input[name="{{ form.password2.html_name }}"] {
+            width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 0.75rem;
+            font-size: 1rem; transition: all 0.2s; background: white;
+        }
+        input[name="{{ form.username.html_name }}"]:focus, input[name="{{ form.password1.html_name }}"]:focus, input[name="{{ form.password2.html_name }}"]:focus {
+            outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+        input[name="{{ form.password1.html_name }}"], input[name="{{ form.password2.html_name }}"] { padding-right: 2.75rem; }
+    </style>
 </body>
 </html>

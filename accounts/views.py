@@ -14,22 +14,8 @@ class CustomUserCreationForm(UserCreationForm):
         fields = ('username',)
 
 
-class RecaptchaAuthenticationForm(AuthenticationForm):
-    def clean(self):
-        token = self.data.get("g-recaptcha-response")
-        result = verify_recaptcha(
-            token=token,
-            remoteip=self.request.META.get("REMOTE_ADDR"),
-            expected_action="login",
-        )
-        if not result.ok:
-            raise forms.ValidationError("reCAPTCHA verification failed. Please try again.")
-        return super().clean()
-
-
 class RecaptchaLoginView(LoginView):
     template_name = "accounts/login.html"
-    authentication_form = RecaptchaAuthenticationForm
 
 
 def signup(request):

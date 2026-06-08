@@ -1,1226 +1,290 @@
-﻿{% load currency_filters %}
-<!DOCTYPE html>
+{% load currency_filters %}
 {% load static %}
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" data-theme="corporate">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/media/logo/logo.png">
     <title>Survival Dashboard - Money Logger</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3);
-            min-height: 100vh;
-        }
-
-        /* Header Navigation */
-        .header {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            backdrop-filter: blur(24px);
-            background: rgba(255,255,255,0.7);
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            margin-bottom: 2rem;
-        }
-
-        .header-inner {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 4rem;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            text-decoration: none;
-        }
-
-        .logo-icon {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 0.75rem;
-            background: linear-gradient(to bottom right, #3b82f6, #9333ea);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .logo-text {
-            font-weight: 700;
-            font-size: 1.25rem;
-            background: linear-gradient(to right, #2563eb, #9333ea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .logo-subtitle {
-            font-size: 0.75rem;
-            color: #6b7280;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .nav-link {
-            padding: 0.5rem 1rem;
-            border-radius: 0.75rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #4b5563;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .nav-link:hover {
-            background: rgba(255,255,255,0.5);
-            color: #111827;
-        }
-
-        .nav-link.active {
-            color: #2563eb;
-            background: linear-gradient(to right, #dbeafe, #e9d5ff);
-        }
-
-        .btn-add {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: linear-gradient(to right, #2563eb, #9333ea);
-            color: white;
-            border-radius: 0.75rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            text-decoration: none;
-            transition: box-shadow 0.2s;
-        }
-
-        .btn-add:hover {
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        /* What-If Mode Toggle */
-        .whatif-toggle { margin: 0 0.5rem; }
-        .whatif-btn { 
-            display: flex; 
-            align-items: center; 
-            gap: 0.5rem; 
-            padding: 0.5rem 1rem; 
-            background: rgba(255,255,255,0.8); 
-            backdrop-filter: blur(10px); 
-            color: #6b7280; 
-            border: 1px solid #e5e7eb; 
-            border-radius: 0.75rem; 
-            font-size: 0.875rem; 
-            font-weight: 500; 
-            cursor: pointer; 
-            transition: all 0.2s; 
-        }
-        .whatif-btn:hover { 
-            background: rgba(255,255,255,0.9); 
-            color: #374151; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-        }
-        .whatif-btn.active { 
-            background: linear-gradient(to right, #f59e0b, #ea580c); 
-            color: white; 
-            border-color: transparent; 
-        }
-        .whatif-btn.active:hover { 
-            background: linear-gradient(to right, #d97706, #c2410c); 
-        }
-        
-        /* Settings Dropdown */
-        .settings-dropdown { position: relative; }
-        .settings-btn { display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 0.75rem; background: rgba(255,255,255,0.5); border: 1px solid rgba(229,231,235,0.5); cursor: pointer; transition: all 0.2s; }
-        .settings-btn:hover { background: rgba(255,255,255,0.8); border-color: #e5e7eb; }
-        .settings-btn svg { width: 1.25rem; height: 1.25rem; color: #6b7280; }
-        .settings-menu { position: absolute; top: calc(100% + 0.5rem); right: 0; min-width: 200px; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-radius: 0.75rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 0.5rem; display: none; z-index: 100; animation: slideDown 0.2s ease-out; }
-        .settings-menu.active { display: block; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .settings-menu-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 500; color: #374151; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; background: transparent; width: 100%; text-align: left; }
-        .settings-menu-item:hover { background: rgba(59,130,246,0.1); color: #2563eb; }
-        .settings-menu-item svg { width: 1.125rem; height: 1.125rem; color: currentColor; }
-        .settings-menu-divider { height: 1px; background: rgba(229,231,235,0.5); margin: 0.5rem 0; }
-        .settings-menu-item.logout-item { color: #ef4444; }
-        .settings-menu-item.logout-item:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px 80px;
-        }
-
-        /* Welcome Banner */
-        .welcome-banner {
-            position: relative;
-            overflow: hidden;
-            border-radius: 24px;
-            margin-bottom: 32px;
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        .welcome-banner::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to right, #2563eb, #9333ea, #ec4899);
-            opacity: 0.9;
-        }
-
-        .welcome-banner-content {
-            position: relative;
-            padding: 32px;
-            text-align: center;
-            color: white;
-        }
-
-        .welcome-banner h2 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .welcome-banner p {
-            color: #dbeafe;
-            font-size: 1rem;
-        }
-
-        /* Hero Section */
-        .hero-section {
-            position: relative;
-            overflow: hidden;
-            margin-bottom: 32px;
-            animation: fadeInUp 0.6s ease-out 0.1s backwards;
-        }
-
-        .hero-section::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to bottom right, rgba(168, 85, 247, 0.1), rgba(236, 72, 153, 0.1), rgba(239, 68, 68, 0.05));
-            border-radius: 24px;
-        }
-
-        .hero-card {
-            position: relative;
-            padding: 48px;
-            backdrop-filter: blur(10px);
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 24px;
-            border: 1px solid rgba(168, 85, 247, 0.2);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        }
-
-        .health-score-container {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .heart-icon {
-            width: 128px;
-            height: 128px;
-            margin: 0 auto 16px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            animation: scaleIn 0.6s ease-out 0.2s backwards;
-        }
-
-        .heart-icon svg {
-            width: 64px;
-            height: 64px;
-            fill: white;
-        }
-
-        .health-score {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .health-label {
-            font-size: 1.25rem;
-            color: #4b5563;
-            margin-bottom: 16px;
-        }
-
-        .health-badge {
-            display: inline-block;
-            padding: 8px 24px;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-
-        /* Metrics Grid */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 24px;
-            margin-bottom: 24px;
-        }
-
-        .metric-card {
-            padding: 16px;
-            border-radius: 16px;
-            border: 1px solid;
-        }
-
-        .metric-card svg {
-            width: 24px;
-            height: 24px;
-            margin-bottom: 8px;
-        }
-
-        .metric-label {
-            font-size: 0.75rem;
-            color: #4b5563;
-            margin-bottom: 4px;
-        }
-
-        .metric-value {
-            font-size: 1.25rem;
-            font-weight: 700;
-        }
-
-        /* Warning Cards */
-        .warning-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 16px;
-            margin-top: 24px;
-        }
-
-        .warning-card {
-            padding: 16px;
-            border-radius: 16px;
-            border: 1px solid;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .warning-icon {
-            width: 24px;
-            height: 24px;
-        }
-
-        .warning-content {
-            flex: 1;
-        }
-
-        .warning-label {
-            font-size: 0.75rem;
-            color: #4b5563;
-            margin-bottom: 4px;
-        }
-
-        .warning-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        /* Chart Section */
-        .chart-section {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid rgba(229, 231, 235, 0.5);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            padding: 24px;
-            margin-bottom: 32px;
-            animation: fadeInUp 0.6s ease-out 0.2s backwards;
-        }
-
-        .chart-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-
-        .chart-header svg {
-            width: 24px;
-            height: 24px;
-            color: #2563eb;
-        }
-
-        .chart-header h2 {
-            font-size: 1.25rem;
-            font-weight: 700;
-        }
-
-        .bar-chart {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-around;
-            height: 200px;
-            gap: 8px;
-            padding: 20px 0;
-        }
-
-        .bar-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .bar {
-            width: 100%;
-            background: linear-gradient(to top, #ef4444, #f87171);
-            border-radius: 8px 8px 0 0;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .bar:hover {
-            opacity: 0.8;
-        }
-
-        .bar.today {
-            background: linear-gradient(to top, #2563eb, #60a5fa);
-        }
-
-        .bar-label {
-            font-size: 0.75rem;
-            color: #6b7280;
-            font-weight: 500;
-        }
-
-        .bar-value {
-            font-size: 0.75rem;
-            color: #374151;
-            font-weight: 600;
-        }
-
-        /* Chart Container */
-        .chart-container {
-            position: relative;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid rgba(229, 231, 235, 0.3);
-        }
-
-        /* Today's Spending */
-        .today-spending {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid rgba(229, 231, 235, 0.5);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            padding: 24px;
-            margin-bottom: 32px;
-            animation: fadeInUp 0.6s ease-out 0.3s backwards;
-        }
-
-        .today-spending h2 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-        }
-
-        .progress-container {
-            margin-bottom: 16px;
-        }
-
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .progress-header span {
-            font-size: 0.875rem;
-        }
-
-        .progress-label {
-            color: #6b7280;
-        }
-
-        .progress-value {
-            font-weight: 700;
-        }
-
-        .progress-bar {
-            height: 16px;
-            background: #f3f4f6;
-            border-radius: 9999px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            border-radius: 9999px;
-            transition: width 0.8s ease-out 0.5s;
-        }
-
-        .progress-explanation {
-            margin-top: 0.5rem;
-        }
-
-        .text-red-600 {
-            color: #dc2626;
-        }
-
-        .text-green-600 {
-            color: #16a34a;
-        }
-
-        .text-gray-600 {
-            color: #4b5563;
-        }
-
-        .today-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 16px;
-        }
-
-        .stat-card {
-            padding: 16px;
-            border-radius: 12px;
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: #6b7280;
-            margin-bottom: 4px;
-        }
-
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-
-        /* AI Insights */
-        .insights-section {
-            animation: fadeInUp 0.6s ease-out 0.4s backwards;
-        }
-
-        .insights-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .insights-header svg {
-            width: 24px;
-            height: 24px;
-            color: #9333ea;
-        }
-
-        .insights-header h2 {
-            font-size: 1.25rem;
-            font-weight: 700;
-        }
-
-        .insight-card {
-            padding: 24px;
-            border-radius: 16px;
-            border: 1px solid;
-            margin-bottom: 16px;
-            animation: slideInLeft 0.6s ease-out backwards;
-        }
-
-        .insight-card:nth-child(2) { animation-delay: 0.5s; }
-        .insight-card:nth-child(3) { animation-delay: 0.6s; }
-        .insight-card:nth-child(4) { animation-delay: 0.7s; }
-
-        .insight-content {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-        }
-
-        .insight-icon {
-            padding: 8px;
-            border-radius: 12px;
-        }
-
-        .insight-icon svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        .insight-text {
-            flex: 1;
-        }
-
-        /* Color Variants */
-        .insight-danger { 
-            background: #fef2f2; 
-            border-color: #fecaca; 
-        }
-        .insight-text-danger { 
-            color: #b91c1c; 
-        }
-        .insight-icon-danger { 
-            background: #fecaca; 
-        }
-        .insight-icon-danger svg { 
-            color: #dc2626; 
-        }
-
-        .insight-warning { 
-            background: #fff7ed; 
-            border-color: #fed7aa; 
-        }
-        .insight-text-warning { 
-            color: #c2410c; 
-        }
-        .insight-icon-warning { 
-            background: #fed7aa; 
-        }
-        .insight-icon-warning svg { 
-            color: #ea580c; 
-        }
-
-        .insight-success { 
-            background: #f0fdf4; 
-            border-color: #bbf7d0; 
-        }
-        .insight-text-success { 
-            color: #15803d; 
-        }
-        .insight-icon-success { 
-            background: #bbf7d0; 
-        }
-        .insight-icon-success svg { 
-            color: #16a34a; 
-        }
-
-        .insight-info { 
-            background: #eff6ff; 
-            border-color: #bfdbfe; 
-        }
-        .insight-text-info { 
-            color: #1d4ed8; 
-        }
-        .insight-icon-info { 
-            background: #bfdbfe; 
-        }
-        .insight-icon-info svg { 
-            color: #2563eb; 
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        /* Legacy color variants (keeping for backward compatibility) */
-        .bg-green { background: linear-gradient(to bottom right, #dcfce7, rgba(220, 252, 231, 0.5)); border-color: rgba(34, 197, 94, 0.2); }
-        .text-green { color: #16a34a; }
-        .bg-green-icon { background: #bbf7d0; }
-
-        .bg-red { background: linear-gradient(to bottom right, #fee2e2, rgba(254, 226, 226, 0.5)); border-color: rgba(239, 68, 68, 0.2); }
-        .text-red { color: #dc2626; }
-        .bg-red-icon { background: #fecaca; }
-
-        .bg-blue { background: linear-gradient(to bottom right, #dbeafe, rgba(219, 234, 254, 0.5)); border-color: rgba(37, 99, 235, 0.2); }
-        .text-blue { color: #2563eb; }
-        .bg-blue-icon { background: #bfdbfe; }
-
-        .bg-purple { background: linear-gradient(to bottom right, #f3e8ff, rgba(243, 232, 255, 0.5)); border-color: rgba(147, 51, 234, 0.2); }
-        .text-purple { color: #9333ea; }
-        .bg-purple-icon { background: #e9d5ff; }
-
-        .bg-orange { background: linear-gradient(to bottom right, #fed7aa, rgba(254, 215, 170, 0.5)); border-color: rgba(249, 115, 22, 0.2); }
-        .text-orange { color: #ea580c; }
-        .bg-orange-icon { background: #fdba74; }
-
-        .bg-yellow { background: linear-gradient(to bottom right, #fef3c7, rgba(254, 243, 199, 0.5)); border-color: rgba(234, 179, 8, 0.2); }
-        .text-yellow { color: #ca8a04; }
-
-        /* Health Status Colors */
+        * { font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
+        .brand-gradient { background: linear-gradient(to right, #2563eb, #9333ea); }
+        .brand-text { background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .glass { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(229,231,235,0.5); }
+        @keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes scaleIn { from { opacity:0; transform:scale(0); } to { opacity:1; transform:scale(1); } }
+        @keyframes slideInLeft { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:translateX(0); } }
+        @keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.5; transform:scale(1.2); } }
+        .anim-fade-up { animation: fadeInUp 0.6s ease-out both; }
+        .anim-scale { animation: scaleIn 0.6s ease-out 0.2s both; }
+        .fab { position: fixed; bottom: 80px; right: 24px; width: 56px; height: 56px; background: linear-gradient(to right, #2563eb, #9333ea); border-radius: 50%; display: none; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(37,99,235,0.3); z-index: 40; transition: all 0.3s; text-decoration: none; color: white; }
+        .fab:hover { transform: scale(1.1); }
+        .fab svg { width: 28px; height: 28px; }
+        .progress-fill { height: 100%; border-radius: 9999px; transition: width 0.8s ease-out 0.5s; }
         .health-excellent { background: linear-gradient(to bottom right, #10b981, #059669); }
         .health-good { background: linear-gradient(to bottom right, #eab308, #f59e0b); }
         .health-warning { background: linear-gradient(to bottom right, #f59e0b, #ef4444); }
         .health-critical { background: linear-gradient(to bottom right, #ef4444, #ec4899); }
-
-        .badge-excellent { background: #dcfce7; color: #166534; }
-        .badge-good { background: #fef3c7; color: #854d0e; }
-        .badge-warning { background: #fed7aa; color: #9a3412; }
-        .badge-critical { background: #fee2e2; color: #991b1b; }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes scaleIn {
-            from {
-                opacity: 0;
-                transform: scale(0);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.5;
-                transform: scale(1.2);
-            }
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-
-
-        /* Floating Action Button */
-        .fab {
-            position: fixed;
-            bottom: 80px;
-            right: 24px;
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(to right, #2563eb, #9333ea);
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
-            z-index: 40;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: white;
-        }
-
-        .fab:hover {
-            transform: scale(1.1);
-            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.4);
-        }
-
-        .fab:active {
-            transform: scale(0.95);
-        }
-
-        .fab svg {
-            width: 28px;
-            height: 28px;
-        }
-
-        /* Responsive */
+        .bar { background: linear-gradient(to top, #ef4444, #f87171); border-radius: 8px 8px 0 0; transition: all 0.3s; }
+        .bar:hover { opacity: 0.8; }
+        .bar.today { background: linear-gradient(to top, #2563eb, #60a5fa); }
         @media (max-width: 768px) {
-            .nav-links { display: none; }
-            .settings-dropdown { display: none; }
-            .btn-add { display: none; } /* Hide desktop add button on mobile */
-            .header-inner { padding: 0 0.5rem; }
-            .container { padding: 0 0.5rem 100px; } /* Extra bottom padding for mobile nav */
-            .welcome-banner h2 { font-size: 1.5rem; }
-            .hero-card { padding: 24px; }
-            .health-score { font-size: 2.5rem; }
-            .metrics-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            /* Show mobile navigation and FAB */
-            .mobile-nav { display: block; }
+            .container { padding: 0 0.5rem 100px !important; }
             .fab { display: flex; }
         }
-
         @media (max-width: 640px) {
-            /* Make daily expense boxes scroll horizontally on small screens */
-            .daily-expense-grid {
-                display: flex !important;
-                overflow-x: auto;
-                gap: 12px;
-                padding-bottom: 8px;
-                scroll-snap-type: x mandatory;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            .daily-expense-box {
-                min-width: 120px;
-                flex-shrink: 0;
-                scroll-snap-align: start;
-            }
-            
-            /* Hide scrollbar but keep functionality */
-            .daily-expense-grid::-webkit-scrollbar {
-                height: 4px;
-            }
-            
-            .daily-expense-grid::-webkit-scrollbar-track {
-                background: rgba(229, 231, 235, 0.3);
-                border-radius: 2px;
-            }
-            
-            .daily-expense-grid::-webkit-scrollbar-thumb {
-                background: rgba(147, 51, 234, 0.3);
-                border-radius: 2px;
-            }
+            .daily-expense-grid { display: flex !important; overflow-x: auto; gap: 12px; padding-bottom: 8px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+            .daily-expense-box { min-width: 120px; flex-shrink: 0; scroll-snap-align: start; }
         }
     </style>
 </head>
 <body>
     {% include "includes/nav.html" with active_page="survival" action_url="add_transaction" action_text="Add Transaction" whatif_next="survival" %}
 
-    <div class="container">
-        <!-- What-If Mode Banner -->
+    <div class="max-w-7xl mx-auto px-4 pb-20 container">
         {% if request.session.whatif_mode %}
-        <div class="whatif-banner" style="background: linear-gradient(to right, #f59e0b, #ea580c); border-radius: 1rem; padding: 1rem 1.5rem; color: white; display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; box-shadow: 0 8px 16px rgba(245,158,11,0.2);">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <div style="font-size: 1.5rem;">🧪</div>
+        <div class="rounded-2xl p-4 mb-6 flex items-center justify-between text-white shadow-lg" style="background: linear-gradient(to right, #f59e0b, #ea580c);">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🧪</span>
                 <div>
-                    <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem;">What-If Mode Active</h3>
-                    <p style="font-size: 0.875rem; opacity: 0.9;">All transactions are temporary and won't affect your real data</p>
+                    <h3 class="font-bold text-lg">What-If Mode Active</h3>
+                    <p class="text-sm opacity-90">All transactions are temporary and won't affect your real data</p>
                 </div>
             </div>
-            <form method="post" action="{% url 'toggle_whatif' %}" style="display: inline;" data-no-loading>
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{% url 'survival' %}">
-                <button type="submit" style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border: none; border-radius: 0.75rem; color: white; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: all 0.3s;">
-                    Exit Mode
-                </button>
+            <form method="post" action="{% url 'toggle_whatif' %}" data-no-loading>
+                {% csrf_token %}<input type="hidden" name="next" value="{% url 'survival' %}">
+                <button type="submit" class="btn btn-sm bg-white/20 border-transparent text-white hover:bg-white/30">Exit Mode</button>
             </form>
         </div>
         {% endif %}
-        
+
         <!-- Welcome Banner -->
-        <div class="welcome-banner">
-            <div class="welcome-banner-content">
-                <h2>💰 Will I Run Out of Money This Month?</h2>
-                <p>Your AI-powered financial survival prediction system</p>
+        <div class="relative overflow-hidden rounded-3xl mb-8 anim-fade-up">
+            <div class="absolute inset-0" style="background: linear-gradient(to right, #2563eb, #9333ea, #ec4899); opacity:0.9;"></div>
+            <div class="relative p-8 text-center text-white">
+                <h2 class="text-3xl font-bold mb-2">💰 Will I Run Out of Money This Month?</h2>
+                <p class="text-blue-100">Your AI-powered financial survival prediction system</p>
             </div>
         </div>
 
-        <!-- Hero Section -->
-        <div class="hero-section">
-            <div class="hero-card">
-                <!-- Health Score -->
-                <div class="health-score-container">
-                    <div class="heart-icon {% if health_score >= 70 %}health-excellent{% elif health_score >= 50 %}health-good{% elif health_score >= 30 %}health-warning{% else %}health-critical{% endif %}">
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                    </div>
-                    
-                    <h1 class="health-score">
-                        <span style="background: linear-gradient(to right, {% if health_score >= 70 %}#10b981, #059669{% elif health_score >= 50 %}#eab308, #f59e0b{% elif health_score >= 30 %}#f59e0b, #ef4444{% else %}#ef4444, #ec4899{% endif %}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                            {{ health_score|floatformat:0 }}%
-                        </span>
-                    </h1>
-                    <p class="health-label">Financial Health Score</p>
-                    <span class="health-badge {% if health_score >= 70 %}badge-excellent{% elif health_score >= 50 %}badge-good{% elif health_score >= 30 %}badge-warning{% else %}badge-critical{% endif %}">
-                        {% if health_score >= 70 %}Excellent{% elif health_score >= 50 %}Good{% elif health_score >= 30 %}Warning{% else %}Critical{% endif %}
-                    </span>
+        <!-- Hero Card -->
+        <div class="glass rounded-3xl p-8 mb-8 anim-fade-up" style="animation-delay:0.1s">
+            <!-- Health Score -->
+            <div class="text-center mb-8">
+                <div class="w-32 h-32 mx-auto mb-4 rounded-full flex items-center justify-center shadow-2xl anim-scale {% if health_score >= 70 %}health-excellent{% elif health_score >= 50 %}health-good{% elif health_score >= 30 %}health-warning{% else %}health-critical{% endif %}">
+                    <svg class="w-16 h-16" viewBox="0 0 24 24" fill="white">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
                 </div>
+                <h1 class="text-5xl font-bold mb-2" style="background: linear-gradient(to right, {% if health_score >= 70 %}#10b981, #059669{% elif health_score >= 50 %}#eab308, #f59e0b{% elif health_score >= 30 %}#f59e0b, #ef4444{% else %}#ef4444, #ec4899{% endif %}); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">{{ health_score|floatformat:0 }}%</h1>
+                <p class="text-base-content/60 text-lg mb-4">Financial Health Score</p>
+                <span class="badge badge-lg {% if health_score >= 70 %}bg-green-100 text-green-800{% elif health_score >= 50 %}bg-yellow-100 text-yellow-800{% elif health_score >= 30 %}bg-orange-100 text-orange-800{% else %}bg-red-100 text-red-800{% endif %}">
+                    {% if health_score >= 70 %}Excellent{% elif health_score >= 50 %}Good{% elif health_score >= 30 %}Warning{% else %}Critical{% endif %}
+                </span>
+            </div>
 
-                <!-- Key Metrics Grid -->
-                <div class="metrics-grid">
-                    <div class="metric-card bg-blue">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue">
-                            <line x1="12" y1="1" x2="12" y2="23"></line>
-                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                        </svg>
-                        <p class="metric-label">Total Wealth</p>
-                        <p class="metric-value text-blue">₹{{ available_funds|floatformat:0 }}</p>
-                    </div>
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="p-4 rounded-2xl border bg-gradient-to-br from-blue-50 to-blue-50/50 border-blue-100">
+                    <svg class="w-6 h-6 text-blue-600 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <p class="text-xs text-base-content/60 mb-1">Total Wealth</p>
+                    <p class="text-xl font-bold text-blue-600">₹{{ available_funds|floatformat:0 }}</p>
+                </div>
+                <div class="p-4 rounded-2xl border bg-gradient-to-br from-purple-50 to-purple-50/50 border-purple-100">
+                    <svg class="w-6 h-6 text-purple-600 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                    <p class="text-xs text-base-content/60 mb-1">Avg Daily Spend</p>
+                    <p class="text-xl font-bold text-purple-600">₹{{ avg_daily_spend|floatformat:0 }}</p>
+                </div>
+                <div class="p-4 rounded-2xl border bg-gradient-to-br from-green-50 to-green-50/50 border-green-100">
+                    <svg class="w-6 h-6 text-green-600 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <p class="text-xs text-base-content/60 mb-1">Safe Daily Spend</p>
+                    <p class="text-xl font-bold text-green-600">₹{% widthratio available_funds days_left 1 %}</p>
+                </div>
+                <div class="p-4 rounded-2xl border bg-gradient-to-br from-orange-50 to-orange-50/50 border-orange-100">
+                    <svg class="w-6 h-6 text-orange-600 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <p class="text-xs text-base-content/60 mb-1">Days Remaining</p>
+                    <p class="text-xl font-bold text-orange-600">{{ days_left }}</p>
+                </div>
+            </div>
 
-                    <div class="metric-card bg-purple">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-purple">
-                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                            <polyline points="17 6 23 6 23 12"></polyline>
-                        </svg>
-                        <p class="metric-label">Avg Daily Spend</p>
-                        <p class="metric-value text-purple">₹{{ avg_daily_spend|floatformat:0 }}</p>
-                    </div>
-
-                    <div class="metric-card bg-green">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-green">
-                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                        </svg>
-                        <p class="metric-label">Safe Daily Spend</p>
-                        <p class="metric-value text-green">₹{% widthratio available_funds days_left 1 %}</p>
-                    </div>
-
-                    <div class="metric-card bg-orange">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-orange">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        <p class="metric-label">Days Remaining</p>
-                        <p class="metric-value text-orange">{{ days_left }}</p>
+            <!-- Warning Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 rounded-2xl border flex items-center gap-3 {% if days_until_broke and days_until_broke < days_left %}bg-gradient-to-br from-red-50 to-red-50/50 border-red-100{% else %}bg-gradient-to-br from-green-50 to-green-50/50 border-green-100{% endif %}">
+                    <svg class="w-6 h-6 {% if days_until_broke and days_until_broke < days_left %}text-red-500{% else %}text-green-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <div>
+                        <p class="text-xs text-base-content/60">Days Until Broke</p>
+                        <p class="text-2xl font-bold {% if days_until_broke and days_until_broke < days_left %}text-red-600{% else %}text-green-600{% endif %}">{% if days_until_broke %}{{ days_until_broke }}{% else %}∞{% endif %}</p>
                     </div>
                 </div>
-
-                <!-- Critical Warning -->
-                <div class="warning-grid">
-                    <div class="warning-card {% if days_until_broke and days_until_broke < days_left %}bg-red{% else %}bg-green{% endif %}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="warning-icon {% if days_until_broke and days_until_broke < days_left %}text-red{% else %}text-green{% endif %}">
-                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                            <line x1="12" y1="9" x2="12" y2="13"></line>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                        </svg>
-                        <div class="warning-content">
-                            <p class="warning-label">Days Until Broke</p>
-                            <p class="warning-value {% if days_until_broke and days_until_broke < days_left %}text-red{% else %}text-green{% endif %}">
-                                {% if days_until_broke %}{{ days_until_broke }}{% else %}∞{% endif %}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="warning-card {% if days_until_broke and days_until_broke < days_left %}bg-red{% else %}bg-green{% endif %}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="warning-icon {% if days_until_broke and days_until_broke < days_left %}text-red{% else %}text-green{% endif %}">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        <div class="warning-content">
-                            <p class="warning-label">Broke Date</p>
-                            <p class="warning-value {% if days_until_broke and days_until_broke < days_left %}text-red{% else %}text-green{% endif %}" style="font-size: 1.125rem;">
-                                {% if broke_date %}{{ broke_date|date:"M d, Y" }}{% else %}Never{% endif %}
-                            </p>
-                        </div>
+                <div class="p-4 rounded-2xl border flex items-center gap-3 {% if days_until_broke and days_until_broke < days_left %}bg-gradient-to-br from-red-50 to-red-50/50 border-red-100{% else %}bg-gradient-to-br from-green-50 to-green-50/50 border-green-100{% endif %}">
+                    <svg class="w-6 h-6 {% if days_until_broke and days_until_broke < days_left %}text-red-500{% else %}text-green-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <div>
+                        <p class="text-xs text-base-content/60">Broke Date</p>
+                        <p class="text-lg font-bold {% if days_until_broke and days_until_broke < days_left %}text-red-600{% else %}text-green-600{% endif %}">{% if broke_date %}{{ broke_date|date:"M d, Y" }}{% else %}Never{% endif %}</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Weekly Spending Chart -->
-        <div class="chart-section">
-            <div class="chart-header">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                </svg>
-                <h2>Last 7 Days Activity</h2>
+        <!-- Weekly Chart -->
+        <div class="glass rounded-2xl p-6 mb-8 anim-fade-up" style="animation-delay:0.2s">
+            <div class="flex items-center gap-3 mb-6">
+                <svg class="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <h2 class="text-xl font-bold">Last 7 Days Activity</h2>
             </div>
-            
-            <div class="chart-container" style="height: 300px;">
+            <div class="relative h-72">
                 <canvas id="weeklyChart"></canvas>
             </div>
         </div>
 
-        <!-- Last 7 Days Expense Boxes -->
-        <div class="chart-section" style="margin-top: 24px;">
-            <div class="chart-header">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #ef4444;">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="16"></line>
-                    <line x1="8" y1="12" x2="16" y2="12"></line>
-                </svg>
-                <h2>Daily Expense Breakdown</h2>
+        <!-- Daily Expense Breakdown -->
+        <div class="glass rounded-2xl p-6 mb-8 anim-fade-up" style="animation-delay:0.25s">
+            <div class="flex items-center gap-3 mb-4">
+                <svg class="w-6 h-6 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                <h2 class="text-xl font-bold">Daily Expense Breakdown</h2>
             </div>
-            
-            <div class="daily-expense-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-top: 16px;">
+            <div class="daily-expense-grid grid gap-3" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); margin-top: 16px;">
                 {% for day in week_data %}
-                <div class="daily-expense-box" style="position: relative; overflow: hidden; padding: 16px; border-radius: 12px; border: 1px solid; text-align: center; transition: all 0.3s ease; cursor: pointer; {% if day.is_today %}background: linear-gradient(to bottom right, rgba(37, 99, 235, 0.1), rgba(147, 51, 234, 0.1)); border-color: rgba(37, 99, 235, 0.3); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);{% else %}background: rgba(255, 255, 255, 0.6); border-color: rgba(229, 231, 235, 0.5);{% endif %}" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.1)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='{% if day.is_today %}0 4px 12px rgba(37, 99, 235, 0.2){% else %}none{% endif %}';">
-                    <!-- Day Badge -->
-                    <div style="display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px; {% if day.is_today %}background: linear-gradient(to right, #2563eb, #9333ea); color: white;{% else %}background: #f3f4f6; color: #6b7280;{% endif %}">
-                        {{ day.day }}
-                    </div>
-                    
-                    <!-- Date -->
-                    <div style="font-size: 0.75rem; color: #9ca3af; margin-bottom: 8px; font-weight: 500;">
-                        {{ day.full_date|date:"M d" }}
-                    </div>
-                    
-                    <!-- Expense Amount -->
-                    <div style="font-size: 1.25rem; font-weight: 700; {% if day.is_today %}background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;{% elif day.expense > avg_daily_spend %}color: #ef4444;{% else %}color: #374151;{% endif %}">
-                        ₹{{ day.expense|floatformat:0 }}
-                    </div>
-                    
-                    <!-- Status Indicator -->
+                <div class="daily-expense-box relative p-4 rounded-xl border text-center transition-all cursor-pointer hover:-translate-y-1 hover:shadow-lg {% if day.is_today %}bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200 shadow-md{% else %}bg-white/60 border-base-200{% endif %}"
+                     onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.1)'"
+                     onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                    <div class="inline-block px-3 py-1 rounded-full text-xs font-semibold mb-2 {% if day.is_today %}brand-gradient text-white{% else %}bg-base-200 text-base-content/60{% endif %}">{{ day.day }}</div>
+                    <div class="text-xs text-base-content/40 mb-2">{{ day.full_date|date:"M d" }}</div>
+                    <div class="text-xl font-bold {% if day.is_today %}brand-text{% elif day.expense > avg_daily_spend %}text-red-500{% else %}text-base-content{% endif %}">₹{{ day.expense|floatformat:0 }}</div>
                     {% if day.expense > avg_daily_spend %}
-                    <div style="margin-top: 8px; font-size: 0.625rem; color: #ef4444; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="18 15 12 9 6 15"></polyline>
-                        </svg>
-                        Over Budget
+                    <div class="mt-2 text-xs text-red-500 font-semibold flex items-center justify-center gap-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>Over Budget
                     </div>
                     {% elif day.expense > 0 %}
-                    <div style="margin-top: 8px; font-size: 0.625rem; color: #10b981; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                        On Track
+                    <div class="mt-2 text-xs text-green-500 font-semibold flex items-center justify-center gap-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>On Track
                     </div>
                     {% else %}
-                    <div style="margin-top: 8px; font-size: 0.625rem; color: #9ca3af; font-weight: 600;">
-                        No Expense
-                    </div>
+                    <div class="mt-2 text-xs text-base-content/40 font-semibold">No Expense</div>
                     {% endif %}
-                    
-                    <!-- Today Indicator -->
                     {% if day.is_today %}
-                    <div style="position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: linear-gradient(to right, #2563eb, #9333ea); box-shadow: 0 0 8px rgba(37, 99, 235, 0.6); animation: pulse 2s infinite;"></div>
+                    <div class="absolute top-2 right-2 w-2 h-2 rounded-full brand-gradient" style="animation: pulse 2s infinite; box-shadow: 0 0 8px rgba(37,99,235,0.6);"></div>
                     {% endif %}
                 </div>
                 {% endfor %}
             </div>
         </div>
 
-        <!-- Today's Spending Tracker -->
-        <div class="today-spending">
-            <h2>Today's Spending</h2>
-            
-            <div class="progress-container">
-                <div class="progress-header">
-                    <span class="progress-label">Spent Today</span>
-                    <span class="progress-value">₹{{ today_expense|floatformat:0 }} / ₹{{ avg_daily_spend|floatformat:0 }}</span>
+        <!-- Today's Spending -->
+        <div class="glass rounded-2xl p-6 mb-8 anim-fade-up" style="animation-delay:0.3s">
+            <h2 class="text-xl font-bold mb-4">Today's Spending</h2>
+            <div class="mb-4">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-base-content/60">Spent Today</span>
+                    <span class="font-bold">₹{{ today_expense|floatformat:0 }} / ₹{{ avg_daily_spend|floatformat:0 }}</span>
                 </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: {% if avg_daily_spend > 0 %}{% widthratio today_expense avg_daily_spend 100 %}{% else %}0{% endif %}%; {% if today_expense > avg_daily_spend %}background: linear-gradient(to right, #ef4444, #ec4899);{% else %}background: linear-gradient(to right, #2563eb, #9333ea);{% endif %}">
-                    </div>
+                <div class="h-4 bg-base-200 rounded-full overflow-hidden">
+                    <div class="progress-fill h-full rounded-full" style="width: {% if avg_daily_spend > 0 %}{% widthratio today_expense avg_daily_spend 100 %}{% else %}0{% endif %}%; {% if today_expense > avg_daily_spend %}background: linear-gradient(to right, #ef4444, #ec4899);{% else %}background: linear-gradient(to right, #2563eb, #9333ea);{% endif %}"></div>
                 </div>
-                <div class="progress-explanation">
-                    <p class="text-sm text-gray-600 mt-2">
-                        <strong>Today:</strong> ₹{{ today_expense|floatformat:0 }} spent • 
-                        <strong>Daily Budget:</strong> ₹{{ avg_daily_spend|floatformat:0 }}
-                        {% if spending_difference > 0 %}
-                            • <span class="text-red-600">Over budget by ₹{{ spending_difference|floatformat:0 }}</span>
-                        {% else %}
-                            • <span class="text-green-600">₹{{ remaining_budget|floatformat:0 }} remaining</span>
-                        {% endif %}
-                    </p>
-                </div>
+                <p class="text-sm text-base-content/60 mt-2">
+                    <strong>Today:</strong> ₹{{ today_expense|floatformat:0 }} spent &bull;
+                    <strong>Daily Budget:</strong> ₹{{ avg_daily_spend|floatformat:0 }}
+                    {% if spending_difference > 0 %}
+                        &bull; <span class="text-red-600">Over budget by ₹{{ spending_difference|floatformat:0 }}</span>
+                    {% else %}
+                        &bull; <span class="text-green-600">₹{{ remaining_budget|floatformat:0 }} remaining</span>
+                    {% endif %}
+                </p>
             </div>
-
-            <div class="today-stats">
-                <div class="stat-card bg-blue">
-                    <p class="stat-label">Days Tracked</p>
-                    <p class="stat-value text-blue">{{ week_data|length }}</p>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="p-4 rounded-xl bg-blue-50">
+                    <p class="text-xs text-base-content/60 mb-1">Days Tracked</p>
+                    <p class="text-2xl font-bold text-blue-600">{{ week_data|length }}</p>
                 </div>
-                <div class="stat-card bg-purple">
-                    <p class="stat-label">Remaining Budget</p>
-                    <p class="stat-value text-purple">₹{% if days_left > 0 %}{{ available_funds|floatformat:0|add:today_expense|floatformat:0 }}{% else %}0{% endif %}</p>
+                <div class="p-4 rounded-xl bg-purple-50">
+                    <p class="text-xs text-base-content/60 mb-1">Remaining Budget</p>
+                    <p class="text-2xl font-bold text-purple-600">₹{% if days_left > 0 %}{{ available_funds|floatformat:0 }}{% else %}0{% endif %}</p>
                 </div>
-                <div class="stat-card {% if today_expense <= available_funds|divisibleby:days_left %}bg-green{% else %}bg-red{% endif %}">
-                    <p class="stat-label">Status</p>
-                    <p class="stat-value {% if today_expense <= available_funds|divisibleby:days_left %}text-green{% else %}text-red{% endif %}">
-                        {% if today_expense <= available_funds|divisibleby:days_left %}On Track{% else %}Over Budget{% endif %}
+                <div class="p-4 rounded-xl {% if today_expense <= available_funds|divisibleby:days_left %}bg-green-50{% else %}bg-red-50{% endif %}">
+                    <p class="text-xs text-base-content/60 mb-1">Status</p>
+                    <p class="text-2xl font-bold {% if today_expense <= available_funds|divisibleby:days_left %}text-green-600{% else %}text-red-600{% endif %}">
+                        {% if today_expense <= available_funds|divisibleby:days_left %}On Track{% else %}Over{% endif %}
                     </p>
                 </div>
             </div>
         </div>
 
         <!-- AI Insights -->
-        <div class="insights-section">
-            <div class="insights-header">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #9333ea;">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                </svg>
-                <h2>AI Insights</h2>
+        <div class="anim-fade-up" style="animation-delay:0.4s">
+            <div class="flex items-center gap-3 mb-4">
+                <svg class="w-6 h-6 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <h2 class="text-xl font-bold">AI Insights</h2>
             </div>
-
             {% for insight in insights %}
-            <div class="insight-card insight-{{ insight.type }}">
-                <div class="insight-content">
-                    <div class="insight-icon insight-icon-{{ insight.type }}">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="rounded-2xl border p-6 mb-4 {% if insight.type == 'danger' %}bg-red-50 border-red-100{% elif insight.type == 'warning' %}bg-orange-50 border-orange-100{% elif insight.type == 'success' %}bg-green-50 border-green-100{% else %}bg-blue-50 border-blue-100{% endif %}" style="animation: slideInLeft 0.6s ease-out both; animation-delay: {{ forloop.counter|add:4 }}00ms;">
+                <div class="flex items-start gap-4">
+                    <div class="p-2 rounded-xl {% if insight.type == 'danger' %}bg-red-100{% elif insight.type == 'warning' %}bg-orange-100{% elif insight.type == 'success' %}bg-green-100{% else %}bg-blue-100{% endif %}">
+                        <svg class="w-5 h-5 {% if insight.type == 'danger' %}text-red-500{% elif insight.type == 'warning' %}text-orange-500{% elif insight.type == 'success' %}text-green-500{% else %}text-blue-500{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             {% if insight.type == 'danger' or insight.type == 'warning' %}
-                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                            <line x1="12" y1="9" x2="12" y2="13"></line>
-                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                             {% elif insight.type == 'success' %}
-                            <polyline points="20 6 9 17 4 12"></polyline>
+                            <polyline points="20 6 9 17 4 12"/>
                             {% else %}
-                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
                             {% endif %}
                         </svg>
                     </div>
-                    <p class="insight-text insight-text-{{ insight.type }}">
-                        {{ insight.message }}
-                    </p>
+                    <p class="flex-1 text-sm font-medium {% if insight.type == 'danger' %}text-red-700{% elif insight.type == 'warning' %}text-orange-700{% elif insight.type == 'success' %}text-green-700{% else %}text-blue-700{% endif %}">{{ insight.message }}</p>
                 </div>
             </div>
             {% endfor %}
         </div>
     </div>
 
-    <!-- Floating Action Button (Mobile) -->
     <a href="{% url 'add_transaction' %}" class="fab">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     </a>
 
     {% include "includes/mobile_nav.html" with active_page="survival" %}
 
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        
-        // Weekly spending data from Django
         const weeklyData = [
             {% for day in week_data %}
-            {
-                day: "{{ day.day }}",
-                date: "{{ day.date }}",
-                expense: {{ day.expense }},
-                income: {{ day.income }},
-                isToday: {% if day.is_today %}true{% else %}false{% endif %}
-            }{% if not forloop.last %},{% endif %}
+            { day: "{{ day.day }}", date: "{{ day.date }}", expense: {{ day.expense }}, income: {{ day.income }}, isToday: {% if day.is_today %}true{% else %}false{% endif %} }{% if not forloop.last %},{% endif %}
             {% endfor %}
         ];
-
-        // Create weekly spending chart
         const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
         new Chart(weeklyCtx, {
             type: 'bar',
             data: {
                 labels: weeklyData.map(d => d.day + '\n' + d.date),
                 datasets: [{
-                    label: 'Income',
-                    data: weeklyData.map(d => d.income),
-                    backgroundColor: 'rgba(16, 185, 129, 0.8)',  // Green for income
-                    borderColor: 'rgba(16, 185, 129, 1)',
-                    borderWidth: 2,
-                    borderRadius: 8,
-                    borderSkipped: false,
+                    label: 'Income', data: weeklyData.map(d => d.income),
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)', borderColor: 'rgba(16, 185, 129, 1)',
+                    borderWidth: 2, borderRadius: 8, borderSkipped: false,
                 }, {
-                    label: 'Expense',
-                    data: weeklyData.map(d => d.expense),
-                    backgroundColor: weeklyData.map(d => 
-                        d.isToday 
-                            ? 'rgba(37, 99, 235, 0.8)'  // Blue for today's expense
-                            : 'rgba(239, 68, 68, 0.8)'  // Red for other days' expense
-                    ),
-                    borderColor: weeklyData.map(d => 
-                        d.isToday 
-                            ? 'rgba(37, 99, 235, 1)'
-                            : 'rgba(239, 68, 68, 1)'
-                    ),
-                    borderWidth: 2,
-                    borderRadius: 8,
-                    borderSkipped: false,
+                    label: 'Expense', data: weeklyData.map(d => d.expense),
+                    backgroundColor: weeklyData.map(d => d.isToday ? 'rgba(37, 99, 235, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
+                    borderColor: weeklyData.map(d => d.isToday ? 'rgba(37, 99, 235, 1)' : 'rgba(239, 68, 68, 1)'),
+                    borderWidth: 2, borderRadius: 8, borderSkipped: false,
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
+                responsive: true, maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            usePointStyle: true,
-                            padding: 20,
-                            font: {
-                                size: 12,
-                                weight: '500'
-                            }
-                        }
+                    legend: { display: true, position: 'top', labels: { usePointStyle: true, padding: 20, font: { size: 12, weight: '500' } } },
+                    tooltip: { backgroundColor: 'rgba(255,255,255,0.95)', titleColor: '#374151', bodyColor: '#374151', borderColor: '#e5e7eb', borderWidth: 1, cornerRadius: 12,
+                        callbacks: { title: (ctx) => weeklyData[ctx[0].dataIndex].day + ', ' + weeklyData[ctx[0].dataIndex].date, label: (ctx) => ctx.dataset.label + ': ₹' + ctx.parsed.y.toLocaleString() }
                     },
-                    tooltip: {
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        titleColor: '#374151',
-                        bodyColor: '#374151',
-                        borderColor: '#e5e7eb',
-                        borderWidth: 1,
-                        cornerRadius: 12,
-                        callbacks: {
-                            title: function(context) {
-                                const index = context[0].dataIndex;
-                                return weeklyData[index].day + ', ' + weeklyData[index].date;
-                            },
-                            label: function(context) {
-                                const label = context.dataset.label;
-                                const value = context.parsed.y;
-                                return label + ': ₹' + value.toLocaleString();
-                            }
-                        }
-                    }
+                    datalabels: { display: false }
                 },
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            color: 'rgba(229, 231, 235, 0.5)',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            color: '#6b7280',
-                            callback: function(value) {
-                                return '₹' + value.toLocaleString();
-                            }
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            color: '#6b7280',
-                            font: {
-                                size: 12,
-                                weight: '500'
-                            }
-                        }
-                    }
+                    y: { beginAtZero: true, grid: { color: 'rgba(229,231,235,0.5)' }, ticks: { color: '#6b7280', callback: v => '₹' + v.toLocaleString() } },
+                    x: { grid: { display: false }, ticks: { color: '#6b7280', font: { size: 12, weight: '500' } } }
                 },
-                animation: {
-                    duration: 1000,
-                    easing: 'easeOutQuart'
-                },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                }
+                animation: { duration: 1000, easing: 'easeOutQuart' },
+                interaction: { intersect: false, mode: 'index' }
             }
         });
     </script>
