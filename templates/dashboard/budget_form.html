@@ -1,110 +1,339 @@
 {% load humanize %}
 <!DOCTYPE html>
-<html lang="en" data-theme="corporate">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/media/logo/logo.png">
     <title>{{ title }} - Money Logger</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4/dist/full.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * { font-family: 'Inter', sans-serif; }
-        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
-        .brand-gradient { background: linear-gradient(to right, #2563eb, #9333ea); }
-        .brand-text { background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .glass { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(229,231,235,0.5); }
-        .glass-nav { background: rgba(255,255,255,0.75); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.2); }
-        .form-field { width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 0.75rem; font-size: 1rem; transition: all 0.2s; background: white; }
-        .form-field:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(145deg, #dbeafe 0%, #e0e7ff 40%, #ede9fe 70%, #fce7f3 100%);
+            min-height: 100vh;
+        }
+
+        .page-wrap {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 1rem 5rem;
+        }
+
+        /* ── form card ── */
+        .form-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 24px rgba(30, 30, 60, .07);
+            overflow: hidden;
+        }
+
+        /* card header strip */
+        .form-card-header {
+            padding: 1.75rem 2rem 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+            background: linear-gradient(135deg, rgba(238,242,255,.6), rgba(245,243,255,.6));
+        }
+        .form-card-header .page-icon {
+            width: 3rem; height: 3rem; border-radius: .875rem;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 14px rgba(79,70,229,.28);
+        }
+        .form-card-header h1 {
+            font-size: 1.5rem; font-weight: 800; color: #111827; margin-bottom: .25rem;
+        }
+        .form-card-header p { font-size: .875rem; color: #9ca3af; }
+
+        /* card body */
+        .form-card-body { padding: 1.75rem 2rem 2rem; }
+
+        /* ── field styling ── */
+        .field-group { margin-bottom: 1.375rem; }
+        .field-label {
+            display: block;
+            font-size: .875rem; font-weight: 600; color: #374151;
+            margin-bottom: .5rem;
+        }
+        .field-label span { color: #ef4444; margin-left: 2px; }
+
+        /* shared input / select */
+        .form-input,
+        #id_category, #id_amount, #id_period,
+        #id_month, #id_year, #id_alert_threshold {
+            width: 100%;
+            padding: .6875rem 1rem;
+            border: 1.5px solid #e5e7eb;
+            border-radius: .625rem;
+            font-size: .9375rem;
+            background: #f9fafb;
+            color: #111827;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s, background .2s;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+        .form-input:focus,
+        #id_category:focus, #id_amount:focus, #id_period:focus,
+        #id_month:focus, #id_year:focus, #id_alert_threshold:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+            background: #fff;
+        }
+        .form-input::placeholder,
+        #id_category::placeholder, #id_amount::placeholder { color: #9ca3af; }
+
+        /* select arrow */
+        select.form-input,
+        #id_period, #id_month {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right .75rem center;
+            background-repeat: no-repeat;
+            background-size: 1rem;
+            padding-right: 2.5rem;
+            cursor: pointer;
+        }
+
+        /* help text */
+        .field-help { font-size: .75rem; color: #9ca3af; margin-top: .375rem; }
+        .field-error { font-size: .75rem; color: #ef4444; margin-top: .375rem; font-weight: 500; }
+
+        /* 3-col row */
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        @media (max-width: 560px) { .grid-3 { grid-template-columns: 1fr; } }
+
+        /* threshold preview */
+        .threshold-preview {
+            display: flex; align-items: center; gap: .625rem;
+            margin-top: .625rem;
+            padding: .625rem .875rem;
+            background: #f9fafb; border: 1px solid #e5e7eb;
+            border-radius: .625rem;
+        }
+        .threshold-bar-bg {
+            flex: 1; height: 8px; background: #e5e7eb; border-radius: 999px; overflow: hidden;
+        }
+        .threshold-bar-fill {
+            height: 100%; border-radius: 999px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            transition: width .3s;
+        }
+        .threshold-value {
+            font-size: .8125rem; font-weight: 700; color: #4f46e5; min-width: 2.5rem; text-align: right;
+        }
+
+        /* divider */
+        .form-divider { height: 1px; background: #f3f4f6; margin: 1.5rem 0; }
+
+        /* action buttons */
+        .form-actions { display: flex; gap: .75rem; }
+        .btn-submit {
+            flex: 1;
+            padding: .75rem 1.5rem;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fff; border: none; border-radius: .75rem;
+            font-size: .9375rem; font-weight: 700;
+            cursor: pointer; transition: opacity .18s, box-shadow .18s;
+            display: flex; align-items: center; justify-content: center; gap: .5rem;
+        }
+        .btn-submit:hover { opacity: .91; box-shadow: 0 4px 16px rgba(79,70,229,.32); }
+        .btn-cancel {
+            padding: .75rem 1.5rem;
+            background: #f3f4f6; color: #6b7280;
+            border: 1px solid #e5e7eb; border-radius: .75rem;
+            font-size: .9375rem; font-weight: 600;
+            text-decoration: none; transition: background .15s;
+            display: flex; align-items: center; gap: .375rem;
+        }
+        .btn-cancel:hover { background: #e5e7eb; color: #374151; }
+
+        /* back link */
+        .back-link {
+            display: inline-flex; align-items: center; gap: .375rem;
+            font-size: .875rem; font-weight: 500; color: #6b7280;
+            text-decoration: none; margin-bottom: 1.25rem;
+            transition: color .15s;
+        }
+        .back-link:hover { color: #4f46e5; }
+
+        /* messages */
+        .msg-item {
+            display: flex; align-items: center; gap: .5rem;
+            padding: .75rem 1rem; border-radius: .75rem;
+            font-size: .875rem; font-weight: 500; margin-bottom: .625rem;
+            background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe;
+        }
+        .msg-item.error { background: #fef2f2; color: #991b1b; border-color: #fecaca; }
     </style>
 </head>
 <body>
-    <header class="glass-nav sticky top-0 z-50 shadow-sm mb-8">
-        <div class="max-w-7xl mx-auto px-4 flex items-center justify-between h-16">
-            <a href="{% url 'dashboard' %}" class="flex items-center gap-3 no-underline">
-                <div class="w-10 h-10 rounded-xl brand-gradient flex items-center justify-center shadow-md">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-                </div>
-                <div>
-                    <div class="font-bold text-xl brand-text leading-tight">Money Logger</div>
-                    <div class="text-xs text-base-content/50">Financial Survival Tracker</div>
-                </div>
-            </a>
-            <a href="{% url 'budget_list' %}" class="btn btn-ghost btn-sm rounded-xl border border-base-200">← Back to Budgets</a>
-        </div>
-    </header>
 
-    <div class="max-w-2xl mx-auto px-4 pb-20">
+    {% include "includes/nav.html" with active_page="budget" action_url="budget_create" action_text="Add Budget" %}
+
+    <div class="page-wrap">
+
+        <!-- Back link -->
+        <a href="{% url 'budget_list' %}" class="back-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            Back to Budgets
+        </a>
+
+        <!-- Messages -->
         {% if messages %}
         <div class="mb-4">
             {% for message in messages %}
-            <div class="alert text-sm mb-2"><span>{{ message }}</span></div>
+            <div class="msg-item {% if message.tags == 'error' %}error{% endif %}">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                {{ message }}
+            </div>
             {% endfor %}
         </div>
         {% endif %}
 
-        <div class="glass rounded-2xl p-8">
-            <div class="mb-8">
-                <h1 class="text-3xl font-extrabold brand-text mb-2">{{ title }}</h1>
-                <p class="text-base-content/60 text-sm">Set spending limits for different categories</p>
+        <div class="form-card">
+            <!-- Header -->
+            <div class="form-card-header">
+                <div class="page-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="16"/>
+                        <line x1="8" y1="12" x2="16" y2="12"/>
+                    </svg>
+                </div>
+                <h1>{{ title }}</h1>
+                <p>Set a spending limit for a category to stay on track</p>
             </div>
 
-            <form method="post">
-                {% csrf_token %}
-                <div class="form-control mb-5">
-                    <label class="label"><span class="label-text font-semibold">Category *</span></label>
-                    {{ form.category }}
-                    {% if form.category.errors %}<p class="text-error text-xs mt-1">{{ form.category.errors.0 }}</p>
-                    {% else %}<p class="text-xs text-base-content/50 mt-1">Select from categories you've used in your transactions</p>{% endif %}
-                </div>
-                <div class="form-control mb-5">
-                    <label class="label"><span class="label-text font-semibold">Budget Amount (₹) *</span></label>
-                    {{ form.amount }}
-                    {% if form.amount.errors %}<p class="text-error text-xs mt-1">{{ form.amount.errors.0 }}</p>
-                    {% else %}<p class="text-xs text-base-content/50 mt-1">Maximum amount you want to spend in this category</p>{% endif %}
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">Period *</span></label>
-                        {{ form.period }}
-                        {% if form.period.errors %}<p class="text-error text-xs mt-1">{{ form.period.errors.0 }}</p>{% endif %}
+            <!-- Form body -->
+            <div class="form-card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <!-- Category -->
+                    <div class="field-group">
+                        <label class="field-label" for="id_category">
+                            Category <span>*</span>
+                        </label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                            <p class="field-error">{{ form.category.errors.0 }}</p>
+                        {% else %}
+                            <p class="field-help">Select from categories you've used in transactions</p>
+                        {% endif %}
                     </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">Month *</span></label>
-                        {{ form.month }}
-                        {% if form.month.errors %}<p class="text-error text-xs mt-1">{{ form.month.errors.0 }}</p>{% endif %}
+
+                    <!-- Amount -->
+                    <div class="field-group">
+                        <label class="field-label" for="id_amount">
+                            Budget Amount (₹) <span>*</span>
+                        </label>
+                        {{ form.amount }}
+                        {% if form.amount.errors %}
+                            <p class="field-error">{{ form.amount.errors.0 }}</p>
+                        {% else %}
+                            <p class="field-help">Maximum you want to spend in this category</p>
+                        {% endif %}
                     </div>
-                    <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">Year *</span></label>
-                        {{ form.year }}
-                        {% if form.year.errors %}<p class="text-error text-xs mt-1">{{ form.year.errors.0 }}</p>{% endif %}
+
+                    <!-- Period / Month / Year -->
+                    <div class="grid-3">
+                        <div class="field-group" style="margin-bottom:0;">
+                            <label class="field-label" for="id_period">Period <span>*</span></label>
+                            {{ form.period }}
+                            {% if form.period.errors %}<p class="field-error">{{ form.period.errors.0 }}</p>{% endif %}
+                        </div>
+                        <div class="field-group" style="margin-bottom:0;">
+                            <label class="field-label" for="id_month">Month <span>*</span></label>
+                            {{ form.month }}
+                            {% if form.month.errors %}<p class="field-error">{{ form.month.errors.0 }}</p>{% endif %}
+                        </div>
+                        <div class="field-group" style="margin-bottom:0;">
+                            <label class="field-label" for="id_year">Year <span>*</span></label>
+                            {{ form.year }}
+                            {% if form.year.errors %}<p class="field-error">{{ form.year.errors.0 }}</p>{% endif %}
+                        </div>
                     </div>
-                </div>
-                <div class="form-control mb-8">
-                    <label class="label"><span class="label-text font-semibold">Alert Threshold (%) *</span></label>
-                    {{ form.alert_threshold }}
-                    {% if form.alert_threshold.errors %}<p class="text-error text-xs mt-1">{{ form.alert_threshold.errors.0 }}</p>
-                    {% else %}<p class="text-xs text-base-content/50 mt-1">Get notified when you reach this percentage (default: 80%)</p>{% endif %}
-                </div>
-                <div class="flex gap-3">
-                    <button type="submit" class="btn btn-primary flex-1">
-                        {% if budget %}Update Budget{% else %}Create Budget{% endif %}
-                    </button>
-                    <a href="{% url 'budget_list' %}" class="btn btn-ghost border border-base-300">Cancel</a>
-                </div>
-            </form>
+
+                    <div class="form-divider"></div>
+
+                    <!-- Alert threshold -->
+                    <div class="field-group">
+                        <label class="field-label" for="id_alert_threshold">
+                            Alert Threshold (%) <span>*</span>
+                        </label>
+                        {{ form.alert_threshold }}
+                        {% if form.alert_threshold.errors %}
+                            <p class="field-error">{{ form.alert_threshold.errors.0 }}</p>
+                        {% else %}
+                            <p class="field-help">Get alerted when spending reaches this % of your budget</p>
+                        {% endif %}
+
+                        <!-- Live preview bar -->
+                        <div class="threshold-preview" id="thresholdPreview">
+                            <div class="threshold-bar-bg">
+                                <div class="threshold-bar-fill" id="thresholdBar" style="width:80%;"></div>
+                            </div>
+                            <span class="threshold-value" id="thresholdLabel">80%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-divider"></div>
+
+                    <!-- Actions -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                {% if budget %}
+                                <polyline points="20 6 9 17 4 12"/>
+                                {% else %}
+                                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                                {% endif %}
+                            </svg>
+                            {% if budget %}Update Budget{% else %}Create Budget{% endif %}
+                        </button>
+                        <a href="{% url 'budget_list' %}" class="btn-cancel">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-    <style>
-        #id_category, #id_amount, #id_period, #id_month, #id_year, #id_alert_threshold {
-            width: 100%; padding: 0.75rem 1rem; border: 2px solid #e5e7eb; border-radius: 0.75rem;
-            font-size: 1rem; background: white; transition: all 0.2s;
+
+    {% include "includes/mobile_nav.html" with active_page="budget" %}
+
+    <script>
+        // Live threshold bar
+        const input = document.getElementById('id_alert_threshold');
+        const bar   = document.getElementById('thresholdBar');
+        const label = document.getElementById('thresholdLabel');
+
+        function updateThreshold() {
+            const val = Math.min(100, Math.max(0, parseFloat(input.value) || 0));
+            bar.style.width = val + '%';
+            label.textContent = val + '%';
+            // colour feedback
+            if (val >= 90)      { bar.style.background = 'linear-gradient(135deg,#ef4444,#dc2626)'; label.style.color = '#dc2626'; }
+            else if (val >= 70) { bar.style.background = 'linear-gradient(135deg,#f59e0b,#d97706)'; label.style.color = '#d97706'; }
+            else                { bar.style.background = 'linear-gradient(135deg,#4f46e5,#7c3aed)'; label.style.color = '#4f46e5'; }
         }
-        #id_category:focus, #id_amount:focus, #id_period:focus, #id_month:focus, #id_year:focus, #id_alert_threshold:focus {
-            outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+
+        if (input) {
+            input.addEventListener('input', updateThreshold);
+            updateThreshold(); // init on page load
         }
-    </style>
+    </script>
 </body>
 </html>

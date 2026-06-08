@@ -1,155 +1,147 @@
 {% load currency_filters %}
 {% load humanize %}
 <!DOCTYPE html>
-<html lang="en" data-theme="corporate">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/media/logo/logo.png">
     <title>Analytics - Money Logger</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4/dist/full.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <style>
-        * { font-family: 'Inter', sans-serif; }
-        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
-        .brand-gradient { background: linear-gradient(to right, #2563eb, #9333ea); }
-        .brand-text { background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .glass { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(229,231,235,0.5); }
-        @keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-        .anim-fade-up { animation: fadeInUp 0.6s ease-out both; }
-        .legend-item-animated { opacity: 0; animation: fadeInUp 0.5s ease-out forwards; }
-        .legend-progress { height: 8px; background: #f3f4f6; border-radius: 9999px; overflow: hidden; margin-top: 8px; }
-        .legend-progress-fill { height: 100%; border-radius: 9999px; transition: width 0.5s ease-out; }
-        .fab { position: fixed; bottom: 80px; right: 24px; width: 56px; height: 56px; background: linear-gradient(to right, #2563eb, #9333ea); border-radius: 50%; display: none; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(37,99,235,0.3); z-index: 40; transition: all 0.3s; text-decoration: none; color: white; }
-        .fab:hover { transform: scale(1.1); }
-        .fab svg { width: 28px; height: 28px; }
-        @media (max-width: 768px) {
-            .container { padding: 0 0.5rem 100px !important; }
-            .fab { display: flex; }
-        }
-        .category-row { cursor: pointer; }
-        .category-row:hover { background: rgba(249,250,251,0.5); }
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+        body { background: linear-gradient(145deg,#dbeafe 0%,#e0e7ff 40%,#ede9fe 70%,#fce7f3 100%); min-height:100vh; }
+        .page-wrap { max-width:1280px; margin:0 auto; padding:1.5rem 1rem 6rem; }
+        .card-white { background:#fff; border:1px solid #e5e7eb; border-radius:1.25rem; box-shadow:0 4px 24px rgba(30,30,60,.07); }
+        .brand-text { background:linear-gradient(135deg,#4f46e5,#7c3aed); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        .anim { animation:fadeInUp .5s ease-out both; }
+        .legend-progress { height:7px; background:#f3f4f6; border-radius:999px; overflow:hidden; margin-top:6px; }
+        .legend-progress-fill { height:100%; border-radius:999px; transition:width .6s ease-out; }
+        .stat-icon { width:2.75rem; height:2.75rem; border-radius:.75rem; display:flex; align-items:center; justify-content:center; }
+        .fab { position:fixed; bottom:80px; right:24px; width:52px; height:52px; background:linear-gradient(135deg,#4f46e5,#7c3aed); border-radius:50%; display:none; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(79,70,229,.35); z-index:40; color:white; text-decoration:none; transition:transform .2s; }
+        .fab:hover { transform:scale(1.08); }
+        @media(max-width:768px) { .page-wrap { padding:1rem .5rem 6rem; } .fab { display:flex; } }
     </style>
 </head>
 <body>
     {% include "includes/nav.html" with active_page="analytics" action_url="add_transaction" action_text="Add Transaction" whatif_next="analytics" %}
 
-    <div class="max-w-7xl mx-auto px-4 pb-20 container">
+    <div class="page-wrap">
+
         {% if request.session.whatif_mode %}
-        <div class="rounded-2xl p-4 mb-6 flex items-center justify-between text-white shadow-lg" style="background: linear-gradient(to right, #f59e0b, #ea580c);">
+        <div class="rounded-2xl p-4 mb-6 flex items-center justify-between text-white"
+             style="background:linear-gradient(135deg,#f59e0b,#ea580c); box-shadow:0 4px 16px rgba(245,158,11,.25);">
             <div class="flex items-center gap-3">
-                <span class="text-2xl">🧪</span>
-                <div><h3 class="font-bold text-lg">What-If Mode Active</h3><p class="text-sm opacity-90">All transactions are temporary</p></div>
+                <span style="font-size:1.5rem">🧪</span>
+                <div><div class="font-bold">What-If Mode Active</div><div style="font-size:.875rem;opacity:.9;">All transactions are temporary</div></div>
             </div>
             <form method="post" action="{% url 'toggle_whatif' %}" data-no-loading>
                 {% csrf_token %}<input type="hidden" name="next" value="{% url 'analytics' %}">
-                <button type="submit" class="btn btn-sm bg-white/20 border-transparent text-white hover:bg-white/30">Exit Mode</button>
+                <button type="submit" style="padding:.5rem 1.125rem;background:rgba(255,255,255,.2);border:none;border-radius:.625rem;color:#fff;font-size:.875rem;font-weight:600;cursor:pointer;">Exit Mode</button>
             </form>
         </div>
         {% endif %}
 
-        <!-- Page Header -->
-        <div class="flex items-center gap-4 mb-8 anim-fade-up">
-            <div class="p-4 brand-gradient rounded-2xl shadow-lg">
-                <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <!-- Page header -->
+        <div class="flex items-center gap-4 mb-8 anim">
+            <div class="stat-icon" style="background:linear-gradient(135deg,#4f46e5,#7c3aed); width:3.5rem; height:3.5rem; border-radius:1rem;">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             </div>
             <div>
-                <h1 class="text-3xl font-bold text-base-content">Analytics</h1>
-                <p class="text-base-content/60">Visualize your financial data</p>
+                <h1 class="text-2xl font-bold text-gray-900">Analytics</h1>
+                <p class="text-sm text-gray-500">Visualise your financial data</p>
             </div>
         </div>
 
-        <!-- Month Navigation -->
-        <div class="glass rounded-2xl p-4 mb-8 flex justify-center items-center gap-5 anim-fade-up" style="animation-delay:0.1s">
-            <a href="?month={{ prev_month }}&year={{ prev_year }}" class="btn btn-primary btn-sm">← Previous</a>
-            <span class="text-xl font-bold">{{ month_name }} {{ selected_year }}</span>
-            <a href="?month={{ next_month }}&year={{ next_year }}" class="btn btn-primary btn-sm">Next →</a>
+        <!-- Month nav -->
+        <div class="card-white p-4 mb-6 flex justify-center items-center gap-5 anim" style="animation-delay:.05s">
+            <a href="?month={{ prev_month }}&year={{ prev_year }}"
+               style="padding:.5rem 1.125rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-radius:.625rem;text-decoration:none;font-size:.875rem;font-weight:600;">← Prev</a>
+            <span class="text-lg font-bold text-gray-800">{{ month_name }} {{ selected_year }}</span>
+            <a href="?month={{ next_month }}&year={{ next_year }}"
+               style="padding:.5rem 1.125rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-radius:.625rem;text-decoration:none;font-size:.875rem;font-weight:600;">Next →</a>
         </div>
 
-        <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 anim-fade-up" style="animation-delay:0.15s">
-            <div class="glass rounded-2xl p-6 hover:-translate-y-1 transition-all">
-                <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>
-                </div>
-                <p class="text-sm text-base-content/60 mb-1">{{ month_name }} Income</p>
+        <!-- Summary cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6 anim" style="animation-delay:.1s">
+            <div class="card-white p-6 hover:-translate-y-1 transition-all">
+                <div class="stat-icon mb-4" style="background:#d1fae5; color:#059669;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg></div>
+                <p class="text-sm text-gray-500 mb-1">{{ month_name }} Income</p>
                 <p class="text-3xl font-bold text-green-600">₹{{ month_income|indian_currency }}</p>
             </div>
-            <div class="glass rounded-2xl p-6 hover:-translate-y-1 transition-all">
-                <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center mb-4">
-                    <svg class="w-6 h-6 text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12 12 16 16 12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
-                </div>
-                <p class="text-sm text-base-content/60 mb-1">{{ month_name }} Expense</p>
+            <div class="card-white p-6 hover:-translate-y-1 transition-all">
+                <div class="stat-icon mb-4" style="background:#fee2e2; color:#dc2626;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12 12 16 16 12"/><line x1="12" y1="8" x2="12" y2="16"/></svg></div>
+                <p class="text-sm text-gray-500 mb-1">{{ month_name }} Expense</p>
                 <p class="text-3xl font-bold text-red-600">₹{{ month_expense|indian_currency }}</p>
             </div>
-            <div class="glass rounded-2xl p-6 hover:-translate-y-1 transition-all">
-                <div class="w-12 h-12 rounded-xl mb-4" style="background: linear-gradient(to bottom right, #dbeafe, #e9d5ff); display:flex; align-items:center; justify-content:center;">
-                    <svg class="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                </div>
-                <p class="text-sm text-base-content/60 mb-1">{{ month_name }} Balance</p>
+            <div class="card-white p-6 hover:-translate-y-1 transition-all">
+                <div class="stat-icon mb-4" style="background:linear-gradient(135deg,#dbeafe,#ede9fe);"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                <p class="text-sm text-gray-500 mb-1">{{ month_name }} Balance</p>
                 <p class="text-3xl font-bold brand-text">₹{{ month_balance|indian_currency }}</p>
             </div>
         </div>
 
-        <!-- Daily Chart -->
-        <div class="glass rounded-2xl p-6 mb-8 anim-fade-up" style="animation-delay:0.2s">
-            <div class="flex items-center gap-3 mb-6">
-                <svg class="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                <h2 class="text-xl font-bold">Daily Income vs Expense</h2>
+        <!-- Daily chart -->
+        <div class="card-white p-6 mb-6 anim" style="animation-delay:.15s">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="stat-icon" style="background:#eff6ff; color:#2563eb;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+                <h2 class="text-lg font-bold text-gray-800">Daily Income vs Expense</h2>
             </div>
-            <div class="relative h-80"><canvas id="dailyChart"></canvas></div>
+            <div class="relative h-72"><canvas id="dailyChart"></canvas></div>
         </div>
 
-        <!-- Monthly Trend -->
-        <div class="glass rounded-2xl p-6 mb-8 anim-fade-up" style="animation-delay:0.3s">
-            <div class="flex items-center gap-3 mb-6">
-                <svg class="w-6 h-6 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                <h2 class="text-xl font-bold">Monthly Trend - {{ selected_year }}</h2>
+        <!-- Yearly chart -->
+        <div class="card-white p-6 mb-6 anim" style="animation-delay:.2s">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="stat-icon" style="background:#f5f3ff; color:#7c3aed;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+                <h2 class="text-lg font-bold text-gray-800">Monthly Trend — {{ selected_year }}</h2>
             </div>
-            <div class="relative h-80"><canvas id="yearlyChart"></canvas></div>
+            <div class="relative h-72"><canvas id="yearlyChart"></canvas></div>
         </div>
 
-        <!-- Income Distribution -->
-        <div class="glass rounded-2xl p-6 mb-8 anim-fade-up" style="animation-delay:0.35s">
-            <div class="flex items-center gap-3 mb-6">
-                <svg class="w-6 h-6 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>
-                <h2 class="text-xl font-bold">Income Distribution</h2>
+        <!-- Income distribution -->
+        <div class="card-white p-6 mb-6 anim" style="animation-delay:.25s">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="stat-icon" style="background:#d1fae5; color:#059669;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg></div>
+                <h2 class="text-lg font-bold text-gray-800">Income Distribution</h2>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div class="relative h-64"><canvas id="incomePieChart"></canvas></div>
-                <div><h3 class="font-bold text-base-content mb-4">Top Income Sources</h3><div id="incomeLegend"></div></div>
+                <div class="relative h-60"><canvas id="incomePieChart"></canvas></div>
+                <div><h3 class="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wide">Top Income Sources</h3><div id="incomeLegend"></div></div>
             </div>
         </div>
 
-        <!-- Expense Distribution -->
-        <div class="glass rounded-2xl p-6 mb-8 anim-fade-up" style="animation-delay:0.4s">
-            <div class="flex items-center gap-3 mb-6">
-                <svg class="w-6 h-6 text-pink-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12 12 16 16 12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
-                <h2 class="text-xl font-bold">Expense Distribution</h2>
+        <!-- Expense distribution -->
+        <div class="card-white p-6 mb-6 anim" style="animation-delay:.3s">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="stat-icon" style="background:#fee2e2; color:#dc2626;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="8 12 12 16 16 12"/><line x1="12" y1="8" x2="12" y2="16"/></svg></div>
+                <h2 class="text-lg font-bold text-gray-800">Expense Distribution</h2>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div class="relative h-64"><canvas id="expensePieChart"></canvas></div>
-                <div><h3 class="font-bold text-base-content mb-4">Top Expense Categories</h3><div id="expenseLegend"></div></div>
+                <div class="relative h-60"><canvas id="expensePieChart"></canvas></div>
+                <div><h3 class="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wide">Top Expense Categories</h3><div id="expenseLegend"></div></div>
             </div>
         </div>
 
-        <!-- Category Table -->
-        <div class="glass rounded-2xl overflow-hidden anim-fade-up" style="animation-delay:0.5s">
-            <div class="p-6 bg-gradient-to-r from-blue-50/50 to-purple-50/50 border-b border-base-200">
-                <h2 class="text-xl font-bold">Category Details</h2>
-                <p class="text-sm text-base-content/50">Click on categories to filter</p>
+        <!-- Category table -->
+        <div class="card-white overflow-hidden anim" style="animation-delay:.35s">
+            <div class="p-5 border-b border-gray-100" style="background:linear-gradient(to right,rgba(219,234,254,.4),rgba(237,233,254,.4))">
+                <h2 class="text-lg font-bold text-gray-800">Category Details</h2>
+                <p class="text-xs text-gray-400 mt-0.5">All categories for {{ month_name }}</p>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
-                    <thead class="bg-base-50/50">
+                    <thead style="background:#f9fafb;">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-base-content/50 uppercase tracking-wider">Category</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-base-content/50 uppercase tracking-wider">Income</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-base-content/50 uppercase tracking-wider">Expense</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-base-content/50 uppercase tracking-wider">Net</th>
+                            <th class="px-5 py-3 text-left text-xs font-600 text-gray-400 uppercase tracking-wider">Category</th>
+                            <th class="px-5 py-3 text-left text-xs font-600 text-gray-400 uppercase tracking-wider">Income</th>
+                            <th class="px-5 py-3 text-left text-xs font-600 text-gray-400 uppercase tracking-wider">Expense</th>
+                            <th class="px-5 py-3 text-right text-xs font-600 text-gray-400 uppercase tracking-wider">Net</th>
                         </tr>
                     </thead>
                     <tbody id="categoryTableBody"></tbody>
@@ -159,85 +151,79 @@
     </div>
 
     <a href="{% url 'add_transaction' %}" class="fab">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     </a>
-
     {% include "includes/mobile_nav.html" with active_page="analytics" %}
 
     <script>
         Chart.register(ChartDataLabels);
-        const INCOME_COLORS = ['#2563eb','#16a34a','#0891b2','#059669','#0d9488','#1d4ed8'];
-        const EXPENSE_COLORS = ['#dc2626','#ea580c','#d97706','#ca8a04','#dc2626','#b91c1c','#f59e0b','#ef4444','#fb923c','#fbbf24'];
-        const GENERAL_COLORS = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444','#06b6d4','#6366f1','#14b8a6','#f97316'];
+        const INCOME_COLORS  = ['#4f46e5','#059669','#0891b2','#10b981','#0d9488','#1d4ed8'];
+        const EXPENSE_COLORS = ['#dc2626','#ea580c','#d97706','#ca8a04','#b91c1c','#f59e0b','#ef4444','#fb923c','#fbbf24','#f97316'];
+        const GEN_COLORS     = ['#4f46e5','#7c3aed','#ec4899','#f59e0b','#10b981','#ef4444','#06b6d4','#6366f1','#14b8a6','#f97316'];
 
-        const categoryExpenseData = [{% for c in category_expense %}{ name: "{{ c.category }}", value: {{ c.total }} },{% endfor %}];
-        const categoryIncomeData = [{% for c in category_income %}{ name: "{{ c.category }}", value: {{ c.total }} },{% endfor %}];
+        const catExpData = [{% for c in category_expense %}{ name:"{{ c.category }}",value:{{ c.total }} },{% endfor %}];
+        const catIncData = [{% for c in category_income %}{ name:"{{ c.category }}",value:{{ c.total }} },{% endfor %}];
 
-        const tooltipDefaults = { backgroundColor: 'rgba(255,255,255,0.95)', titleColor: '#374151', bodyColor: '#374151', borderColor: '#e5e7eb', borderWidth: 1, cornerRadius: 12 };
+        const tooltipOpts = { backgroundColor:'rgba(255,255,255,.96)',titleColor:'#374151',bodyColor:'#374151',borderColor:'#e5e7eb',borderWidth:1,cornerRadius:10 };
 
-        // Daily Chart
         new Chart(document.getElementById('dailyChart').getContext('2d'), {
-            type: 'line',
-            data: { labels: {{ daily_labels|safe }}, datasets: [
-                { label: 'Income', data: {{ daily_income|safe }}, borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', tension: 0.4, fill: true, borderWidth: 2, pointBackgroundColor: '#10b981', pointRadius: 2, pointHoverRadius: 5 },
-                { label: 'Expense', data: {{ daily_expense|safe }}, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.4, fill: true, borderWidth: 2, pointBackgroundColor: '#ef4444', pointRadius: 2, pointHoverRadius: 5 }
+            type:'line', data:{ labels:{{ daily_labels|safe }}, datasets:[
+                { label:'Income', data:{{ daily_income|safe }}, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.1)', tension:.4, fill:true, borderWidth:2, pointBackgroundColor:'#10b981', pointRadius:2, pointHoverRadius:5 },
+                { label:'Expense', data:{{ daily_expense|safe }}, borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.1)', tension:.4, fill:true, borderWidth:2, pointBackgroundColor:'#ef4444', pointRadius:2, pointHoverRadius:5 }
             ]},
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { usePointStyle: true, padding: 20 } }, datalabels: { display: false }, tooltip: { ...tooltipDefaults, callbacks: { label: ctx => ctx.dataset.label + ': ₹' + ctx.parsed.y.toLocaleString() } } }, scales: { x: { title: { display: true, text: 'Day' }, grid: { color: '#e5e7eb' }, ticks: { color: '#6b7280' } }, y: { title: { display: true, text: 'Amount (₹)' }, beginAtZero: true, grid: { color: '#e5e7eb' }, ticks: { color: '#6b7280' } } } }
+            options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'top',labels:{usePointStyle:true,padding:20}}, datalabels:{display:false}, tooltip:{...tooltipOpts,callbacks:{label:c=>`${c.dataset.label}: ₹${c.parsed.y.toLocaleString()}`}} }, scales:{ x:{grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af'}}, y:{beginAtZero:true,grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af'}} } }
         });
 
-        // Yearly Chart
         new Chart(document.getElementById('yearlyChart').getContext('2d'), {
-            type: 'bar',
-            data: { labels: {{ month_labels|safe }}, datasets: [
-                { label: 'Income', data: {{ yearly_income|safe }}, backgroundColor: '#10b981', borderRadius: 8, borderSkipped: false },
-                { label: 'Expense', data: {{ yearly_expense|safe }}, backgroundColor: '#ef4444', borderRadius: 8, borderSkipped: false }
+            type:'bar', data:{ labels:{{ month_labels|safe }}, datasets:[
+                { label:'Income', data:{{ yearly_income|safe }}, backgroundColor:'#10b981', borderRadius:6, borderSkipped:false },
+                { label:'Expense', data:{{ yearly_expense|safe }}, backgroundColor:'#ef4444', borderRadius:6, borderSkipped:false }
             ]},
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { usePointStyle: true, padding: 20 } }, datalabels: { display: false }, tooltip: { ...tooltipDefaults, callbacks: { label: ctx => ctx.dataset.label + ': ₹' + ctx.parsed.y.toLocaleString() } } }, scales: { x: { title: { display: true, text: 'Month' }, grid: { color: '#e5e7eb' }, ticks: { color: '#6b7280' } }, y: { title: { display: true, text: 'Amount (₹)' }, beginAtZero: true, grid: { color: '#e5e7eb' }, ticks: { color: '#6b7280' } } } }
+            options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'top',labels:{usePointStyle:true,padding:20}}, datalabels:{display:false}, tooltip:{...tooltipOpts,callbacks:{label:c=>`${c.dataset.label}: ₹${c.parsed.y.toLocaleString()}`}} }, scales:{ x:{grid:{display:false},ticks:{color:'#9ca3af'}}, y:{beginAtZero:true,grid:{color:'#f3f4f6'},ticks:{color:'#9ca3af'}} } }
         });
 
         function makeDoughnut(id, data, colors) {
-            return new Chart(document.getElementById(id).getContext('2d'), {
-                type: 'doughnut',
-                data: { labels: data.map(c => c.name), datasets: [{ data: data.map(c => c.value), backgroundColor: colors, borderWidth: 0, hoverBorderWidth: 2, hoverBorderColor: '#ffffff' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { display: false }, tooltip: { ...tooltipDefaults, callbacks: { label: ctx => { const total = data.reduce((s,c) => s+c.value, 0); return ctx.label + ': ₹' + ctx.parsed.toLocaleString() + ' (' + ((ctx.parsed/total)*100).toFixed(1) + '%)'; } } } }, cutout: '50%', animation: { animateRotate: true, animateScale: true, duration: 1000, easing: 'easeOutQuart' } }
+            new Chart(document.getElementById(id).getContext('2d'), {
+                type:'doughnut', data:{ labels:data.map(c=>c.name), datasets:[{data:data.map(c=>c.value),backgroundColor:colors,borderWidth:0,hoverBorderWidth:2,hoverBorderColor:'#fff'}] },
+                options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, datalabels:{display:false}, tooltip:{...tooltipOpts,callbacks:{label:c=>{ const t=data.reduce((s,x)=>s+x.value,0); return `${c.label}: ₹${c.parsed.toLocaleString()} (${((c.parsed/t)*100).toFixed(1)}%)`; }}} }, cutout:'52%', animation:{animateRotate:true,duration:900} }
             });
         }
+        makeDoughnut('incomePieChart',  catIncData,  INCOME_COLORS);
+        makeDoughnut('expensePieChart', catExpData, EXPENSE_COLORS);
 
-        makeDoughnut('incomePieChart', categoryIncomeData, INCOME_COLORS);
-        makeDoughnut('expensePieChart', categoryExpenseData, EXPENSE_COLORS);
-
-        function generateLegend(containerId, data, colors) {
+        function buildLegend(containerId, data, colors) {
             const el = document.getElementById(containerId);
             if (!el) return;
-            const total = data.reduce((s,c) => s+c.value, 0);
-            data.slice(0, 8).forEach((cat, i) => {
-                const pct = ((cat.value / total) * 100).toFixed(1);
-                const item = document.createElement('div');
-                item.className = 'legend-item-animated mb-3';
-                item.style.animationDelay = `${0.5 + i * 0.1}s`;
-                item.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border-radius:3px;background:${colors[i % colors.length]}"></div><span style="font-size:0.875rem;color:#374151">${cat.name}</span></div><span style="font-weight:700;color:#111827;font-size:0.875rem">₹${cat.value.toLocaleString()}</span></div><div class="legend-progress"><div class="legend-progress-fill" style="width:0%;background:${colors[i % colors.length]}"></div></div>`;
-                el.appendChild(item);
-                setTimeout(() => { item.querySelector('.legend-progress-fill').style.width = pct + '%'; }, (0.5 + i * 0.1) * 1000);
+            const total = data.reduce((s,c)=>s+c.value,0);
+            data.slice(0,8).forEach((cat,i)=>{
+                const pct = ((cat.value/total)*100).toFixed(1);
+                const div = document.createElement('div');
+                div.style.marginBottom = '10px';
+                div.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"><div style="display:flex;align-items:center;gap:8px;"><div style="width:12px;height:12px;border-radius:3px;background:${colors[i%colors.length]}"></div><span style="font-size:.875rem;color:#374151">${cat.name}</span></div><span style="font-weight:700;color:#111827;font-size:.875rem">₹${cat.value.toLocaleString()}</span></div><div class="legend-progress"><div class="legend-progress-fill" style="width:0%;background:${colors[i%colors.length]}"></div></div>`;
+                el.appendChild(div);
+                setTimeout(()=>{ div.querySelector('.legend-progress-fill').style.width = pct+'%'; }, 300 + i*100);
             });
         }
 
-        function generateCategoryTable() {
+        function buildCategoryTable() {
             const tb = document.getElementById('categoryTableBody');
             if (!tb) return;
             const map = new Map();
-            categoryIncomeData.forEach(c => map.set(c.name, { income: c.value, expense: 0 }));
-            categoryExpenseData.forEach(c => { if (map.has(c.name)) map.get(c.name).expense = c.value; else map.set(c.name, { income: 0, expense: c.value }); });
-            Array.from(map.entries()).map(([name, d]) => ({ name, ...d, total: d.income + d.expense })).sort((a,b) => b.total - a.total).forEach((cat, i) => {
+            catIncData.forEach(c => map.set(c.name,{income:c.value,expense:0}));
+            catExpData.forEach(c => { if (map.has(c.name)) map.get(c.name).expense=c.value; else map.set(c.name,{income:0,expense:c.value}); });
+            [...map.entries()].map(([name,d])=>({name,...d,total:d.income+d.expense})).sort((a,b)=>b.total-a.total).forEach((cat,i)=>{
                 const net = cat.income - cat.expense;
-                const row = document.createElement('tr');
-                row.className = 'category-row border-b border-base-200/50';
-                row.innerHTML = `<td class="px-6 py-4"><div style="display:flex;align-items:center;gap:12px;"><div style="width:12px;height:12px;border-radius:50%;background:${GENERAL_COLORS[i % GENERAL_COLORS.length]}"></div><span style="font-weight:500;color:#111827">${cat.name}</span></div></td><td class="px-6 py-4 font-bold text-green-600">₹${cat.income.toLocaleString()}</td><td class="px-6 py-4 font-bold text-red-600">₹${cat.expense.toLocaleString()}</td><td class="px-6 py-4 text-right font-bold ${net >= 0 ? 'text-green-600' : 'text-red-600'}">${net >= 0 ? '+' : ''}₹${net.toLocaleString()}</td>`;
-                tb.appendChild(row);
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid #f3f4f6';
+                tr.innerHTML = `<td style="padding:.875rem 1.25rem;"><div style="display:flex;align-items:center;gap:10px;"><div style="width:10px;height:10px;border-radius:50%;background:${GEN_COLORS[i%GEN_COLORS.length]}"></div><span style="font-weight:500;color:#111827">${cat.name}</span></div></td><td style="padding:.875rem 1.25rem;font-weight:700;color:#059669;">₹${cat.income.toLocaleString()}</td><td style="padding:.875rem 1.25rem;font-weight:700;color:#dc2626;">₹${cat.expense.toLocaleString()}</td><td style="padding:.875rem 1.25rem;text-align:right;font-weight:700;color:${net>=0?'#059669':'#dc2626'};">${net>=0?'+':''}₹${net.toLocaleString()}</td>`;
+                tb.appendChild(tr);
             });
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            try { generateLegend('incomeLegend', categoryIncomeData, INCOME_COLORS); generateLegend('expenseLegend', categoryExpenseData, EXPENSE_COLORS); generateCategoryTable(); } catch(e) { console.error(e); }
+            buildLegend('incomeLegend',  catIncData,  INCOME_COLORS);
+            buildLegend('expenseLegend', catExpData, EXPENSE_COLORS);
+            buildCategoryTable();
         });
     </script>
 </body>

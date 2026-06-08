@@ -1,795 +1,532 @@
 {% load currency_filters %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/media/logo/logo.png">
     <title>Dashboard - Money Logger</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4/dist/full.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --secondary: #9333ea;
-            --brand: linear-gradient(to right, var(--primary), var(--secondary));
-            --success: #16a34a;
-            --danger: #dc2626;
-            --warning: #f59e0b;
-            --text: #374151;
-            --text-muted: #6b7280;
-            --text-light: #9ca3af;
-            --border: #e5e7eb;
-            --glass-bg: rgba(255,255,255,0.8);
-            --glass-border: rgba(229,231,235,0.5);
-            --radius-sm: 0.5rem;
-            --radius-md: 0.75rem;
-            --radius-lg: 1rem;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 6px rgba(0,0,0,0.05);
-            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
-            --blur: blur(10px);
-            --transition: all 0.2s;
-        }
-        * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter',sans-serif; }
-        body { background:linear-gradient(to bottom right,#eff6ff,#faf5ff,#fce7f3); min-height:100vh; }
-        .container { max-width:1280px; margin:0 auto; padding:2rem 1rem; }
-        .flex-center { display:flex; align-items:center; }
-        .flex-between { display:flex; align-items:center; justify-content:space-between; }
-        .glass { background:var(--glass-bg); backdrop-filter:var(--blur); border:1px solid var(--glass-border); }
-        
-        .header { position:sticky; top:0; z-index:50; backdrop-filter:blur(24px); background:rgba(255,255,255,0.7); border-bottom:1px solid rgba(255,255,255,0.2); box-shadow:var(--shadow-sm); margin-bottom:2rem; }
-        .header-inner { max-width:1280px; margin:0 auto; padding:0 1rem; display:flex; align-items:center; justify-content:space-between; height:4rem; }
-        .logo { display:flex; align-items:center; gap:0.75rem; text-decoration:none; }
-        .logo-icon { width:2.5rem; height:2.5rem; border-radius:var(--radius-md); background:linear-gradient(to bottom right,#3b82f6,#9333ea); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
-        .logo-text { font-weight:700; font-size:1.25rem; background:var(--brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-        .logo-subtitle { font-size:0.75rem; color:var(--text-muted); }
-        .nav-links { display:flex; align-items:center; gap:0.5rem; }
-        .nav-link { padding:0.5rem 1rem; border-radius:var(--radius-md); font-size:0.875rem; font-weight:500; color:#4b5563; text-decoration:none; transition:var(--transition); }
-        .nav-link:hover { background:rgba(255,255,255,0.5); color:#111827; }
-        .nav-link.active { color:var(--primary); background:linear-gradient(to right,#dbeafe,#e9d5ff); }
-        .btn-add { display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:var(--brand); color:white; border-radius:var(--radius-md); font-size:0.875rem; font-weight:500; text-decoration:none; transition:box-shadow 0.2s; }
-        .btn-add:hover { box-shadow:0 4px 6px rgba(0,0,0,0.1); }
-        
-        .whatif-toggle { margin:0 0.5rem; }
-        .whatif-btn { display:flex; align-items:center; gap:0.5rem; padding:0.5rem 1rem; background:var(--glass-bg); backdrop-filter:var(--blur); color:var(--text-muted); border:1px solid var(--border); border-radius:var(--radius-md); font-size:0.875rem; font-weight:500; cursor:pointer; transition:var(--transition); }
-        .whatif-btn:hover { background:rgba(255,255,255,0.9); color:var(--text); box-shadow:0 2px 4px rgba(0,0,0,0.1); }
-        .whatif-btn.active { background:linear-gradient(to right,#f59e0b,#ea580c); color:white; border-color:transparent; }
-        .whatif-btn.active:hover { background:linear-gradient(to right,#d97706,#c2410c); }
-        
-        .settings-dropdown { position:relative; }
-        .settings-btn { display:flex; align-items:center; justify-content:center; width:2.5rem; height:2.5rem; border-radius:var(--radius-md); background:rgba(255,255,255,0.5); border:1px solid var(--glass-border); cursor:pointer; transition:var(--transition); }
-        .settings-btn:hover { background:var(--glass-bg); border-color:var(--border); }
-        .settings-btn svg { width:1.25rem; height:1.25rem; color:var(--text-muted); }
-        .settings-menu { position:absolute; top:calc(100% + 0.5rem); right:0; min-width:200px; background:rgba(255,255,255,0.95); backdrop-filter:blur(20px); border-radius:var(--radius-md); border:1px solid var(--glass-border); box-shadow:var(--shadow-lg); padding:0.5rem; display:none; z-index:100; animation:slideDown 0.2s ease-out; }
-        .settings-menu.active { display:block; }
-        .settings-menu-item { display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; border-radius:var(--radius-sm); font-size:0.875rem; font-weight:500; color:var(--text); text-decoration:none; transition:var(--transition); cursor:pointer; border:none; background:transparent; width:100%; text-align:left; }
-        .settings-menu-item:hover { background:rgba(59,130,246,0.1); color:var(--primary); }
-        .settings-menu-item svg { width:1.125rem; height:1.125rem; color:currentColor; }
-        .settings-menu-divider { height:1px; background:var(--glass-border); margin:0.5rem 0; }
-        .settings-menu-item.logout-item { color:var(--danger); }
-        .settings-menu-item.logout-item:hover { background:rgba(239,68,68,0.1); color:var(--danger); }
-        
-        .insight-banner { position:relative; overflow:hidden; border-radius:var(--radius-lg); padding:1rem 1.5rem; color:white; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; box-shadow:0 8px 16px rgba(0,0,0,0.1); margin-bottom:2rem; animation:slideDown 0.5s ease-out; }
-        .insight-content { display:flex; align-items:center; gap:0.75rem; }
-        .insight-icon { font-size:1.5rem; }
-        .insight-text h3 { font-size:1.125rem; font-weight:700; margin-bottom:0.25rem; }
-        .insight-text p { font-size:0.875rem; opacity:0.8; }
-        .insight-btn { padding:0.5rem 1rem; background:rgba(255,255,255,0.2); backdrop-filter:var(--blur); border-radius:var(--radius-md); font-size:0.875rem; font-weight:500; color:white; text-decoration:none; transition:all 0.3s; }
-        .insight-btn:hover { background:rgba(255,255,255,0.3); }
-        
-        @keyframes slideDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
-        .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.5rem; margin-bottom:2rem; }
-        .stat-card { position:relative; overflow:hidden; border-radius:var(--radius-lg); padding:1.5rem; backdrop-filter:var(--blur); background:var(--glass-bg); border:1px solid var(--glass-border); box-shadow:var(--shadow-md); transition:all 0.3s; animation:fadeInUp 0.6s ease-out; animation-fill-mode:both; }
-        @keyframes fadeInUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
-        .stat-card:hover { transform:translateY(-4px); box-shadow:0 12px 24px rgba(0,0,0,0.1); }
-        .stat-card::before { content:''; position:absolute; inset:0; border-radius:var(--radius-lg); opacity:0.1; z-index:-1; }
-        .stat-card.income::before { background:linear-gradient(to bottom right,#10b981,#059669); }
-        .stat-card.expense::before { background:linear-gradient(to bottom right,#ef4444,#dc2626); }
-        .stat-card.balance::before { background:linear-gradient(to bottom right,#3b82f6,#9333ea,#ec4899); }
-        .stat-card.methods::before { background:linear-gradient(to bottom right,#6366f1,#3b82f6); }
-        .stat-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
-        .stat-icon { width:3rem; height:3rem; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; font-size:1.5rem; }
-        .stat-card.income .stat-icon { background:#dcfce7; color:#16a34a; }
-        .stat-card.expense .stat-icon { background:#fee2e2; color:#dc2626; }
-        .stat-card.balance .stat-icon { background:linear-gradient(to bottom right,#dbeafe,#e9d5ff); }
-        .stat-card.methods .stat-icon { background:#e0e7ff; color:#6366f1; }
-        .stat-trend { font-size:0.875rem; font-weight:500; }
-        .stat-card.income .stat-value,.stat-card.income .stat-trend { color:#16a34a; }
-        .stat-card.expense .stat-value,.stat-trend.negative { color:#dc2626; }
-        .stat-trend.positive { color:#16a34a; }
-        .stat-label { font-size:0.875rem; color:var(--text-muted); margin-bottom:0.25rem; }
-        .stat-value { font-size:1.875rem; font-weight:700; }
-        .stat-card.balance .stat-value { background:var(--brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
 
-        /* Eye Toggle */
-        .eye-toggle { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 0.5rem; border: none; background: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.2s; color: #6b7280; margin-left: 0.5rem; }
-        .eye-toggle:hover { background: rgba(255,255,255,0.8); color: #374151; }
-        .sensitive-hidden .eye-toggle .eye-open { display: none; }
+        body {
+            background: linear-gradient(145deg, #dbeafe 0%, #e0e7ff 40%, #ede9fe 70%, #fce7f3 100%);
+            min-height: 100vh;
+        }
+
+        /* ── page shell ── */
+        .page-wrap { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1rem 6rem; }
+
+        /* ── glass card (reusable) ── */
+        .card-white {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 1.25rem;
+            box-shadow: 0 4px 24px rgba(30,30,60,0.07);
+        }
+
+        /* ── brand gradient ── */
+        .brand-gradient { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+        .brand-text {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+
+        /* ── What-If banner ── */
+        .whatif-banner {
+            border-radius: 1rem;
+            padding: 1rem 1.5rem;
+            color: #fff;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+            background: linear-gradient(135deg, #f59e0b, #ea580c);
+            box-shadow: 0 4px 16px rgba(245,158,11,0.25);
+            margin-bottom: 1.5rem;
+        }
+
+        /* ── insight banner ── */
+        .insight-banner {
+            border-radius: 1rem;
+            padding: 1rem 1.5rem;
+            color: #fff;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            margin-bottom: 1.5rem;
+            animation: fadeInDown .4s ease-out;
+        }
+        @keyframes fadeInDown { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeInUp   { from { opacity:0; transform:translateY(24px);  } to { opacity:1; transform:translateY(0); } }
+
+        /* ── summary grid ── */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.75rem;
+        }
+
+        /* ── stat card ── */
+        .stat-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            box-shadow: 0 2px 12px rgba(30,30,60,0.06);
+            transition: transform .2s, box-shadow .2s;
+            animation: fadeInUp .5s ease-out both;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(30,30,60,0.1); }
+        .stat-label { font-size: .8125rem; color: #6b7280; font-weight: 500; margin-bottom: .25rem; }
+        .stat-value { font-size: 1.875rem; font-weight: 800; letter-spacing: -.02em; margin: 0; }
+        .stat-icon {
+            width: 2.75rem; height: 2.75rem; border-radius: .75rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* income */
+        .stat-card.income .stat-icon { background: #d1fae5; color: #059669; }
+        .stat-card.income .stat-value { color: #059669; }
+        /* expense */
+        .stat-card.expense .stat-icon { background: #fee2e2; color: #dc2626; }
+        .stat-card.expense .stat-value { color: #dc2626; }
+        /* balance */
+        .stat-card.balance .stat-icon { background: linear-gradient(135deg,#dbeafe,#ede9fe); }
+
+        /* eye toggle */
+        .eye-toggle {
+            background: #f3f4f6; border: none; border-radius: .5rem;
+            width: 2rem; height: 2rem; display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #6b7280; transition: background .2s, color .2s;
+        }
+        .eye-toggle:hover { background: #e5e7eb; color: #374151; }
+        .sensitive-hidden .eye-toggle .eye-open  { display: none; }
         .sensitive-hidden .eye-toggle .eye-closed { display: block; }
-        .eye-toggle .eye-open { display: block; }
+        .eye-toggle .eye-open  { display: block; }
         .eye-toggle .eye-closed { display: none; }
         .sensitive-hidden .savings-line { display: none; }
         .sensitive-hidden .net-with-savings { display: none; }
         .net-without-savings { display: none; }
         .sensitive-hidden .net-without-savings { display: inline; }
-        
-        /* Methods Card */
-        .methods-breakdown { display: flex; flex-direction: column; gap: 0.75rem; }
+
+        /* methods card items */
         .method-item { display: flex; align-items: center; justify-content: space-between; }
-        .method-info { display: flex; align-items: center; gap: 0.5rem; }
-        .method-icon { width: 2rem; height: 2rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-        .method-icon.upi { background: #e0e7ff; color: #6366f1; }
-        .method-icon.cash { background: #dcfce7; color: #16a34a; }
-        .method-label { font-size: 0.875rem; color: #6b7280; }
-        .method-value { font-size: 1.125rem; font-weight: 700; color: #111827; }
-        .method-value.upi { color: #9333ea; } /* Violet for UPI Cash */
-        .method-value.cash { color: #16a34a; } /* Green for Hand Cash */
-        .method-divider { height: 1px; background: linear-gradient(to right, transparent, #e5e7eb, transparent); }
-        
-        .flex-center { display:flex; align-items:center; }
-        .flex-between { display:flex; align-items:center; justify-content:space-between; }
-        .glass { background:var(--glass-bg); backdrop-filter:var(--blur); border:1px solid var(--glass-border); }
-        .mb-2 { margin-bottom:1.5rem; }
-        .whatif-banner { background:linear-gradient(to right,#f59e0b,#ea580c); border-radius:var(--radius-lg); padding:1rem 1.5rem; color:#fff; display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; box-shadow:0 8px 16px rgba(245,158,11,0.2); }
-        .whatif-banner-content { display:flex; align-items:center; gap:0.75rem; }
-        .whatif-banner-icon { font-size:1.5rem; }
-        .whatif-banner h3 { font-size:1.125rem; font-weight:700; margin-bottom:0.25rem; }
-        .whatif-banner p { font-size:0.875rem; opacity:0.9; }
-        .whatif-banner form { display:inline; }
-        .whatif-banner .exit-btn { padding:0.5rem 1rem; background:rgba(255,255,255,0.2); backdrop-filter:var(--blur); border:none; border-radius:var(--radius-md); color:#fff; font-size:0.875rem; font-weight:500; cursor:pointer; transition:all 0.3s; }
-        .method-icon-warning { background:#fef3c7; color:#d97706; }
-        .method-value-warning { color:#d97706; }
-        .svg-indigo { color:#6366f1; }
-        
-        .filters-section { margin-bottom:1rem; }
-        .filters-wrapper { display:flex; gap:1rem; flex-wrap:wrap; align-items:center; }
-        .search-box { flex:1; min-width:200px; position:relative; }
-        .search-icon { position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:var(--text-light); }
-        .search-box input { width:100%; padding:0.75rem 0.75rem 0.75rem 2.5rem; background:var(--glass-bg); backdrop-filter:var(--blur); border:1px solid var(--border); border-radius:var(--radius-md); font-size:1rem; transition:all 0.3s; }
-        .search-box input:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
-        .filter-group { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
-        .filter-icon { color:var(--text-light); }
-        .filter-group select { padding:0.75rem 1rem; background:var(--glass-bg); backdrop-filter:var(--blur); border:1px solid var(--border); border-radius:var(--radius-md); font-size:0.875rem; cursor:pointer; transition:all 0.3s; }
-        .filter-group select:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,0.1); }
-        
-        /* Table */
-        .table-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 1rem; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
+        .method-info { display: flex; align-items: center; gap: .5rem; }
+        .method-icon { width: 2rem; height: 2rem; border-radius: .5rem; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+        .method-icon.upi  { background: #e0e7ff; color: #6366f1; }
+        .method-icon.cash { background: #d1fae5; color: #059669; }
+        .method-icon.sav  { background: #fef3c7; color: #d97706; }
+        .method-label { font-size: .875rem; color: #6b7280; }
+        .method-value { font-size: 1.125rem; font-weight: 700; }
+        .method-value.upi  { color: #6366f1; }
+        .method-value.cash { color: #059669; }
+        .method-value.sav  { color: #d97706; }
+        .method-divider { height: 1px; background: #f3f4f6; margin: .5rem 0; }
 
-        /* Date Filter Section */
-        .date-filter-section {
-            padding: 20px 24px;
-            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
-            background: linear-gradient(to right, rgba(219,234,254,0.3), rgba(233,213,255,0.3));
+        /* ── filter section ── */
+        .filters-wrap {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 1rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;
+            box-shadow: 0 2px 8px rgba(30,30,60,0.05);
         }
-
-        .date-filter-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
-        }
-
-        .date-filter-header h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #374151;
-            margin: 0;
-        }
-
-        .date-filter-form {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .date-inputs {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .date-input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .date-input-group label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #374151;
-        }
-
-        .date-input {
-            padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            background: white;
-            transition: all 0.2s;
-            min-width: 130px;
-        }
-
-        .date-input:focus {
+        .search-box { flex: 1; min-width: 200px; position: relative; }
+        .search-box input {
+            width: 100%;
+            border: 1.5px solid #e5e7eb;
+            border-radius: .625rem;
+            padding: .625rem .875rem .625rem 2.5rem;
+            font-size: .9375rem;
+            background: #f9fafb;
             outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            transition: border-color .2s, box-shadow .2s;
         }
-
-        .date-separator {
-            display: flex;
-            align-items: center;
-            color: #6b7280;
-            margin: 0 4px;
+        .search-box input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99,102,241,.12);
+            background: #fff;
         }
-
-        .date-filter-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            border: none;
+        .search-icon { position: absolute; left: .75rem; top: 50%; transform: translateY(-50%); color: #9ca3af; }
+        .filter-group { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+        .filter-group select {
+            border: 1.5px solid #e5e7eb;
+            border-radius: .625rem;
+            padding: .625rem .875rem;
+            font-size: .875rem;
+            background: #f9fafb;
+            outline: none;
+            transition: border-color .2s;
             cursor: pointer;
-            transition: all 0.2s;
         }
+        .filter-group select:focus { border-color: #6366f1; background: #fff; }
 
-        .apply-btn {
-            background: linear-gradient(to right, #2563eb, #3b82f6);
-            color: white;
+        /* ── table card ── */
+        .table-card {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 1.25rem;
+            overflow: hidden;
+            box-shadow: 0 2px 16px rgba(30,30,60,0.06);
         }
-
-        .apply-btn:hover {
-            background: linear-gradient(to right, #1d4ed8, #2563eb);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        .table-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+            background: linear-gradient(to right, rgba(219,234,254,.4), rgba(237,233,254,.4));
         }
+        .table-header h2 { font-size: 1.0625rem; font-weight: 700; color: #111827; margin: 0 0 .125rem; }
+        .table-header p  { font-size: .8125rem; color: #9ca3af; margin: 0; }
 
-        .clear-btn {
+        /* date filter strip */
+        .date-strip {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f3f4f6;
+            background: #fafafa;
+        }
+        .date-strip-form {
+            display: flex; align-items: flex-end; flex-wrap: wrap; gap: .75rem;
+        }
+        .date-group { display: flex; flex-direction: column; gap: .375rem; }
+        .date-group label { font-size: .8125rem; font-weight: 500; color: #374151; }
+        .date-input {
+            border: 1.5px solid #e5e7eb;
+            border-radius: .5rem;
+            padding: .5rem .75rem;
+            font-size: .875rem;
+            background: #fff;
+            outline: none;
+            min-width: 130px;
+            transition: border-color .2s;
+        }
+        .date-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.1); }
+        .btn-apply {
+            padding: .5625rem 1.125rem;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: #fff;
+            border: none;
+            border-radius: .5rem;
+            font-size: .875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .2s;
+            display: flex; align-items: center; gap: .375rem;
+        }
+        .btn-apply:hover { opacity: .88; }
+        .btn-clear {
+            padding: .5625rem 1.125rem;
             background: #f3f4f6;
             color: #6b7280;
-            border: 1px solid #d1d5db;
+            border: 1px solid #e5e7eb;
+            border-radius: .5rem;
+            font-size: .875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background .2s;
+            display: flex; align-items: center; gap: .375rem;
         }
-
-        .clear-btn:hover {
-            background: #e5e7eb;
-            color: #374151;
-        }
-
-        .quick-filters {
-            display: flex;
-            gap: 8px;
-            margin-left: auto;
-        }
-
-        .quick-filter-btn {
-            padding: 6px 12px;
-            background: rgba(255, 255, 255, 0.8);
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 0.75rem;
+        .btn-clear:hover { background: #e5e7eb; }
+        .quick-chips { display: flex; gap: .375rem; flex-wrap: wrap; margin-left: auto; }
+        .qchip {
+            padding: .375rem .75rem;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            font-size: .75rem;
             font-weight: 500;
             color: #6b7280;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all .2s;
         }
+        .qchip:hover  { border-color: #6366f1; color: #6366f1; background: #eef2ff; }
+        .qchip.active { background: #4f46e5; color: #fff; border-color: #4f46e5; }
 
-        .quick-filter-btn:hover {
-            background: white;
-            color: #2563eb;
-            border-color: #2563eb;
-        }
-
-        .quick-filter-btn.active {
-            background: #2563eb;
-            color: white;
-            border-color: #2563eb;
-        }
-        .table-header { padding: 1rem 1.5rem; background: linear-gradient(to right, rgba(219,234,254,0.5), rgba(233,213,255,0.5)); border-bottom: 1px solid rgba(229,231,235,0.5); }
-        .table-header h2 { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.25rem; }
-        .table-header p { font-size: 0.875rem; color: #6b7280; }
+        /* table */
         .table-wrapper { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
-        thead { background: rgba(249,250,251,0.5); }
-        th { padding: 0.75rem 1.5rem; text-align: left; font-size: 0.75rem; font-weight: 500; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
-        td { padding: 1rem 1.5rem; border-bottom: 1px solid rgba(229,231,235,0.5); font-size: 0.875rem; }
-        tbody tr { transition: background 0.2s; }
-        tbody tr:hover { background: rgba(249,250,251,0.5); }
-        .category-badge { display: inline-block; padding: 0.25rem 0.75rem; background: #f3f4f6; color: #374151; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
-        .payment-method { display: flex; align-items: center; gap: 0.5rem; color: #6b7280; font-size: 0.875rem; }
-        .payment-icon { font-size: 1rem; }
-        .amount { font-weight: 700; font-size: 1rem; }
-        .amount.positive { color: #16a34a; }
+        thead { background: #f9fafb; }
+        th {
+            padding: .75rem 1.25rem;
+            text-align: left; font-size: .6875rem; font-weight: 600;
+            color: #9ca3af; text-transform: uppercase; letter-spacing: .06em;
+            white-space: nowrap;
+        }
+        td { padding: .9375rem 1.25rem; border-bottom: 1px solid #f3f4f6; font-size: .875rem; }
+        tbody tr { transition: background .15s; }
+        tbody tr:hover { background: #fafafa; }
+        tbody tr:last-child td { border-bottom: none; }
+
+        .category-badge {
+            display: inline-block; padding: .25rem .75rem;
+            background: #f3f4f6; color: #374151;
+            border-radius: 999px; font-size: .75rem; font-weight: 500;
+        }
+        .payment-method { display: flex; align-items: center; gap: .4rem; color: #6b7280; font-size: .875rem; }
+        .amount { font-weight: 700; font-size: .9375rem; }
+        .amount.positive { color: #059669; }
         .amount.negative { color: #dc2626; }
-        .amount.switch { color: #2563eb; }
-        .amount.saving { color: #9333ea; }
-        .empty-state { text-align: center; padding: 5rem 1rem; color: #9ca3af; }
-        .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
-        
-        /* Pagination */
-        .pagination { 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            gap: 1rem; 
-            padding: 1.5rem; 
-            width: 100%;
-            box-sizing: border-box;
-            margin-top: 1rem;
-        }
-        .pagination a { 
-            padding: 0.5rem 1rem; 
-            background: linear-gradient(to right, #2563eb, #9333ea); 
-            color: white; 
-            border-radius: 0.5rem; 
-            text-decoration: none; 
-            font-weight: 600; 
-            transition: all 0.3s; 
-            white-space: nowrap;
-        }
-        .pagination a:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .pagination span { 
-            color: #6b7280; 
-            font-weight: 600; 
-            text-align: center;
-            white-space: nowrap;
-        }
+        .amount.switch   { color: #2563eb; }
+        .amount.saving   { color: #7c3aed; }
 
-        /* Action Buttons */
-        .action-buttons {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
+        .empty-state { text-align: center; padding: 4rem 1rem; color: #9ca3af; }
 
+        /* action buttons */
+        .action-buttons { display: flex; align-items: center; justify-content: center; gap: .5rem; }
         .action-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            width: 30px; height: 30px;
+            border: none; border-radius: .5rem; cursor: pointer; transition: all .2s;
         }
+        .edit-btn   { background: #eff6ff; color: #2563eb; }
+        .edit-btn:hover   { background: #dbeafe; transform: scale(1.08); }
+        .delete-btn { background: #fef2f2; color: #ef4444; }
+        .delete-btn:hover { background: #fee2e2; transform: scale(1.08); }
 
-        .edit-btn {
-            background: rgba(37, 99, 235, 0.1);
-            color: #2563eb;
+        /* pagination */
+        .pagination {
+            display: flex; justify-content: center; align-items: center;
+            gap: .75rem; padding: 1.25rem; flex-wrap: wrap;
         }
-
-        .edit-btn:hover {
-            background: rgba(37, 99, 235, 0.2);
-            transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.2);
+        .pagination a {
+            padding: .5rem 1rem;
+            background: linear-gradient(135deg,#4f46e5,#7c3aed);
+            color: #fff; border-radius: .5rem; text-decoration: none;
+            font-weight: 600; font-size: .875rem; transition: opacity .2s;
         }
+        .pagination a:hover { opacity: .88; }
+        .pagination span { color: #6b7280; font-weight: 500; font-size: .875rem; }
 
-        .delete-btn {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-        }
-
-        .delete-btn:hover {
-            background: rgba(239, 68, 68, 0.2);
-            transform: scale(1.1);
-            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
-        }
-
-        .action-btn svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        /* Confirmation Modal */
+        /* modal */
         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            animation: fadeIn 0.2s ease-out;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.4); backdrop-filter: blur(4px);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
         }
-
-        .modal-overlay.show {
-            display: flex;
-        }
-
+        .modal-overlay.show { display: flex; }
         .modal-content {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            border: 1px solid rgba(229, 231, 235, 0.5);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            padding: 32px;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-            animation: slideUp 0.3s ease-out;
+            background: #fff; border-radius: 1.25rem;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 20px 50px rgba(0,0,0,.18);
+            padding: 2rem; max-width: 380px; width: 90%; text-align: center;
+            animation: fadeInUp .25s ease-out;
         }
-
         .modal-icon {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
+            width: 56px; height: 56px; margin: 0 auto 1.25rem;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            background: #fef2f2; color: #ef4444;
         }
-
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #111827;
-            margin-bottom: 12px;
-        }
-
-        .modal-message {
-            color: #6b7280;
-            margin-bottom: 24px;
-            line-height: 1.5;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-        }
-
+        .modal-title   { font-size: 1.25rem; font-weight: 700; color: #111827; margin: 0 0 .5rem; }
+        .modal-message { color: #6b7280; margin: 0 0 1.5rem; line-height: 1.5; font-size: .9375rem; }
+        .modal-actions { display: flex; gap: .75rem; justify-content: center; }
         .modal-btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            min-width: 100px;
+            padding: .6875rem 1.375rem; border: none;
+            border-radius: .75rem; font-weight: 600; cursor: pointer;
+            min-width: 96px; transition: all .2s;
         }
-
         .modal-btn-cancel {
-            background: rgba(107, 114, 128, 0.1);
-            color: #6b7280;
-            border: 1px solid rgba(107, 114, 128, 0.2);
+            background: #f3f4f6; color: #6b7280;
+            border: 1px solid #e5e7eb;
         }
-
-        .modal-btn-cancel:hover {
-            background: rgba(107, 114, 128, 0.2);
-            transform: translateY(-1px);
-        }
-
+        .modal-btn-cancel:hover { background: #e5e7eb; }
         .modal-btn-delete {
-            background: linear-gradient(to right, #ef4444, #dc2626);
-            color: white;
+            background: linear-gradient(135deg,#ef4444,#dc2626);
+            color: #fff;
         }
+        .modal-btn-delete:hover { opacity: .88; }
 
-        .modal-btn-delete:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        /* messages */
+        .message-item {
+            padding: .75rem 1rem; border-radius: .75rem;
+            font-size: .875rem; font-weight: 500; margin-bottom: .5rem;
+            display: flex; align-items: center; gap: .5rem;
         }
+        .message-item.error   { background: #fce7f3; color: #9d174d; }
+        .message-item.success { background: #d1fae5; color: #065f46; }
+        .message-item.info    { background: #dbeafe; color: #1e40af; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-
-
-        /* Floating Action Button */
+        /* FAB */
         .fab {
-            position: fixed;
-            bottom: 80px;
-            right: 24px;
-            width: 56px;
-            height: 56px;
-            background: linear-gradient(to right, #2563eb, #9333ea);
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
-            z-index: 40;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            color: white;
+            position: fixed; bottom: 80px; right: 1.5rem;
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg,#4f46e5,#7c3aed);
+            border-radius: 50%; display: none; align-items: center; justify-content: center;
+            box-shadow: 0 6px 20px rgba(79,70,229,.35);
+            color: #fff; text-decoration: none;
+            z-index: 40; transition: transform .2s, box-shadow .2s;
         }
+        .fab:hover { transform: scale(1.08); box-shadow: 0 8px 24px rgba(79,70,229,.4); }
 
-        .fab:hover {
-            transform: scale(1.1);
-            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.4);
-        }
-
-        .fab:active {
-            transform: scale(0.95);
-        }
-
-        .fab svg {
-            width: 28px;
-            height: 28px;
-        }
-
-        /* Responsive */
-        @media (max-width: 378px) {
-            .date-filter-section { padding: 12px; }
-            .date-filter-form { gap: 8px; }
-            .date-inputs { gap: 4px; }
-            .date-input-group label { font-size: 0.75rem; }
-            .date-input { min-width: 100px; padding: 6px 8px; font-size: 0.8rem; }
-            .date-separator { margin: 0; }
-            .date-filter-actions { gap: 6px; }
-            .filter-btn { padding: 6px 10px; font-size: 0.75rem; gap: 4px; }
-            .quick-filter-btn { padding: 4px 8px; font-size: 0.7rem; }
-            .search-box { min-width: 100%; }
-            .search-box input { font-size: 0.875rem; padding: 0.5rem 0.5rem 0.5rem 2rem; }
-            .filter-group select { padding: 0.5rem 0.75rem; font-size: 0.8rem; }
-            .filter-group { gap: 4px; }
-        }
-
+        /* ── responsive ── */
         @media (max-width: 768px) {
-            .container { padding: 1rem 0.5rem 100px; } /* Extra bottom padding for mobile nav */
-            .header-inner { padding: 0 0.5rem; }
-            .nav-links { display: none; }
-            .settings-dropdown { display: none; } /* Hide settings dropdown on mobile */
-            .whatif-toggle { margin: 0 0.25rem; } /* Reduce margin on mobile */
-            .btn-add { display: none; } /* Hide desktop add button on mobile */
+            .page-wrap { padding: 1rem .75rem 6rem; }
             .summary-grid { grid-template-columns: 1fr; gap: 1rem; }
-            .stat-card { padding: 1rem; }
             .stat-value { font-size: 1.5rem; }
-            .filters-wrapper { flex-direction: column; }
+            .filters-wrap { flex-direction: column; }
             .search-box { width: 100%; }
             .filter-group { width: 100%; }
             .filter-group select { flex: 1; }
-            th, td { padding: 0.75rem 0.5rem; font-size: 0.875rem; } /* Increased from 0.75rem to 0.875rem */
+            th, td { padding: .625rem .75rem; }
             .table-wrapper { overflow-x: scroll; }
-            table { min-width: 700px; }
-            
-            .quick-filters {
-                margin-left: 0;
-                justify-content: center;
-            }
-            
-            /* Show mobile navigation and FAB */
+            table { min-width: 680px; }
+            .quick-chips { margin-left: 0; }
             .mobile-nav { display: block; }
             .fab { display: flex; }
-            
-            /* Mobile action buttons */
-            .action-buttons {
-                gap: 6px;
-            }
-            
-            .action-btn {
-                width: 28px;
-                height: 28px;
-            }
-            
-            .action-btn svg {
-                width: 14px;
-                height: 14px;
-            }
-            
-            /* Mobile modal */
-            .modal-content {
-                padding: 24px;
-                margin: 16px;
-            }
-            
-            .modal-icon {
-                width: 48px;
-                height: 48px;
-                margin-bottom: 16px;
-            }
-            
-            .modal-title {
-                font-size: 1.25rem;
-            }
-            
-            .modal-actions {
-                flex-direction: column;
-                gap: 8px;
-            }
-            
-            .modal-btn {
-                width: 100%;
-            }
-            
-            /* Mobile pagination */
-            .pagination {
-                padding: 1rem 0.5rem;
-                gap: 0.5rem;
-                flex-wrap: wrap;
-            }
-            
-            .pagination a {
-                padding: 0.5rem 0.75rem;
-                font-size: 0.875rem;
-            }
-            
-            .pagination span {
-                font-size: 0.875rem;
-                flex-basis: 100%;
-                order: -1;
-                margin-bottom: 0.5rem;
-            }
+            .modal-actions { flex-direction: column; }
+            .modal-btn { width: 100%; }
         }
-        .message-item {
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 0.875rem;
-            font-weight: 500;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .message-item.error {
-            background: #fce7f3;
-            color: #9d174d;
-        }
-
-        .message-item.success {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .message-item.info {
-            background: #dbeafe;
-            color: #1e40af;
+        @media (max-width: 380px) {
+            .date-input { min-width: 110px; font-size: .8125rem; }
+            .btn-apply, .btn-clear { padding: .5rem .875rem; font-size: .8125rem; }
         }
     </style>
 </head>
 <body>
     {% include "includes/nav.html" with active_page="dashboard" action_url="add_transaction" action_text="Add Transaction" whatif_next="dashboard" %}
 
-    <div class="container">
-        <!-- Messages -->
+    <div class="page-wrap">
+
+        <!-- Django messages -->
         {% if messages %}
-            <div class="messages-container mb-2">
-                {% for message in messages %}
-                    <div class="message-item {{ message.tags }}">{{ message }}</div>
-                {% endfor %}
+        <div style="margin-bottom:1rem;">
+            {% for message in messages %}
+            <div class="message-item {{ message.tags }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {{ message }}
             </div>
+            {% endfor %}
+        </div>
         {% endif %}
-        <!-- What-If Mode Banner -->
+
+        <!-- What-If banner -->
         {% if request.session.whatif_mode %}
         <div class="whatif-banner">
-            <div class="whatif-banner-content">
-                <div class="whatif-banner-icon">🧪</div>
+            <div style="display:flex; align-items:center; gap:.75rem;">
+                <span style="font-size:1.5rem;">🧪</span>
                 <div>
-                    <h3>What-If Mode Active</h3>
-                    <p>All transactions are temporary and won't affect your real data</p>
+                    <div style="font-size:1rem; font-weight:700;">What-If Mode Active</div>
+                    <div style="font-size:.875rem; opacity:.9;">Transactions are temporary and won't affect real data</div>
                 </div>
             </div>
             <form method="post" action="{% url 'toggle_whatif' %}" data-no-loading>
                 {% csrf_token %}
                 <input type="hidden" name="next" value="{% url 'dashboard' %}">
-                <button type="submit" class="exit-btn">Exit Mode</button>
+                <button type="submit" style="padding:.5rem 1.125rem; background:rgba(255,255,255,.2); border:none; border-radius:.625rem; color:#fff; font-size:.875rem; font-weight:600; cursor:pointer;">
+                    Exit Mode
+                </button>
             </form>
         </div>
         {% endif %}
-        
-        <!-- Quick Insight Banner -->
+
+        <!-- Insight banner -->
         {% if total_income > 0 %}
-        <div class="insight-banner" style="background: {% if is_healthy %}linear-gradient(to right, #10b981, #059669){% elif balance >= 0 %}linear-gradient(to right, #f59e0b, #ea580c){% else %}linear-gradient(to right, #ef4444, #dc2626){% endif %};">
-            <div class="insight-content">
-                <div class="insight-icon">
-                    {% if is_healthy %}✨{% elif balance >= 0 %}⚠️{% else %}🚨{% endif %}
-                </div>
-                <div class="insight-text">
-                    <h3>
-                        {% if is_healthy %}
-                            🎉 Great job! Your finances are healthy!
-                        {% elif balance >= 0 %}
-                            Watch your spending - savings rate is low
-                        {% else %}
-                            🚨 Alert: You're in the red!
-                        {% endif %}
-                    </h3>
-                    <p>
-                        {% if is_healthy %}
-                            Savings rate: {{ savings_rate|floatformat:1 }}% • Keep it up!
-                        {% elif balance >= 0 %}
-                            Savings rate: {{ savings_rate|floatformat:1 }}% • Try to save at least 20%
-                        {% else %}
-                            Current balance: ₹{{ balance|indian_currency }} • Take action now
-                        {% endif %}
-                    </p>
+        <div class="insight-banner" style="background: {% if is_healthy %}linear-gradient(135deg,#059669,#10b981){% elif balance >= 0 %}linear-gradient(135deg,#f59e0b,#ea580c){% else %}linear-gradient(135deg,#ef4444,#dc2626){% endif %};">
+            <div style="display:flex; align-items:center; gap:.75rem;">
+                <span style="font-size:1.5rem;">{% if is_healthy %}✨{% elif balance >= 0 %}⚠️{% else %}🚨{% endif %}</span>
+                <div>
+                    <div style="font-size:1rem; font-weight:700;">
+                        {% if is_healthy %}Great job! Your finances are healthy!
+                        {% elif balance >= 0 %}Watch your spending – savings rate is low
+                        {% else %}Alert: You're in the red!{% endif %}
+                    </div>
+                    <div style="font-size:.875rem; opacity:.85;">
+                        {% if is_healthy %}Savings rate: {{ savings_rate|floatformat:1 }}% · Keep it up!
+                        {% elif balance >= 0 %}Savings rate: {{ savings_rate|floatformat:1 }}% · Aim for 20%+
+                        {% else %}Balance: ₹{{ balance|indian_currency }} · Take action now{% endif %}
+                    </div>
                 </div>
             </div>
-            <a href="{% url 'survival' %}" class="insight-btn">View Survival Dashboard →</a>
+            <a href="{% url 'survival' %}"
+               style="padding:.5rem 1.125rem; background:rgba(255,255,255,.2); border-radius:.625rem; color:#fff; text-decoration:none; font-size:.875rem; font-weight:600; white-space:nowrap;">
+                Survival Dashboard →
+            </a>
         </div>
         {% endif %}
 
-        <!-- Summary Cards -->
+        <!-- ── Summary Cards ── -->
         <div class="summary-grid">
-            <!-- Total Income -->
-            <div class="stat-card income">
-                <div class="stat-header">
+
+            <!-- Income -->
+            <div class="stat-card income" style="animation-delay:.05s">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                     <div class="stat-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="16 12 12 8 8 12"></polyline><line x1="12" y1="16" x2="12" y2="8"></line></svg>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/>
+                        </svg>
                     </div>
-                    <div class="stat-trend positive">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                    </div>
+                    <span style="font-size:.75rem; font-weight:600; color:#059669; display:flex; align-items:center; gap:.25rem;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+                        </svg>
+                    </span>
                 </div>
-                <h3 class="stat-label">Total Income</h3>
+                <p class="stat-label">Total Income</p>
                 <p class="stat-value">₹{{ total_income|indian_currency }}</p>
             </div>
 
-            <!-- Total Expense -->
-            <div class="stat-card expense">
-                <div class="stat-header">
+            <!-- Expense -->
+            <div class="stat-card expense" style="animation-delay:.1s">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                     <div class="stat-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="8" x2="12" y2="16"></line></svg>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/><polyline points="8 12 12 16 16 12"/><line x1="12" y1="8" x2="12" y2="16"/>
+                        </svg>
                     </div>
-                    <div class="stat-trend negative">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(180deg);"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
-                    </div>
+                    <span style="font-size:.75rem; font-weight:600; color:#dc2626; display:flex; align-items:center; gap:.25rem;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(180deg)">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+                        </svg>
+                    </span>
                 </div>
-                <h3 class="stat-label">Total Expense</h3>
+                <p class="stat-label">Total Expense</p>
                 <p class="stat-value">₹{{ total_expense|indian_currency }}</p>
             </div>
 
             <!-- Net Balance -->
-            <div class="stat-card balance">
-                <div class="stat-header">
+            <div class="stat-card balance" style="animation-delay:.15s">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                     <div class="stat-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="background: linear-gradient(to bottom right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                        </svg>
                     </div>
-                    <div class="flex-center">
-                        <span class="stat-trend {% if balance >= 0 %}positive{% else %}negative{% endif %}">
+                    <div style="display:flex; align-items:center; gap:.375rem;">
+                        <span class="stat-label" style="font-weight:600; {% if balance >= 0 %}color:#059669{% else %}color:#dc2626{% endif %};">
                             {% if balance >= 0 %}+{% endif %}{% if total_income > 0 %}{% widthratio balance total_income 100 %}{% else %}0{% endif %}%
                         </span>
                         <button class="eye-toggle" id="eyeToggleBtn" title="Toggle sensitive info">
-                            <svg class="eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            <svg class="eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <svg class="eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
                         </button>
                     </div>
                 </div>
-                <h3 class="stat-label">Net Balance</h3>
-                <p class="stat-value">
+                <p class="stat-label">Net Balance</p>
+                <p class="stat-value brand-text">
                     <span class="net-with-savings">₹{{ balance|indian_currency }}</span>
                     <span class="net-without-savings">₹{{ balance_without_savings|indian_currency }}</span>
                 </p>
             </div>
 
             <!-- Payment Methods -->
-            <div class="stat-card methods">
-                <h3 class="stat-label" style="margin-bottom:0.75rem">Payment Methods</h3>
-                <div class="methods-breakdown">
+            <div class="stat-card" style="animation-delay:.2s">
+                <p class="stat-label" style="margin-bottom:.875rem;">Payment Methods</p>
+                <div style="display:flex; flex-direction:column; gap:.625rem;">
                     <div class="method-item">
                         <div class="method-info">
                             <div class="method-icon upi">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+                                </svg>
                             </div>
                             <span class="method-label">UPI Cash</span>
                         </div>
@@ -799,7 +536,9 @@
                     <div class="method-item">
                         <div class="method-info">
                             <div class="method-icon cash">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                </svg>
                             </div>
                             <span class="method-label">Hand Cash</span>
                         </div>
@@ -808,156 +547,119 @@
                     <div class="method-divider savings-line"></div>
                     <div class="method-item savings-line">
                         <div class="method-info">
-                            <div class="method-icon method-icon-warning">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/></svg>
+                            <div class="method-icon sav">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/>
+                                </svg>
                             </div>
-                            <span class="method-label">Savings Amount</span>
+                            <span class="method-label">Savings</span>
                         </div>
-                        <span class="method-value method-value-warning">₹{{ total_saved|indian_currency }}</span>
+                        <span class="method-value sav">₹{{ total_saved|indian_currency }}</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Filters & Search -->
-        <div class="filters-section">
-            <form method="get" id="filterForm" data-no-loading>
-                <div class="filters-wrapper">
-                    <div class="search-box">
-                        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg>
-                        <input type="text" name="search" placeholder="Search transactions..." value="{{ search }}" id="searchInput">
-                    </div>
-                    
-                    <div class="filter-group">
-                        <svg class="filter-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                        
-                        <select name="transaction_type" id="typeFilter">
-                            <option value="">All Types</option>
-                            <option value="INCOME" {% if transaction_type == 'INCOME' %}selected{% endif %}>Income</option>
-                            <option value="EXPENSE" {% if transaction_type == 'EXPENSE' %}selected{% endif %}>Expense</option>
-                            <option value="SWITCH" {% if transaction_type == 'SWITCH' %}selected{% endif %}>Switch</option>
-                            <option value="SAVING" {% if transaction_type == 'SAVING' %}selected{% endif %}>Saving</option>
-                        </select>
-                        
-                        <select name="money_type" id="methodFilter">
-                            <option value="">All Methods</option>
-                            <option value="UPI CASH" {% if money_type == 'UPI CASH' %}selected{% endif %}>UPI</option>
-                            <option value="HAND CASH" {% if money_type == 'HAND CASH' %}selected{% endif %}>Cash</option>
-                        </select>
-                        
-                        <select name="category" id="categoryFilter">
-                            <option value="">All Categories</option>
-                            {% for cat in categories %}
-                            <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+        <!-- ── Filters bar ── -->
+        <div class="filters-wrap">
+            <form method="get" id="filterForm" data-no-loading style="display:contents;">
+                <div class="search-box">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input type="text" name="search" placeholder="Search transactions…" value="{{ search }}" id="searchInput">
+                </div>
+                <div class="filter-group">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                    </svg>
+                    <select name="transaction_type" id="typeFilter">
+                        <option value="">All Types</option>
+                        <option value="INCOME"  {% if transaction_type == 'INCOME'  %}selected{% endif %}>Income</option>
+                        <option value="EXPENSE" {% if transaction_type == 'EXPENSE' %}selected{% endif %}>Expense</option>
+                        <option value="SWITCH"  {% if transaction_type == 'SWITCH'  %}selected{% endif %}>Switch</option>
+                        <option value="SAVING"  {% if transaction_type == 'SAVING'  %}selected{% endif %}>Saving</option>
+                    </select>
+                    <select name="money_type" id="methodFilter">
+                        <option value="">All Methods</option>
+                        <option value="UPI CASH"  {% if money_type == 'UPI CASH'  %}selected{% endif %}>UPI</option>
+                        <option value="HAND CASH" {% if money_type == 'HAND CASH' %}selected{% endif %}>Cash</option>
+                    </select>
+                    <select name="category" id="categoryFilter">
+                        <option value="">All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </form>
         </div>
 
-        <!-- Transactions Table -->
+        <!-- ── Transactions Table ── -->
         <div class="table-card">
             <div class="table-header">
                 <h2>Recent Transactions</h2>
                 <p>Showing {{ transactions.object_list|length }} transaction{% if transactions.object_list|length != 1 %}s{% endif %}</p>
             </div>
 
-            <!-- Date Filter Section -->
-            <div class="date-filter-section">
-                <div class="date-filter-header">
-                    <svg class="svg-indigo" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="2" x2="16" y2="6"></line>
-                        <line x1="8" y1="2" x2="8" y2="6"></line>
-                        <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                    <h3>Filter by Date Range</h3>
-                </div>
-                
-                <form method="GET" class="date-filter-form" id="dateFilterForm" data-no-loading>
-                    <div class="date-inputs">
-                        <div class="date-input-group">
-                            <label for="start_date">Start Date</label>
-                            <input type="date" 
-                                   id="start_date" 
-                                   name="start_date" 
-                                   value="{{ start_date }}"
-                                   class="date-input">
-                        </div>
-                        
-                        <div class="date-separator">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </div>
-                        
-                        <div class="date-input-group">
-                            <label for="end_date">End Date</label>
-                            <input type="date" 
-                                   id="end_date" 
-                                   name="end_date" 
-                                   value="{{ end_date }}"
-                                   class="date-input">
-                        </div>
+            <!-- Date filter strip -->
+            <div class="date-strip">
+                <form method="GET" class="date-strip-form" id="dateFilterForm" data-no-loading>
+                    <div class="date-group">
+                        <label for="start_date">From</label>
+                        <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="date-input">
                     </div>
-                    
-                    <div class="date-filter-actions">
-                        <button type="submit" class="filter-btn apply-btn">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                            Apply Filter
-                        </button>
-                        
-                        <button type="button" class="filter-btn clear-btn" data-action="clear-dates">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                            Clear
-                        </button>
-                        
-                        <div class="quick-filters">
-                            <button type="button" class="quick-filter-btn" data-period="today">Today</button>
-                            <button type="button" class="quick-filter-btn" data-period="yesterday">Yesterday</button>
-                            <button type="button" class="quick-filter-btn" data-period="week">This Week</button>
-                            <button type="button" class="quick-filter-btn" data-period="month">This Month</button>
-                        </div>
+                    <div style="display:flex; align-items:flex-end; padding-bottom:.125rem; color:#9ca3af;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"/>
+                        </svg>
                     </div>
-                    
-                    <!-- Preserve other filters -->
-                    {% if category %}
-                        <input type="hidden" name="category" value="{{ category }}">
-                    {% endif %}
-                    {% if transaction_type %}
-                        <input type="hidden" name="transaction_type" value="{{ transaction_type }}">
-                    {% endif %}
-                    {% if money_type %}
-                        <input type="hidden" name="money_type" value="{{ money_type }}">
-                    {% endif %}
+                    <div class="date-group">
+                        <label for="end_date">To</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="date-input">
+                    </div>
+                    <button type="submit" class="btn-apply">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        Apply
+                    </button>
+                    <button type="button" class="btn-clear" data-action="clear-dates">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                        Clear
+                    </button>
+                    <div class="quick-chips">
+                        <button type="button" class="qchip" data-period="today">Today</button>
+                        <button type="button" class="qchip" data-period="yesterday">Yesterday</button>
+                        <button type="button" class="qchip" data-period="week">This Week</button>
+                        <button type="button" class="qchip" data-period="month">This Month</button>
+                    </div>
+                    {% if category %}<input type="hidden" name="category" value="{{ category }}">{% endif %}
+                    {% if transaction_type %}<input type="hidden" name="transaction_type" value="{{ transaction_type }}">{% endif %}
+                    {% if money_type %}<input type="hidden" name="money_type" value="{{ money_type }}">{% endif %}
                 </form>
             </div>
-            
+
             <div id="transactionsContainer">
                 {% include 'dashboard/_transactions_table.html' %}
             </div>
         </div>
-    </div>
+    </div><!-- /page-wrap -->
 
-    <!-- Delete Confirmation Modal -->
+    <!-- Delete modal -->
     <div id="deleteModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-icon">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="3,6 5,6 21,6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3,6 5,6 21,6"/>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
                 </svg>
             </div>
             <h3 class="modal-title">Delete Transaction</h3>
-            <p class="modal-message">Are you sure you want to delete "<span id="transactionName"></span>"? This action cannot be undone.</p>
+            <p class="modal-message">Are you sure you want to delete "<span id="transactionName"></span>"? This cannot be undone.</p>
             <div class="modal-actions">
                 <button class="modal-btn modal-btn-cancel" data-action="close-modal">Cancel</button>
                 <button class="modal-btn modal-btn-delete" data-action="confirm-delete">Delete</button>
@@ -965,11 +667,10 @@
         </div>
     </div>
 
-    <!-- Floating Action Button (Mobile) -->
+    <!-- FAB (mobile) -->
     <a href="{% url 'add_transaction' %}" class="fab">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
     </a>
 
@@ -977,113 +678,88 @@
 
     <script>
         const filterForm = document.getElementById('filterForm');
-        let deleteTransactionId = null;
-        let searchTimer;
+        let deleteTransactionId = null, searchTimer, dateTimer;
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchInput = document.getElementById('searchInput');
-            const typeFilter = document.getElementById('typeFilter');
-            const methodFilter = document.getElementById('methodFilter');
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput   = document.getElementById('searchInput');
+            const typeFilter    = document.getElementById('typeFilter');
+            const methodFilter  = document.getElementById('methodFilter');
             const categoryFilter = document.getElementById('categoryFilter');
-            const startDateInput = document.getElementById('start_date');
-            const endDateInput = document.getElementById('end_date');
-            const eyeToggle = document.getElementById('eyeToggleBtn');
-            const deleteModal = document.getElementById('deleteModal');
+            const startDate     = document.getElementById('start_date');
+            const endDate       = document.getElementById('end_date');
+            const eyeToggle     = document.getElementById('eyeToggleBtn');
+            const summaryGrid   = document.querySelector('.summary-grid');
+            const deleteModal   = document.getElementById('deleteModal');
 
             // Search debounce
-            if (searchInput) {
-                searchInput.addEventListener('input', function() {
-                    clearTimeout(searchTimer);
-                    searchTimer = setTimeout(() => filterForm.submit(), 500);
-                });
-            }
-
-            if (typeFilter) typeFilter.addEventListener('change', () => filterForm.submit());
-            if (methodFilter) methodFilter.addEventListener('change', () => filterForm.submit());
+            if (searchInput) searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => filterForm.submit(), 500);
+            });
+            if (typeFilter)    typeFilter.addEventListener('change',    () => filterForm.submit());
+            if (methodFilter)  methodFilter.addEventListener('change',  () => filterForm.submit());
             if (categoryFilter) categoryFilter.addEventListener('change', () => filterForm.submit());
 
-            // Date range auto-submit
-            let dateTimer;
+            // Date auto-submit
             function onDateChange() {
                 clearTimeout(dateTimer);
                 dateTimer = setTimeout(() => {
-                    if (startDateInput.value && endDateInput.value) {
-                        document.getElementById('dateFilterForm').submit();
-                    }
+                    if (startDate.value && endDate.value) document.getElementById('dateFilterForm').submit();
                 }, 500);
             }
-            if (startDateInput && endDateInput) {
-                startDateInput.addEventListener('change', onDateChange);
-                endDateInput.addEventListener('change', onDateChange);
-            }
+            if (startDate) startDate.addEventListener('change', onDateChange);
+            if (endDate)   endDate.addEventListener('change',   onDateChange);
 
-            // Sensitive toggle
-            const sensitiveHidden = localStorage.getItem('sensitiveHidden') === 'true';
-            const summaryGrid = document.querySelector('.summary-grid');
-            if (sensitiveHidden && summaryGrid) summaryGrid.classList.add('sensitive-hidden');
-            if (eyeToggle) {
-                eyeToggle.addEventListener('click', function() {
-                    if (!summaryGrid) return;
-                    summaryGrid.classList.toggle('sensitive-hidden');
-                    localStorage.setItem('sensitiveHidden', summaryGrid.classList.contains('sensitive-hidden'));
-                });
-            }
+            // Eye / sensitive toggle
+            const hidden = localStorage.getItem('sensitiveHidden') === 'true';
+            if (hidden && summaryGrid) summaryGrid.classList.add('sensitive-hidden');
+            if (eyeToggle) eyeToggle.addEventListener('click', () => {
+                summaryGrid.classList.toggle('sensitive-hidden');
+                localStorage.setItem('sensitiveHidden', summaryGrid.classList.contains('sensitive-hidden'));
+            });
         });
 
-        // Event delegation for global handlers
-        document.addEventListener('click', function(e) {
-            const target = e.target.closest('[data-action]') || e.target.closest('.pagination-link') || e.target.closest('.quick-action-card') || e.target.closest('[data-period]');
-            if (!target) return;
+        document.addEventListener('click', function (e) {
+            const t = e.target.closest('[data-action], .pagination-link, [data-period]');
+            if (!t) return;
 
-            // Pagination
-            if (target.matches('.pagination-link')) {
+            if (t.matches('.pagination-link')) {
                 e.preventDefault();
-                loadPage(target.getAttribute('data-page'));
+                loadPage(t.getAttribute('data-page'));
                 return;
             }
-
-            // Quick filter buttons
-            if (target.matches('[data-period]')) {
-                setQuickFilter(target.getAttribute('data-period'), target);
+            if (t.matches('[data-period]')) {
+                setQuickFilter(t.getAttribute('data-period'), t);
                 return;
             }
-
-            // Modal actions
-            const action = target.getAttribute('data-action');
-            if (action === 'close-modal') closeDeleteModal();
-            if (action === 'confirm-delete') confirmDelete();
-            if (action === 'clear-dates') clearDateFilter();
+            const a = t.getAttribute('data-action');
+            if (a === 'close-modal')   closeDeleteModal();
+            if (a === 'confirm-delete') confirmDelete();
+            if (a === 'clear-dates')   clearDateFilter();
         });
 
-        // Close modal on outside click & Escape
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeDeleteModal();
-        });
-        document.getElementById('deleteModal').addEventListener('click', function(e) {
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDeleteModal(); });
+        document.getElementById('deleteModal').addEventListener('click', function (e) {
             if (e.target === this) closeDeleteModal();
         });
 
         function loadPage(page) {
-            const formData = new FormData(filterForm);
-            const params = new URLSearchParams(formData);
+            const params = new URLSearchParams(new FormData(filterForm));
             params.set('page', page);
-            const container = document.getElementById('transactionsContainer');
-            container.style.opacity = '0.5';
-            container.style.pointerEvents = 'none';
+            const cont = document.getElementById('transactionsContainer');
+            cont.style.opacity = '.45';
+            cont.style.pointerEvents = 'none';
             fetch('{% url "dashboard" %}?' + params.toString(), {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             })
             .then(r => r.json())
             .then(data => {
-                container.innerHTML = data.html;
-                container.style.opacity = '1';
-                container.style.pointerEvents = 'auto';
-                container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                cont.innerHTML = data.html;
+                cont.style.opacity = '1';
+                cont.style.pointerEvents = 'auto';
+                cont.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             })
-            .catch(() => {
-                container.style.opacity = '1';
-                container.style.pointerEvents = 'auto';
-            });
+            .catch(() => { cont.style.opacity = '1'; cont.style.pointerEvents = 'auto'; });
         }
 
         function editTransaction(id, type) {
@@ -1108,11 +784,9 @@
             form.action = `/ledger/${deleteTransactionId}/delete/`;
             const csrf = document.querySelector('[name=csrfmiddlewaretoken]');
             if (csrf) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'csrfmiddlewaretoken';
-                input.value = csrf.value;
-                form.appendChild(input);
+                const inp = document.createElement('input');
+                inp.type = 'hidden'; inp.name = 'csrfmiddlewaretoken'; inp.value = csrf.value;
+                form.appendChild(inp);
             }
             document.body.appendChild(form);
             form.submit();
@@ -1129,12 +803,12 @@
             const fmt = d => d.toISOString().split('T')[0];
             let s, e;
             switch (period) {
-                case 'today': s = e = fmt(today); break;
+                case 'today':     s = e = fmt(today); break;
                 case 'yesterday': { const y = new Date(today); y.setDate(today.getDate()-1); s = e = fmt(y); break; }
-                case 'week': { const ws = new Date(today); ws.setDate(today.getDate()-today.getDay()); s = fmt(ws); e = fmt(today); break; }
-                case 'month': { const ms = new Date(today.getFullYear(), today.getMonth(), 1); s = fmt(ms); e = fmt(today); break; }
+                case 'week':      { const ws = new Date(today); ws.setDate(today.getDate()-today.getDay()); s = fmt(ws); e = fmt(today); break; }
+                case 'month':     { s = fmt(new Date(today.getFullYear(), today.getMonth(), 1)); e = fmt(today); break; }
             }
-            document.querySelectorAll('.quick-filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.qchip').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             document.getElementById('start_date').value = s;
             document.getElementById('end_date').value = e;

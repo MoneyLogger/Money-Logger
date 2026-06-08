@@ -1,167 +1,194 @@
 {% load currency_filters %}
 {% load humanize %}
 <!DOCTYPE html>
-<html lang="en" data-theme="corporate">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="/media/logo/logo.png">
     <title>Budget - Money Logger</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4/dist/full.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * { font-family: 'Inter', sans-serif; }
-        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
-        .brand-gradient { background: linear-gradient(to right, #9333ea, #ec4899); }
-        .brand-text { background: linear-gradient(to right, #9333ea, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-        .glass { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(229,231,235,0.5); }
-        @keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-        .anim-fade-up { animation: fadeInUp 0.6s ease-out both; }
-        .budget-card { transition: transform 0.3s, box-shadow 0.3s; }
-        .budget-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
-        .progress-fill { height: 100%; border-radius: 9999px; transition: width 1s cubic-bezier(0.4,0,0.2,1); }
-        .fab { position: fixed; bottom: 80px; right: 24px; width: 56px; height: 56px; background: linear-gradient(to right, #9333ea, #ec4899); border-radius: 50%; display: none; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(147,51,234,0.3); z-index: 40; transition: all 0.3s; text-decoration: none; color: white; }
-        .fab:hover { transform: scale(1.1); }
-        .fab svg { width: 28px; height: 28px; }
-        @media (max-width: 768px) { .container { padding: 1rem 0.5rem 100px !important; } .fab { display: flex; } }
+        * { font-family:'Inter',sans-serif; box-sizing:border-box; }
+        body { background:linear-gradient(145deg,#dbeafe 0%,#e0e7ff 40%,#ede9fe 70%,#fce7f3 100%); min-height:100vh; }
+        .page-wrap { max-width:1280px; margin:0 auto; padding:1.5rem 1rem 6rem; }
+        .card-white { background:#fff; border:1px solid #e5e7eb; border-radius:1.25rem; box-shadow:0 4px 24px rgba(30,30,60,.07); }
+        .brand-text { background:linear-gradient(135deg,#4f46e5,#7c3aed); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        .anim { animation:fadeInUp .5s ease-out both; }
+        .stat-icon { width:2.75rem; height:2.75rem; border-radius:.75rem; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .progress-bg { height:.75rem; background:#f3f4f6; border-radius:999px; overflow:hidden; }
+        .progress-fill { height:100%; border-radius:999px; transition:width 1s cubic-bezier(.4,0,.2,1); }
+        .budget-card { transition:transform .25s,box-shadow .25s; }
+        .budget-card:hover { transform:translateY(-3px); box-shadow:0 10px 28px rgba(30,30,60,.1); }
+        .form-input {
+            border:1.5px solid #e5e7eb; border-radius:.5rem;
+            padding:.5rem .75rem; font-size:.875rem; background:#f9fafb;
+            outline:none; width:100%; transition:border-color .2s;
+        }
+        .form-input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.12); background:#fff; }
+        .fab { position:fixed; bottom:80px; right:24px; width:52px; height:52px; background:linear-gradient(135deg,#4f46e5,#7c3aed); border-radius:50%; display:none; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(79,70,229,.35); z-index:40; color:white; text-decoration:none; transition:transform .2s; }
+        .fab:hover { transform:scale(1.08); }
+        /* Modal */
+        .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.4); backdrop-filter:blur(4px); display:none; align-items:center; justify-content:center; z-index:1000; padding:1rem; }
+        .modal-overlay.show { display:flex; }
+        .modal-card { background:#fff; border-radius:1.25rem; padding:2rem; max-width:380px; width:100%; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,.18); animation:fadeInUp .25s ease-out; }
+        .modal-icon { width:52px; height:52px; margin:0 auto 1.25rem; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#fef2f2; color:#ef4444; }
+        @media(max-width:768px) { .page-wrap { padding:1rem .5rem 6rem; } .fab { display:flex; } }
     </style>
 </head>
 <body>
     {% include "includes/nav.html" with active_page="budget" action_url="budget_create" action_text="Add Budget" whatif_next="budget_list" %}
 
-    <div class="max-w-7xl mx-auto px-4 pb-20 container">
-        <!-- Page Header -->
-        <div class="flex items-center justify-between flex-wrap gap-4 mb-8 anim-fade-up">
+    <div class="page-wrap">
+
+        <!-- Page header -->
+        <div class="flex items-center justify-between flex-wrap gap-4 mb-7 anim">
             <div class="flex items-center gap-4">
-                <div class="w-16 h-16 rounded-2xl brand-gradient flex items-center justify-center shadow-lg">
-                    <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                <div class="stat-icon" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);width:3.5rem;height:3.5rem;border-radius:1rem;">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                 </div>
                 <div>
-                    <h1 class="text-3xl font-extrabold text-base-content">Budget Manager</h1>
-                    <p class="text-base-content/60 text-sm">Track spending limits by category</p>
+                    <h1 class="text-2xl font-bold text-gray-900">Budget Manager</h1>
+                    <p class="text-sm text-gray-500">Track spending limits by category</p>
                 </div>
             </div>
         </div>
 
-        <!-- Month Navigation -->
-        <div class="flex flex-col items-center gap-3 mb-8 anim-fade-up" style="animation-delay:0.05s">
+        <!-- Month navigation -->
+        <div class="flex flex-col items-center gap-3 mb-7 anim" style="animation-delay:.05s">
             <div class="flex items-center gap-4">
-                <a href="{% url 'budget_list' %}?month={{ prev_month }}&year={{ prev_year }}" class="btn btn-ghost btn-sm btn-square rounded-xl bg-white/80 border border-base-200 hover:text-purple-600 hover:border-purple-300">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                <a href="{% url 'budget_list' %}?month={{ prev_month }}&year={{ prev_year }}"
+                   class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
                 </a>
-                <div class="flex flex-col items-center px-6 py-2 glass rounded-xl">
-                    <span class="font-bold text-lg text-base-content">{{ month_name }}</span>
-                    <span class="text-xs text-base-content/50">{{ selected_year }}</span>
+                <div class="card-white px-6 py-2 text-center">
+                    <div class="font-bold text-lg text-gray-900">{{ month_name }}</div>
+                    <div class="text-xs text-gray-400">{{ selected_year }}</div>
                 </div>
-                <a href="{% url 'budget_list' %}?month={{ next_month }}&year={{ next_year }}" class="btn btn-ghost btn-sm btn-square rounded-xl bg-white/80 border border-base-200 hover:text-purple-600 hover:border-purple-300">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                <a href="{% url 'budget_list' %}?month={{ next_month }}&year={{ next_year }}"
+                   class="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center hover:border-indigo-300 hover:text-indigo-600 transition-all shadow-sm">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
                 </a>
             </div>
             {% if not is_current_period %}
-            <a href="{% url 'budget_list' %}?month={{ current_month }}&year={{ current_year }}" class="text-sm font-semibold text-purple-600 hover:bg-purple-50 px-3 py-1 rounded-lg transition-all">Today</a>
+            <a href="{% url 'budget_list' %}?month={{ current_month }}&year={{ current_year }}"
+               class="text-sm font-semibold text-indigo-600 hover:bg-indigo-50 px-3 py-1 rounded-lg transition-all">Back to Today</a>
             {% endif %}
         </div>
 
         {% if budget_data %}
-        <!-- Overall Summary -->
-        <div class="glass rounded-2xl p-6 mb-8 anim-fade-up" style="animation-delay:0.1s">
-            <h2 class="text-xl font-bold mb-6">Overall Budget</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div class="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-50/50">
-                    <p class="text-sm text-base-content/60 mb-1">Total Budget</p>
+        <!-- Overall summary -->
+        <div class="card-white p-6 mb-6 anim" style="animation-delay:.1s">
+            <h2 class="text-base font-bold text-gray-800 mb-5">Overall Budget</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+                <div class="p-4 rounded-xl" style="background:#eff6ff;">
+                    <p class="text-xs text-gray-500 mb-1">Total Budget</p>
                     <p class="text-2xl font-bold text-blue-600">₹{{ total_budget|indian_currency }}</p>
                 </div>
-                <div class="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-purple-50/50">
-                    <p class="text-sm text-base-content/60 mb-1">Total Spent</p>
+                <div class="p-4 rounded-xl" style="background:#f5f3ff;">
+                    <p class="text-xs text-gray-500 mb-1">Total Spent</p>
                     <p class="text-2xl font-bold text-purple-600">₹{{ total_spent|indian_currency }}</p>
                 </div>
-                <div class="p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-50/50">
-                    <p class="text-sm text-base-content/60 mb-1">Remaining</p>
+                <div class="p-4 rounded-xl" style="background:#f0fdf4;">
+                    <p class="text-xs text-gray-500 mb-1">Remaining</p>
                     <p class="text-2xl font-bold text-green-600">₹{{ total_remaining|indian_currency }}</p>
                 </div>
             </div>
             <div>
-                <div class="flex justify-between items-center mb-2 text-sm">
-                    <span class="text-base-content/60">Overall Progress</span>
-                    <span class="font-bold {% if total_percentage >= 100 %}text-error{% elif total_percentage >= 80 %}text-warning{% else %}text-success{% endif %}">{{ total_percentage|floatformat:1 }}%</span>
+                <div class="flex justify-between items-center mb-1.5 text-sm">
+                    <span class="text-gray-500">Overall Progress</span>
+                    <span class="font-bold {% if total_percentage >= 100 %}text-red-600{% elif total_percentage >= 80 %}text-amber-500{% else %}text-green-600{% endif %}">{{ total_percentage|floatformat:1 }}%</span>
                 </div>
-                <div class="h-4 bg-base-200 rounded-full overflow-hidden">
-                    <div class="progress-fill {% if total_percentage >= 100 %}bg-error{% elif total_percentage >= 80 %}bg-warning{% else %}bg-success{% endif %}" style="width:0%" data-width="{% if total_percentage > 100 %}100{% else %}{{ total_percentage|indian_currency }}{% endif %}"></div>
+                <div class="progress-bg">
+                    <div class="progress-fill {% if total_percentage >= 100 %}bg-red-500{% elif total_percentage >= 80 %}bg-amber-400{% else %}bg-green-500{% endif %}"
+                         style="width:0%" data-width="{% if total_percentage > 100 %}100{% else %}{{ total_percentage|floatformat:0 }}{% endif %}"></div>
                 </div>
             </div>
         </div>
 
-        <!-- Budget Cards -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Budget cards grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
             {% for item in budget_data %}
             {% with delay=forloop.counter0|add:1 %}
-            <div class="budget-card glass rounded-2xl p-6 relative overflow-hidden border {% if item.status == 'safe' %}border-base-200{% elif item.status == 'warning' %}border-yellow-200{% else %}border-red-200{% endif %} anim-fade-up" style="animation-delay: 0.{{ delay }}s;">
-                <div class="absolute inset-0 opacity-30 pointer-events-none" style="{% if item.status == 'safe' %}background: linear-gradient(to bottom right, #dcfce7, transparent);{% elif item.status == 'warning' %}background: linear-gradient(to bottom right, #fef3c7, transparent);{% else %}background: linear-gradient(to bottom right, #fee2e2, transparent);{% endif %}"></div>
+            <div class="budget-card card-white p-6 relative overflow-hidden anim border {% if item.status == 'safe' %}border-gray-100{% elif item.status == 'warning' %}border-amber-200{% else %}border-red-200{% endif %}"
+                 style="animation-delay:0.{{ delay }}s;">
+                <!-- Subtle tinted bg overlay -->
+                <div class="absolute inset-0 pointer-events-none rounded-2xl"
+                     style="{% if item.status == 'safe' %}background:linear-gradient(135deg,rgba(240,253,244,.5),transparent){% elif item.status == 'warning' %}background:linear-gradient(135deg,rgba(255,251,235,.6),transparent){% else %}background:linear-gradient(135deg,rgba(254,242,242,.6),transparent){% endif %}"></div>
+
                 <div class="relative z-10">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-xl flex items-center justify-center {% if item.status == 'safe' %}bg-green-50{% elif item.status == 'warning' %}bg-yellow-50{% else %}bg-red-50{% endif %}">
-                                <svg class="w-6 h-6 {% if item.status == 'safe' %}text-green-600{% elif item.status == 'warning' %}text-yellow-600{% else %}text-red-600{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                            <div class="stat-icon {% if item.status == 'safe' %}{% elif item.status == 'warning' %}{% else %}{% endif %}"
+                                 style="{% if item.status == 'safe' %}background:#d1fae5;color:#059669{% elif item.status == 'warning' %}background:#fef3c7;color:#d97706{% else %}background:#fee2e2;color:#dc2626{% endif %}">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                             </div>
                             <div>
-                                <h3 class="text-xl font-bold text-base-content">{{ item.budget.category }}</h3>
-                                <p class="text-sm text-base-content/50">{% if item.percentage >= 100 %}Budget exceeded!{% elif item.percentage >= 80 %}Almost at limit{% else %}On track{% endif %}</p>
+                                <h3 class="text-lg font-bold text-gray-900">{{ item.budget.category }}</h3>
+                                <p class="text-xs text-gray-400">{% if item.percentage >= 100 %}Budget exceeded!{% elif item.percentage >= 80 %}Almost at limit{% else %}On track{% endif %}</p>
                             </div>
                         </div>
-                        <div class="flex gap-2">
-                            <button class="btn btn-ghost btn-sm btn-square" onclick="startEditing('{{ item.budget.id }}')">
-                                <svg class="w-5 h-5 text-base-content/50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        <div class="flex gap-1">
+                            <button class="w-9 h-9 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition-all"
+                                    onclick="startEditing('{{ item.budget.id }}')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             </button>
-                            <button class="btn btn-ghost btn-sm btn-square text-error hover:bg-error/10" onclick="confirmDelete('{{ item.budget.id }}', '{{ item.budget.category }}')">
-                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            <button class="w-9 h-9 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-400 hover:text-red-600 hover:border-red-200 transition-all"
+                                    onclick="confirmDelete('{{ item.budget.id }}', '{{ item.budget.category }}')">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                             </button>
                         </div>
                     </div>
 
                     {% if item.percentage >= 80 %}
-                    <div class="alert {% if item.percentage >= 100 %}alert-error{% else %}alert-warning{% endif %} alert-sm py-2 mb-4 text-sm">
-                        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <div class="flex items-center gap-2 rounded-xl px-4 py-2.5 mb-4 text-sm font-medium {% if item.percentage >= 100 %}bg-red-50 text-red-700 border border-red-200{% else %}bg-amber-50 text-amber-700 border border-amber-200{% endif %}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                         {% if item.percentage >= 100 %}Exceeded by ₹{{ item.remaining|indian_currency|slice:"1:" }}{% else %}Only ₹{{ item.remaining|indian_currency }} remaining{% endif %}
                     </div>
                     {% endif %}
 
                     <div class="grid grid-cols-3 gap-4 mb-4">
                         <div>
-                            <p class="text-xs text-base-content/50 mb-1">Spent</p>
+                            <p class="text-xs text-gray-400 mb-1">Spent</p>
                             <p class="text-lg font-bold text-purple-600">₹{{ item.spent|indian_currency }}</p>
                         </div>
                         <div>
-                            <p class="text-xs text-base-content/50 mb-1">Limit</p>
+                            <p class="text-xs text-gray-400 mb-1">Limit</p>
                             <div id="limit-display-{{ item.budget.id }}">
-                                <p class="text-lg font-bold text-base-content">₹{{ item.budget.amount|indian_currency }}</p>
+                                <p class="text-lg font-bold text-gray-800">₹{{ item.budget.amount|indian_currency }}</p>
                             </div>
                             <div id="limit-edit-{{ item.budget.id }}" style="display:none;">
-                                <input type="number" id="limit-input-{{ item.budget.id }}" value="{{ item.budget.amount }}" step="0.01" min="0" class="input input-bordered input-sm w-full border-2 border-purple-400 font-bold">
+                                <input type="number" id="limit-input-{{ item.budget.id }}" value="{{ item.budget.amount }}" step="0.01" min="0" class="form-input">
                             </div>
                         </div>
                         <div>
-                            <p class="text-xs text-base-content/50 mb-1">Remaining</p>
+                            <p class="text-xs text-gray-400 mb-1">Remaining</p>
                             <p class="text-lg font-bold {% if item.remaining >= 0 %}text-green-600{% else %}text-red-600{% endif %}">₹{{ item.remaining|indian_currency }}</p>
                         </div>
                     </div>
 
-                    <div id="edit-actions-{{ item.budget.id }}" style="display:none;" class="flex gap-3 mb-4 pt-3 border-t border-base-200">
-                        <button class="btn btn-success btn-sm flex-1 gap-1" onclick="saveBudget('{{ item.budget.id }}')">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Save
+                    <div id="edit-actions-{{ item.budget.id }}" style="display:none;" class="flex gap-3 mb-4 pt-3 border-t border-gray-100">
+                        <button class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white text-sm font-semibold transition-colors"
+                                onclick="saveBudget('{{ item.budget.id }}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Save
                         </button>
-                        <button class="btn btn-ghost btn-sm flex-1 gap-1 border border-base-300" onclick="cancelEditing('{{ item.budget.id }}')">
-                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Cancel
+                        <button class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-semibold transition-colors"
+                                onclick="cancelEditing('{{ item.budget.id }}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Cancel
                         </button>
                     </div>
 
                     <div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span class="text-base-content/50">Progress</span>
-                            <span class="font-bold {% if item.percentage >= 100 %}text-error{% elif item.percentage >= 80 %}text-warning{% else %}text-success{% endif %}">{{ item.percentage|floatformat:1 }}%</span>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-gray-400">Progress</span>
+                            <span class="font-bold {% if item.percentage >= 100 %}text-red-600{% elif item.percentage >= 80 %}text-amber-500{% else %}text-green-600{% endif %}">{{ item.percentage|floatformat:1 }}%</span>
                         </div>
-                        <div class="h-3 bg-base-200 rounded-full overflow-hidden">
-                            <div class="progress-fill {% if item.percentage >= 100 %}bg-error{% elif item.percentage >= 80 %}bg-warning{% else %}bg-success{% endif %}" style="width:0%" data-width="{% if item.percentage > 100 %}100{% else %}{{ item.percentage|indian_currency }}{% endif %}"></div>
+                        <div class="progress-bg">
+                            <div class="progress-fill {% if item.percentage >= 100 %}bg-red-500{% elif item.percentage >= 80 %}bg-amber-400{% else %}bg-green-500{% endif %}"
+                                 style="width:0%" data-width="{% if item.percentage > 100 %}100{% else %}{{ item.percentage|floatformat:0 }}{% endif %}"></div>
                         </div>
                     </div>
                 </div>
@@ -171,15 +198,16 @@
         </div>
 
         {% else %}
-        <!-- Empty State -->
-        <div class="glass rounded-2xl text-center py-24 px-8 anim-fade-up">
-            <div class="text-6xl mb-4 opacity-30">
-                <svg class="w-16 h-16 mx-auto text-base-content/20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <!-- Empty state -->
+        <div class="card-white text-center py-20 px-8 anim">
+            <div class="w-20 h-20 rounded-2xl mx-auto mb-5 flex items-center justify-center" style="background:#f3f4f6;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
             </div>
-            <h3 class="text-xl font-bold text-base-content/40 mb-2">No Budgets Yet</h3>
-            <p class="text-base-content/50 mb-6">Create your first budget to start tracking spending limits</p>
-            <a href="{% url 'budget_create' %}" class="btn brand-gradient text-white border-0 gap-2">
-                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <h3 class="text-xl font-bold text-gray-400 mb-2">No Budgets Yet</h3>
+            <p class="text-gray-400 mb-6 text-sm">Create your first budget to start tracking spending limits</p>
+            <a href="{% url 'budget_create' %}"
+               style="display:inline-flex;align-items:center;gap:.5rem;padding:.75rem 1.5rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-radius:.75rem;font-size:.9375rem;font-weight:600;text-decoration:none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Create Budget
             </a>
         </div>
@@ -187,86 +215,70 @@
     </div>
 
     <a href="{% url 'budget_create' %}" class="fab">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     </a>
-
     {% include "includes/mobile_nav.html" with active_page="budget" %}
 
-    <!-- Delete Modal -->
-    <dialog id="deleteModal" class="modal">
-        <div class="modal-box">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center">
-                    <svg class="w-6 h-6 text-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                </div>
-                <h3 class="text-xl font-bold">Delete Budget</h3>
+    <!-- Delete modal -->
+    <div id="deleteModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             </div>
-            <p class="text-base-content/60 mb-6" id="deleteMessage">Are you sure you want to delete this budget?</p>
-            <div class="modal-action gap-3">
-                <button class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
-                <button class="btn btn-error" onclick="deleteBudget()">Delete</button>
+            <h3 style="font-size:1.25rem;font-weight:700;color:#111827;margin:0 0 .5rem;">Delete Budget</h3>
+            <p id="deleteMessage" style="color:#6b7280;font-size:.9375rem;margin:0 0 1.5rem;line-height:1.5;"></p>
+            <div style="display:flex;gap:.75rem;">
+                <button onclick="closeDeleteModal()" style="flex:1;padding:.6875rem;background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb;border-radius:.75rem;font-weight:600;cursor:pointer;">Cancel</button>
+                <button onclick="deleteBudget()" style="flex:1;padding:.6875rem;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:.75rem;font-weight:600;cursor:pointer;">Delete</button>
             </div>
         </div>
-        <form method="dialog" class="modal-backdrop"><button>close</button></form>
-    </dialog>
+    </div>
 
     <script>
-        let editingBudgetId = null, deletingBudgetId = null, originalLimitValue = null;
+        let editingId=null, deletingId=null, origVal=null;
 
         function startEditing(id) {
-            if (editingBudgetId && editingBudgetId !== id) cancelEditing(editingBudgetId);
-            editingBudgetId = id;
-            originalLimitValue = document.getElementById(`limit-input-${id}`).value;
-            document.getElementById(`limit-display-${id}`).style.display = 'none';
-            document.getElementById(`limit-edit-${id}`).style.display = 'block';
-            document.getElementById(`edit-actions-${id}`).style.display = 'flex';
+            if (editingId && editingId!==id) cancelEditing(editingId);
+            editingId=id; origVal=document.getElementById(`limit-input-${id}`).value;
+            document.getElementById(`limit-display-${id}`).style.display='none';
+            document.getElementById(`limit-edit-${id}`).style.display='block';
+            document.getElementById(`edit-actions-${id}`).style.display='flex';
             document.getElementById(`limit-input-${id}`).focus();
         }
-
         function cancelEditing(id) {
-            document.getElementById(`limit-input-${id}`).value = originalLimitValue;
-            document.getElementById(`limit-display-${id}`).style.display = 'block';
-            document.getElementById(`limit-edit-${id}`).style.display = 'none';
-            document.getElementById(`edit-actions-${id}`).style.display = 'none';
-            editingBudgetId = null;
+            document.getElementById(`limit-input-${id}`).value=origVal;
+            document.getElementById(`limit-display-${id}`).style.display='block';
+            document.getElementById(`limit-edit-${id}`).style.display='none';
+            document.getElementById(`edit-actions-${id}`).style.display='none';
+            editingId=null;
         }
-
         function saveBudget(id) {
-            const newLimit = document.getElementById(`limit-input-${id}`).value;
-            if (!newLimit || parseFloat(newLimit) <= 0) { alert('Please enter a valid budget limit'); return; }
-            const fd = new FormData();
-            fd.append('budget_id', id); fd.append('amount', newLimit); fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-            fetch('{% url "budget_update_ajax" %}', { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.json()).then(d => { if (d.success) window.location.reload(); else alert(d.error || 'Failed'); })
-            .catch(() => alert('Failed'));
+            const v=document.getElementById(`limit-input-${id}`).value;
+            if (!v||parseFloat(v)<=0){alert('Enter a valid amount');return;}
+            const fd=new FormData(); fd.append('budget_id',id); fd.append('amount',v); fd.append('csrfmiddlewaretoken','{{ csrf_token }}');
+            fetch('{% url "budget_update_ajax" %}',{method:'POST',body:fd,headers:{'X-Requested-With':'XMLHttpRequest'}})
+            .then(r=>r.json()).then(d=>{if(d.success)window.location.reload();else alert(d.error||'Failed');}).catch(()=>alert('Failed'));
         }
-
         function confirmDelete(id, cat) {
-            deletingBudgetId = id;
-            document.getElementById('deleteMessage').textContent = `Are you sure you want to delete the budget for "${cat}"? This action cannot be undone.`;
-            document.getElementById('deleteModal').showModal();
+            deletingId=id;
+            document.getElementById('deleteMessage').textContent=`Are you sure you want to delete the budget for "${cat}"? This cannot be undone.`;
+            document.getElementById('deleteModal').classList.add('show');
         }
-
-        function closeDeleteModal() { document.getElementById('deleteModal').close(); deletingBudgetId = null; }
-
+        function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('show'); deletingId=null; }
         function deleteBudget() {
-            if (!deletingBudgetId) return;
-            const fd = new FormData();
-            fd.append('budget_id', deletingBudgetId); fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-            fetch('{% url "budget_delete_ajax" %}', { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-            .then(r => r.json()).then(d => { if (d.success) window.location.reload(); else alert(d.error || 'Failed'); })
-            .catch(() => alert('Failed'));
+            if (!deletingId) return;
+            const fd=new FormData(); fd.append('budget_id',deletingId); fd.append('csrfmiddlewaretoken','{{ csrf_token }}');
+            fetch('{% url "budget_delete_ajax" %}',{method:'POST',body:fd,headers:{'X-Requested-With':'XMLHttpRequest'}})
+            .then(r=>r.json()).then(d=>{if(d.success)window.location.reload();else alert(d.error||'Failed');}).catch(()=>alert('Failed'));
         }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            requestAnimationFrame(function() {
-                document.querySelectorAll('[data-width]').forEach(bar => { bar.style.width = bar.dataset.width + '%'; });
-            });
-            document.querySelectorAll('.limit-input, input[id^="limit-input-"]').forEach(input => {
-                input.addEventListener('keypress', function(e) {
-                    const id = this.id.replace('limit-input-', '');
-                    if (e.key === 'Enter') saveBudget(id);
-                    else if (e.key === 'Escape') cancelEditing(id);
+        document.getElementById('deleteModal').addEventListener('click',function(e){if(e.target===this)closeDeleteModal();});
+        document.addEventListener('DOMContentLoaded', function(){
+            requestAnimationFrame(()=>{ document.querySelectorAll('[data-width]').forEach(b=>{ b.style.width=b.dataset.width+'%'; }); });
+            document.querySelectorAll('input[id^="limit-input-"]').forEach(input=>{
+                input.addEventListener('keypress',function(e){
+                    const id=this.id.replace('limit-input-','');
+                    if(e.key==='Enter') saveBudget(id);
+                    else if(e.key==='Escape') cancelEditing(id);
                 });
             });
         });
