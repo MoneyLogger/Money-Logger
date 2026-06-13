@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-4u)hc$wao_i_f1t)!7l1j8lz_vpdk37*sy!9akc!x5pmqnmb^y"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = ["*"]
 
@@ -67,6 +67,41 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/login/"
 
 
+# Authentication backends:
+#  - EmailBackend: log in with email + password (custom login form)
+#  - ModelBackend: Django default (admin / username), kept for fallback
+#  - allauth: social login (Google)
+AUTHENTICATION_BACKENDS = [
+    "accounts.backends.EmailBackend",
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+# Google OAuth via django-allauth.
+# Credentials come from Google Cloud Console -> APIs & Services -> Credentials
+# -> "OAuth client ID" (Web application). NOT the reCAPTCHA keys.
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
+            "secret": os.getenv("GOOGLE_SECRET", ""),
+            "key": "",
+        },
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+        # Skip allauth's intermediate "Continue" page on social login.
+        "OAUTH_PKCE_ENABLED": True,
+    }
+}
+
+# allauth account behaviour (django-allauth 65.x format).
+ACCOUNT_LOGIN_METHODS = {"username"}
+ACCOUNT_SIGNUP_FIELDS = ["username*", "password1*", "password2*"]
+ACCOUNT_EMAIL_VERIFICATION = "none"
+# Log social users in directly without an extra confirmation page.
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -77,6 +112,12 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "django.contrib.sites",
+    # Google sign-in (OAuth) via django-allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
     "accounts",
     "dashboard",
     "ledger",
@@ -84,14 +125,18 @@ INSTALLED_APPS = [
     "savings",
 ]
 
+SITE_ID = 1
+
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "money_log.urls"
@@ -99,7 +144,7 @@ ROOT_URLCONF = "money_log.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR ,'templates'],
+        "DIRS": ['templates'],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -135,7 +180,12 @@ if PRODUCTION_MODE:
             'PASSWORD': tmpPostgres.password,
             'HOST': tmpPostgres.hostname,
             'PORT': 5432,
+            'CONN_MAX_AGE': 600,
             'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+            # Neon's "-pooler" endpoint (PgBouncer transaction pooling) does not
+            # keep server-side cursors alive between statements, which breaks
+            # streaming queries like dumpdata/.iterator(). Disable them.
+            'DISABLE_SERVER_SIDE_CURSORS': True,
         }
     }
 
@@ -196,4 +246,3 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-

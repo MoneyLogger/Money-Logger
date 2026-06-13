@@ -8,13 +8,35 @@ from django.contrib import messages
 from .models import User
 from .recaptcha import verify_recaptcha
 
+
 class CustomUserCreationForm(UserCreationForm):
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={"placeholder": "you@example.com"}),
+    )
+
     class Meta:
         model = User
-        fields = ('username',)
+        fields = ('username', 'email')
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("An account with this email already exists.")
+        return email
 
 
 class RecaptchaAuthenticationForm(AuthenticationForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Users may log in with either their username or their email. The value
+        # is still submitted as "username"; EmailBackend matches it against the
+        # email and ModelBackend matches it against the username.
+        self.fields["username"].label = "Username or Email"
+        self.fields["username"].widget = forms.TextInput(
+            attrs={"autofocus": True, "placeholder": "Username or email"}
+        )
+
     def clean(self):
         token = self.data.get("g-recaptcha-response")
         result = verify_recaptcha(
@@ -48,8 +70,9 @@ def signup(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
-            messages.success(request, 'Account created successfully!')
+            # Multiple auth backends are configured, so login() can't infer
+            # which one to attach to the session for a freshly-created user.
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
             return redirect('dashboard')
     else:
         form = CustomUserCreationForm()
@@ -62,31 +85,31 @@ def logout_view(request):
 
 def forgot_password(request):
     if request.method == "POST":
-        username = request.POST.get("username")
+        email = request.POST.get("email")
         password1 = request.POST.get("new_password1")
         password2 = request.POST.get("new_password2")
 
-        if not username:
-            messages.error(request, "Please enter your username.")
+        if not email:
+            messages.error(request, "Please enter your email.")
             return render(request, "accounts/forgot_password.html")
 
         try:
-            user = User.objects.get(username=username)
+            user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
-            messages.error(request, "No account found with that username.")
+            messages.error(request, "No account found with that email.")
             return render(request, "accounts/forgot_password.html")
 
         if not password1 or not password2:
             messages.error(request, "Please enter and confirm your new password.")
-            return render(request, "accounts/forgot_password.html", {"username": username})
+            return render(request, "accounts/forgot_password.html", {"email": email})
 
         if password1 != password2:
             messages.error(request, "Passwords do not match.")
-            return render(request, "accounts/forgot_password.html", {"username": username})
+            return render(request, "accounts/forgot_password.html", {"email": email})
 
         if len(password1) < 8:
             messages.error(request, "Password must be at least 8 characters.")
-            return render(request, "accounts/forgot_password.html", {"username": username})
+            return render(request, "accounts/forgot_password.html", {"email": email})
 
         user.set_password(password1)
         user.save()
