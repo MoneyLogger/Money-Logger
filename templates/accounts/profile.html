@@ -1,0 +1,332 @@
+{% load currency_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>My Profile - Money Logger</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; }
+
+        .container { max-width: 768px; margin: 0 auto; padding: 0 20px 100px; }
+        @media (max-width: 640px) { .container { padding: 0 16px 100px; } }
+
+        /* Account hero */
+        .account-hero {
+            position: relative; overflow: hidden;
+            background: linear-gradient(120deg, #1e3a8a 0%, #4f46e5 50%, #7c3aed 100%);
+            border-radius: 24px; padding: 32px; margin-bottom: 24px; color: #fff;
+            box-shadow: 0 25px 50px -12px rgba(79,70,229,0.35);
+            animation: fadeInUp 0.5s ease-out;
+        }
+        .account-hero::after { content: ""; position: absolute; top: -40%; right: -10%; width: 240px; height: 240px; background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 70%); pointer-events: none; }
+        .account-hero-row { display: flex; align-items: center; gap: 20px; position: relative; z-index: 1; }
+        .account-avatar { width: 72px; height: 72px; border-radius: 20px; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.25); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.25); }
+        .account-avatar span { font-size: 2rem; font-weight: 800; color: #fff; }
+        .account-meta { min-width: 0; }
+        .account-name { font-size: 1.6rem; font-weight: 800; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .account-handle { margin-top: 4px; font-size: 0.9rem; color: rgba(226,232,240,0.9); overflow-wrap: anywhere; }
+        .account-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; position: relative; z-index: 1; }
+        .account-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.2); }
+        .account-chip svg { width: 0.9rem; height: 0.9rem; }
+        .account-chip.warn { background: rgba(245,158,11,0.22); border-color: rgba(252,211,77,0.45); color: #fde68a; }
+        .account-chip.ok { background: rgba(16,185,129,0.22); border-color: rgba(110,231,183,0.45); color: #a7f3d0; }
+
+        @media (max-width: 640px) {
+            .account-hero { padding: 24px; border-radius: 20px; }
+            .account-avatar { width: 60px; height: 60px; border-radius: 16px; }
+            .account-avatar span { font-size: 1.6rem; }
+            .account-name { font-size: 1.35rem; }
+        }
+
+        .form-card { background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-radius: 24px; border: 1px solid rgba(229,231,235,0.5); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.18); overflow: hidden; animation: fadeInUp 0.6s ease-out; }
+        @media (max-width: 640px) { .form-card { border-radius: 20px; } }
+
+        .form-header { padding: 28px 32px; background: linear-gradient(to right, rgba(37,99,235,0.12), rgba(147,51,234,0.10)); border-bottom: 1px solid rgba(229,231,235,0.5); }
+        .form-header h1 { font-size: 1.5rem; font-weight: 800; background: linear-gradient(to right, #2563eb, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 6px; }
+        .form-header p { color: #6b7280; font-size: 0.9rem; }
+        @media (max-width: 640px) { .form-header { padding: 22px 20px; } .form-header h1 { font-size: 1.3rem; } }
+
+        .form-content { padding: 32px; }
+        @media (max-width: 640px) { .form-content { padding: 22px 20px; } }
+
+        .form-group { margin-bottom: 22px; }
+        .form-label { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-weight: 600; color: #374151; font-size: 0.85rem; }
+        .form-label .req { color: #dc2626; }
+        .form-label .opt { color: #9ca3af; font-weight: 500; font-size: 0.75rem; }
+
+        .input-wrapper { position: relative; }
+        .input-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: #9ca3af; z-index: 1; pointer-events: none; }
+
+        .form-content input[type="text"],
+        .form-content input[type="email"],
+        .form-content input[type="password"] {
+            width: 100%; padding: 13px 14px 13px 44px; background: #fff; border: 2px solid #e5e7eb;
+            border-radius: 12px; font-size: 0.95rem; transition: all 0.25s ease; font-family: 'Inter', sans-serif;
+        }
+        .form-content input[type="text"]:focus,
+        .form-content input[type="email"]:focus,
+        .form-content input[type="password"]:focus { outline: none; border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.12); }
+        .form-content input::placeholder { color: #cbd5e1; }
+
+        .readonly-field { display: flex; align-items: center; gap: 12px; padding: 13px 14px; background: linear-gradient(to bottom right, #f9fafb, #f3f4f6); border: 2px solid #eef2f7; border-radius: 12px; }
+        .readonly-field svg { width: 20px; height: 20px; color: #9ca3af; flex-shrink: 0; }
+        .readonly-field .value { font-size: 0.95rem; font-weight: 600; color: #374151; }
+        .readonly-field .lock { margin-left: auto; font-size: 0.7rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .field-error { margin-top: 6px; font-size: 0.8rem; color: #dc2626; font-weight: 500; }
+        .field-hint { margin-top: 6px; font-size: 0.78rem; color: #9ca3af; }
+
+        .security-note { display: flex; gap: 12px; padding: 14px 16px; background: rgba(124,58,237,0.06); border: 1px solid rgba(124,58,237,0.14); border-radius: 14px; margin-bottom: 24px; }
+        .security-note svg { width: 20px; height: 20px; color: #7c3aed; flex-shrink: 0; margin-top: 1px; }
+        .security-note p { font-size: 0.82rem; color: #5b21b6; line-height: 1.45; }
+
+        .submit-btn { width: 100%; padding: 16px; background: linear-gradient(to right, #2563eb, #9333ea); color: #fff; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 12px 20px -6px rgba(124,58,237,0.4); display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px; }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 18px 28px -8px rgba(124,58,237,0.5); }
+        .submit-btn:active { transform: translateY(0); }
+        .submit-btn svg { width: 18px; height: 18px; }
+
+        /* Change Password card — distinct slate/indigo accent */
+        .pw-card { margin-top: 24px; }
+        .pw-header { background: linear-gradient(to right, rgba(15,23,42,0.06), rgba(79,70,229,0.08)); }
+        .pw-header-row { display: flex; align-items: center; gap: 14px; }
+        .pw-header-icon { flex-shrink: 0; width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #1e293b, #4f46e5); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 18px -6px rgba(30,41,59,0.5); }
+        .pw-header-icon svg { width: 22px; height: 22px; color: #fff; }
+        .pw-header h1 { background: linear-gradient(to right, #1e293b, #4f46e5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .submit-btn.pw-submit { background: linear-gradient(to right, #1e293b, #4f46e5); box-shadow: 0 12px 20px -6px rgba(30,41,59,0.45); }
+        .submit-btn.pw-submit:hover { box-shadow: 0 18px 28px -8px rgba(30,41,59,0.55); }
+
+        .messages-container { margin-bottom: 22px; }
+        .message-item { padding: 12px 16px; border-radius: 12px; font-size: 0.875rem; font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .message-item.error { background: #fce7f3; color: #9d174d; }
+        .message-item.success { background: #d1fae5; color: #065f46; }
+        .message-item.info { background: #dbeafe; color: #1e40af; }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ── Tablet (641px – 1024px) ─────────────────────────────────────────── */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .container { max-width: 720px; padding: 0 24px 100px; }
+            .account-hero { padding: 28px; }
+            .form-header { padding: 26px 28px; }
+            .form-content { padding: 28px; }
+        }
+
+        /* ── Mobile (≤640px): 16px inputs to stop iOS zoom, bigger touch targets ─ */
+        @media (max-width: 640px) {
+            .form-content input[type="text"],
+            .form-content input[type="email"],
+            .form-content input[type="password"] {
+                font-size: 16px; padding: 14px 14px 14px 44px; min-height: 50px;
+            }
+            .readonly-field { padding: 14px; min-height: 50px; }
+            .form-group { margin-bottom: 20px; }
+            .submit-btn { min-height: 54px; font-size: 1.05rem; -webkit-tap-highlight-color: transparent; user-select: none; }
+            .submit-btn:active { transform: scale(0.99); }
+            .account-hero-row { gap: 16px; }
+            .pw-header-row { gap: 12px; }
+            .pw-header-icon { width: 40px; height: 40px; border-radius: 11px; }
+            .pw-header-icon svg { width: 20px; height: 20px; }
+        }
+
+        /* ── Small phones (≤380px) ───────────────────────────────────────────── */
+        @media (max-width: 380px) {
+            .account-hero { padding: 20px; }
+            .account-name { font-size: 1.2rem; }
+            .account-chip { font-size: 0.7rem; padding: 5px 10px; }
+            .form-header h1 { font-size: 1.2rem; }
+            .form-header p { font-size: 0.82rem; }
+        }
+
+        /* ── Nav switch: hide desktop nav, show mobile nav at ≤768px ──────────── */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .settings-dropdown { display: none; }
+            .btn-add { display: none; }
+            .mobile-nav { display: block; }
+        }
+    </style>
+</head>
+<body>
+    {% include "includes/nav.html" with active_page="profile" hide_whatif=True %}
+
+    <div class="container">
+        <!-- Account hero -->
+        <div class="account-hero">
+            <div class="account-hero-row">
+                <div class="account-avatar">
+                    <span>{{ request.user.username|first|upper }}</span>
+                </div>
+                <div class="account-meta">
+                    <div class="account-name">{{ request.user.username }}</div>
+                    <div class="account-handle">
+                        {% if request.user.email %}{{ request.user.email }}{% else %}No email on file{% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="account-chips">
+                <span class="account-chip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    Joined {{ request.user.date_joined|date:"M Y" }}
+                </span>
+                {% if request.user.email %}
+                <span class="account-chip ok">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Email linked
+                </span>
+                {% else %}
+                <span class="account-chip warn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    Email pending
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="form-header">
+                <h1>Account & Security</h1>
+                <p>Keep your contact details up to date so we can help you recover your account.</p>
+            </div>
+
+            <div class="form-content">
+
+                {% if not request.user.email %}
+                <div class="security-note">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <p>Your account was created with a username only. Adding an email lets you reset your password and secures access if you ever get locked out.</p>
+                </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="profile">
+
+                    <!-- Username (read-only) -->
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <div class="readonly-field">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            <span class="value">{{ request.user.username }}</span>
+                            <span class="lock">Locked</span>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.email.id_for_label }}">
+                            Email address <span class="req">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                            {{ form.email }}
+                        </div>
+                        {% for error in form.email.errors %}
+                        <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Mobile number -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ form.mobile_number.id_for_label }}">
+                            Mobile number <span class="opt">(optional)</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            {{ form.mobile_number }}
+                        </div>
+                        {% for error in form.mobile_number.errors %}
+                        <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                        <div class="field-hint">Reserved for future SMS alerts &amp; login. We won't share it.</div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        Save Changes
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Change Password card -->
+        <div class="form-card pw-card">
+            <div class="form-header pw-header">
+                <div class="pw-header-row">
+                    <div class="pw-header-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
+                    <div>
+                        <h1>Change Password</h1>
+                        <p>Update your password regularly to keep your account protected.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-content">
+                <form method="post" novalidate id="passwordForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" value="password">
+
+                    {% for error in password_form.non_field_errors %}
+                    <div class="message-item error" style="margin-bottom:16px;">{{ error }}</div>
+                    {% endfor %}
+
+                    <!-- Current password -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ password_form.old_password.id_for_label }}">
+                            Current password <span class="req">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            {{ password_form.old_password }}
+                        </div>
+                        {% for error in password_form.old_password.errors %}
+                        <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- New password -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ password_form.new_password1.id_for_label }}">
+                            New password <span class="req">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M12 16v-3"></path><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            {{ password_form.new_password1 }}
+                        </div>
+                        {% for error in password_form.new_password1.errors %}
+                        <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                        <div class="field-hint">At least 8 characters. Avoid common or all-numeric passwords.</div>
+                    </div>
+
+                    <!-- Confirm new password -->
+                    <div class="form-group">
+                        <label class="form-label" for="{{ password_form.new_password2.id_for_label }}">
+                            Confirm new password <span class="req">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                            {{ password_form.new_password2 }}
+                        </div>
+                        {% for error in password_form.new_password2.errors %}
+                        <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="submit-btn pw-submit">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>
+                        Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% include "includes/mobile_nav.html" with active_page="profile" %}
+</body>
+</html>

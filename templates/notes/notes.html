@@ -756,7 +756,7 @@
 </head>
 <body>
     <div class="shell">
-        {% include "includes/nav.html" with active_page="notes" action_url="note_create" action_text="Add Note" whatif_next="notes_list" hide_whatif=True %}
+        {% include "includes/nav.html" with active_page="notes" action_url="note_create" action_text="Add Note" whatif_next="notes_list" hide_whatif=True messages_in_page=True %}
 
         <main class="main">
             {% if messages %}

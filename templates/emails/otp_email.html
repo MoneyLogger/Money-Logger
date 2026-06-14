@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Money Logger Verification</title>
+</head>
+<!-- Inline styles only — email clients strip <style> blocks and external CSS. -->
+<body style="margin:0; padding:0; background:#f1f5f9; font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9; padding:24px 12px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(2,6,23,0.08);">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background:linear-gradient(120deg,#1e3a8a,#4f46e5 55%,#7c3aed); padding:28px 32px;">
+                            <div style="font-size:20px; font-weight:700; color:#ffffff; letter-spacing:0.2px;">Money Logger</div>
+                            <div style="font-size:13px; color:rgba(226,232,240,0.85); margin-top:2px;">Financial Survival Tracker</div>
+                        </td>
+                    </tr>
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding:32px;">
+                            <h1 style="margin:0 0 8px; font-size:20px; color:#0f172a; font-weight:700;">Verify your email</h1>
+                            <p style="margin:0 0 22px; font-size:14px; line-height:1.55; color:#475569;">
+                                Hi {{ username }}, use the verification code below to finish creating your Money Logger account.
+                            </p>
+
+                            <!-- Code -->
+                            <div style="text-align:center; margin:0 0 22px;">
+                                <div style="display:inline-block; padding:16px 28px; background:#f5f3ff; border:1px solid #ddd6fe; border-radius:12px;">
+                                    <span style="font-size:34px; font-weight:800; letter-spacing:10px; color:#4f46e5; font-family:'Courier New',monospace;">{{ otp }}</span>
+                                </div>
+                            </div>
+
+                            <p style="margin:0 0 6px; font-size:13px; color:#64748b; text-align:center;">
+                                This code expires in <strong>{{ expiry_minutes }} minutes</strong>.
+                            </p>
+                            <p style="margin:18px 0 0; font-size:12px; line-height:1.5; color:#94a3b8;">
+                                If you didn't create a Money Logger account, you can safely ignore this email — no account will be activated.
+                            </p>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding:18px 32px; background:#f8fafc; border-top:1px solid #e2e8f0;">
+                            <p style="margin:0; font-size:11px; color:#94a3b8; text-align:center;">
+                                &copy; Money Logger · This is an automated message, please do not reply.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

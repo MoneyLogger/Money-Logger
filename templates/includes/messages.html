@@ -1,0 +1,51 @@
+{% if messages %}
+<div class="ml-flash-wrap" id="mlFlashWrap">
+    {% for message in messages %}
+    <div class="ml-flash {{ message.tags }}" role="alert">
+        <span class="ml-flash-dot"></span>
+        <span class="ml-flash-text">{{ message }}</span>
+        <button type="button" class="ml-flash-x" aria-label="Dismiss" onclick="this.parentNode.remove()">&times;</button>
+    </div>
+    {% endfor %}
+</div>
+<style>
+    .ml-flash-wrap { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: calc(100% - 32px); max-width: 440px; pointer-events: none; }
+    .ml-flash { pointer-events: auto; display: flex; align-items: flex-start; gap: 10px; padding: 13px 14px; border-radius: 12px; font-size: 0.875rem; font-weight: 500; line-height: 1.4; background: #fff; border: 1px solid #e5e7eb; box-shadow: 0 12px 32px rgba(2,6,23,0.18); animation: mlFlashIn 0.25s ease-out; }
+    .ml-flash-dot { flex-shrink: 0; width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; background: #94a3b8; }
+    .ml-flash-text { flex: 1; min-width: 0; overflow-wrap: anywhere; color: #1f2937; }
+    .ml-flash-x { flex-shrink: 0; background: none; border: none; font-size: 1.15rem; line-height: 1; color: #9ca3af; cursor: pointer; padding: 0 2px; }
+    .ml-flash-x:hover { color: #4b5563; }
+    .ml-flash.error   { background: #fef2f2; border-color: #fecaca; }
+    .ml-flash.error   .ml-flash-dot { background: #ef4444; }
+    .ml-flash.error   .ml-flash-text { color: #991b1b; }
+    .ml-flash.success { background: #ecfdf5; border-color: #a7f3d0; }
+    .ml-flash.success .ml-flash-dot { background: #10b981; }
+    .ml-flash.success .ml-flash-text { color: #065f46; }
+    .ml-flash.warning { background: #fffbeb; border-color: #fde68a; }
+    .ml-flash.warning .ml-flash-dot { background: #f59e0b; }
+    .ml-flash.warning .ml-flash-text { color: #92400e; }
+    .ml-flash.info,
+    .ml-flash.debug   { background: #eff6ff; border-color: #bfdbfe; }
+    .ml-flash.info    .ml-flash-dot,
+    .ml-flash.debug   .ml-flash-dot { background: #3b82f6; }
+    .ml-flash.info    .ml-flash-text,
+    .ml-flash.debug   .ml-flash-text { color: #1e40af; }
+    .ml-flash.hide { animation: mlFlashOut 0.25s forwards; }
+    @keyframes mlFlashIn  { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
+    @keyframes mlFlashOut { to { opacity: 0; transform: translateY(-10px); } }
+    @media (max-width: 480px) { .ml-flash-wrap { top: 10px; width: calc(100% - 20px); } }
+</style>
+<script>
+    (function () {
+        var wrap = document.getElementById('mlFlashWrap');
+        if (!wrap) return;
+        // Auto-dismiss each toast after a few seconds.
+        Array.prototype.forEach.call(wrap.querySelectorAll('.ml-flash'), function (el) {
+            setTimeout(function () {
+                el.classList.add('hide');
+                setTimeout(function () { if (el.parentNode) el.remove(); }, 260);
+            }, 6000);
+        });
+    })();
+</script>
+{% endif %}

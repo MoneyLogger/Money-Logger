@@ -100,6 +100,26 @@ ACCOUNT_SIGNUP_FIELDS = ["username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 # Log social users in directly without an extra confirmation page.
 SOCIALACCOUNT_LOGIN_ON_GET = True
+# Trust Google's verified email and mark our account email-verified (no OTP).
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
+
+
+# Email (Gmail SMTP) — used to send signup verification OTPs.
+# EMAIL_HOST_PASSWORD must be a Google "App Password" (Google Account → Security
+# → 2-Step Verification → App passwords), NOT the normal Gmail login password.
+# It is stored in .env as GMAIL_SMTP_PASSWORD. Google shows it with spaces
+# ("abcd efgh ijkl mnop"); we strip them since SMTP wants the 16 chars only.
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "moneyloggerpage@gmail.com")
+EMAIL_HOST_PASSWORD = (os.getenv("GMAIL_SMTP_PASSWORD") or "").replace(" ", "")
+DEFAULT_FROM_EMAIL = f"Money Logger <{EMAIL_HOST_USER}>"
+
+# OTP policy
+OTP_EXPIRY_MINUTES = 10          # how long a code stays valid
+OTP_RESEND_COOLDOWN_SECONDS = 60  # min wait between "resend code" requests
 
 
 # Application definition
