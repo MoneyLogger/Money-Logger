@@ -96,10 +96,16 @@ SOCIALACCOUNT_PROVIDERS = {
 
 # allauth account behaviour (django-allauth 65.x format).
 ACCOUNT_LOGIN_METHODS = {"username"}
-ACCOUNT_SIGNUP_FIELDS = ["username*", "password1*", "password2*"]
+# `email` MUST be listed here: allauth's social signup form always validates the
+# email field's presence and raises ImproperlyConfigured on the Google signup
+# step if it's missing. Our own (custom) signup view doesn't use these fields.
+ACCOUNT_SIGNUP_FIELDS = ["username*", "email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
-# Log social users in directly without an extra confirmation page.
+# Social (Google) login: create the local account automatically and skip
+# allauth's intermediate signup/confirm pages.
 SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
 # Trust Google's verified email and mark our account email-verified (no OTP).
 SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
 
