@@ -1,9 +1,13 @@
+import csv
+import io
+import zipfile
+from datetime import datetime
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Sum, Q
-from django.http import JsonResponse
-from django.core.paginator import Paginator
+from django.db.models import Sum
+from django.http import JsonResponse, HttpResponse
 from .forms import TransactionForm, SwitchForm
 from .models import Transaction, ActivityLog, WhatIfTransaction
 from .balance_service import BalanceService
@@ -11,6 +15,120 @@ from .balance_service import BalanceService
 
 def is_whatif_mode(request):
     return request.session.get('whatif_mode', False)
+
+
+def _csv_bytes(header, rows):
+    """Build one UTF-8 CSV (with BOM so Excel renders ₹/emoji) as bytes."""
+    buf = io.StringIO()
+    buf.write("﻿")
+    writer = csv.writer(buf)
+    writer.writerow(header)
+    for row in rows:
+        writer.writerow(row)
+    return buf.getvalue().encode("utf-8")
+
+
+@login_required
+def export_transactions(request):
+    """
+    Download ALL of the user's data as a ZIP of CSV files:
+    transactions, budgets, saving goals, saving transactions and notes.
+
+    Replaces the old client-side DOM scraper (which only saw the current
+    paginated page and broke on pages without a table). Each managed queryset
+    uses the default `objects` manager, so soft-deleted rows are excluded.
+    """
+    from .models import Budget
+    from savings.models import SavingGoal, SavingTransaction
+    from notes.models import Note
+
+    user = request.user
+
+    transactions_csv = _csv_bytes(
+        ["Date", "Type", "Category", "Amount", "Money Type", "Switch Direction", "Description"],
+        (
+            [
+                t.date.strftime("%Y-%m-%d"),
+                t.get_transaction_type_display(),
+                t.category,
+                t.amount,
+                t.get_money_type_display(),
+                t.get_switch_direction_display() if t.switch_direction else "",
+                t.description,
+            ]
+            for t in Transaction.objects.filter(user=user).order_by("-date", "-id")
+        ),
+    )
+
+    budgets_csv = _csv_bytes(
+        ["Category", "Amount", "Period", "Month", "Year", "Alert Threshold %"],
+        (
+            [b.category, b.amount, b.get_period_display(), b.month, b.year, b.alert_threshold]
+            for b in Budget.objects.filter(user=user).order_by("-year", "-month", "category")
+        ),
+    )
+
+    saving_goals_csv = _csv_bytes(
+        ["Title", "Target Amount", "Current Amount", "Status", "Deadline", "Description", "Created"],
+        (
+            [
+                g.title,
+                g.target_amount,
+                g.current_amount,
+                g.get_status_display(),
+                g.deadline.strftime("%Y-%m-%d") if g.deadline else "",
+                g.description or "",
+                g.created_at.strftime("%Y-%m-%d"),
+            ]
+            for g in SavingGoal.objects.filter(user=user).order_by("-created_at")
+        ),
+    )
+
+    saving_transactions_csv = _csv_bytes(
+        ["Date", "Goal", "Type", "Source", "Amount", "Note"],
+        (
+            [
+                s.date.strftime("%Y-%m-%d"),
+                s.saving_goal.title if s.saving_goal_id else "",
+                s.get_transaction_type_display(),
+                s.get_source_display(),
+                s.amount,
+                s.note or "",
+            ]
+            for s in SavingTransaction.objects.filter(user=user)
+            .select_related("saving_goal")
+            .order_by("-date", "-created_at")
+        ),
+    )
+
+    notes_csv = _csv_bytes(
+        ["Date", "Title", "Category", "Priority", "Color", "Pinned", "Content"],
+        (
+            [
+                n.date.strftime("%Y-%m-%d"),
+                n.title,
+                n.get_category_display(),
+                n.get_priority_display(),
+                n.get_color_display(),
+                "Yes" if n.is_pinned else "No",
+                n.content,
+            ]
+            for n in Note.objects.filter(user=user).order_by("-updated_at")
+        ),
+    )
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("transactions.csv", transactions_csv)
+        zf.writestr("budgets.csv", budgets_csv)
+        zf.writestr("saving_goals.csv", saving_goals_csv)
+        zf.writestr("saving_transactions.csv", saving_transactions_csv)
+        zf.writestr("notes.csv", notes_csv)
+
+    stamp = datetime.now().strftime("%Y-%m-%d")
+    response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
+    response["Content-Disposition"] = f'attachment; filename="moneylogger_export_{stamp}.zip"'
+    return response
 
 
 @login_required

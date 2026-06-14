@@ -28,6 +28,8 @@ urlpatterns = [
 
     path("login/", RecaptchaLoginView.as_view(), name="login"),
     path("accounts/", include("accounts.urls")),
+    # django-allauth routes (Google OAuth lives at /accounts/google/login/)
+    path("accounts/", include("allauth.urls")),
 
     path("", include("dashboard.urls")),
     path("ledger/", include("ledger.urls")),

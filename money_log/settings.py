@@ -28,7 +28,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-4u)hc$wao_i_f1t)!7l1j8lz_vpdk37*sy!9akc!x5pmqnmb^y"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 ALLOWED_HOSTS = ["*"]
 
@@ -68,6 +68,67 @@ LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/login/"
 
 
+# Authentication backends:
+#  - EmailBackend: log in with email + password (custom login form)
+#  - ModelBackend: Django default (admin / username), kept for fallback
+#  - allauth: social login (Google)
+AUTHENTICATION_BACKENDS = [
+    "accounts.backends.EmailBackend",
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+# Google OAuth via django-allauth.
+# Credentials come from Google Cloud Console -> APIs & Services -> Credentials
+# -> "OAuth client ID" (Web application). NOT the reCAPTCHA keys.
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
+            "secret": os.getenv("GOOGLE_SECRET", ""),
+            "key": "",
+        },
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+        # Skip allauth's intermediate "Continue" page on social login.
+        "OAUTH_PKCE_ENABLED": True,
+    }
+}
+
+# allauth account behaviour (django-allauth 65.x format).
+ACCOUNT_LOGIN_METHODS = {"username"}
+# `email` MUST be listed here: allauth's social signup form always validates the
+# email field's presence and raises ImproperlyConfigured on the Google signup
+# step if it's missing. Our own (custom) signup view doesn't use these fields.
+ACCOUNT_SIGNUP_FIELDS = ["username*", "email*", "password1*", "password2*"]
+ACCOUNT_EMAIL_VERIFICATION = "none"
+# Social (Google) login: create the local account automatically and skip
+# allauth's intermediate signup/confirm pages.
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
+# Trust Google's verified email and mark our account email-verified (no OTP).
+SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
+
+
+# Email (Gmail SMTP) — used to send signup verification OTPs.
+# EMAIL_HOST_PASSWORD must be a Google "App Password" (Google Account → Security
+# → 2-Step Verification → App passwords), NOT the normal Gmail login password.
+# It is stored in .env as GMAIL_SMTP_PASSWORD. Google shows it with spaces
+# ("abcd efgh ijkl mnop"); we strip them since SMTP wants the 16 chars only.
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "moneyloggerpage@gmail.com")
+EMAIL_HOST_PASSWORD = (os.getenv("GMAIL_SMTP_PASSWORD") or "").replace(" ", "")
+DEFAULT_FROM_EMAIL = f"Money Logger <{EMAIL_HOST_USER}>"
+
+# OTP policy
+OTP_EXPIRY_MINUTES = 10          # how long a code stays valid
+OTP_RESEND_COOLDOWN_SECONDS = 60  # min wait between "resend code" requests
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -79,12 +140,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "django.contrib.sites",
-
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-
+    # Google sign-in (OAuth) via django-allauth
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
     "accounts",
     "dashboard",
     "ledger",
@@ -164,6 +224,10 @@ if PRODUCTION_MODE:
             'PORT': 5432,
             'CONN_MAX_AGE': 600,
             'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+            # Neon's "-pooler" endpoint (PgBouncer transaction pooling) does not
+            # keep server-side cursors alive between statements, which breaks
+            # streaming queries like dumpdata/.iterator(). Disable them.
+            'DISABLE_SERVER_SIDE_CURSORS': True,
         }
     }
 
@@ -224,4 +288,3 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-

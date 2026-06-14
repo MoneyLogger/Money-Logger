@@ -48,11 +48,11 @@ class Transaction(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['user', 'date'], name='tx_user_date_idx'),
-            models.Index(fields=['user', 'transaction_type', 'money_type'], name='tx_type_money_idx'),
-            models.Index(fields=['user', 'is_active'], name='tx_active_idx'),
-            models.Index(fields=['user', 'is_pinned'], name='tx_pinned_idx'),
-            models.Index(fields=['user', 'category', 'transaction_type', 'date'], name='tx_budget_idx'),
+            models.Index(fields=["user", "date"], name="tx_user_date_idx"),
+            models.Index(fields=["user", "transaction_type", "money_type"], name="tx_type_money_idx"),
+            models.Index(fields=["user", "is_active"], name="tx_active_idx"),
+            models.Index(fields=["user", "is_pinned"], name="tx_pinned_idx"),
+            models.Index(fields=["user", "category", "transaction_type", "date"], name="tx_budget_idx"),
         ]
 
     def __str__(self):
@@ -84,8 +84,8 @@ class ActivityLog(models.Model):
     class Meta:
         ordering = ["-timestamp"]
         indexes = [
-            models.Index(fields=['user', 'timestamp'], name='al_user_ts_idx'),
-            models.Index(fields=['user', 'action'], name='al_action_idx'),
+            models.Index(fields=["user", "timestamp"], name="al_user_ts_idx"),
+            models.Index(fields=["user", "action"], name="al_action_idx"),
         ]
 
     def __str__(self):
@@ -111,8 +111,8 @@ class WhatIfTransaction(models.Model):
     class Meta:
         ordering = ["-date", "-created_at"]
         indexes = [
-            models.Index(fields=['user', 'date'], name='wi_user_date_idx'),
-            models.Index(fields=['user', 'transaction_type'], name='wi_type_idx'),
+            models.Index(fields=["user", "date"], name="wi_user_date_idx"),
+            models.Index(fields=["user", "transaction_type"], name="wi_type_idx"),
         ]
 
     def __str__(self):
@@ -156,6 +156,10 @@ class Budget(models.Model):
                 condition=models.Q(is_active=True),
                 name="unique_active_budget"
             )
+        ]
+        indexes = [
+            models.Index(fields=["user", "is_active"], name="budget_active_idx"),
+            models.Index(fields=["user", "month", "year"], name="budget_period_idx"),
         ]
 
     def __str__(self):

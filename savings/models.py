@@ -37,8 +37,8 @@ class SavingGoal(models.Model):
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['user', 'is_active'], name='sg_active_idx'),
-            models.Index(fields=['user', 'status'], name='sg_status_idx'),
+            models.Index(fields=["user", "is_active"], name="sg_active_idx"),
+            models.Index(fields=["user", "status"], name="sg_status_idx"),
         ]
 
     def progress_percentage(self):
@@ -98,9 +98,9 @@ class SavingTransaction(models.Model):
     class Meta:
         ordering = ["-date", "-created_at"]
         indexes = [
-            models.Index(fields=['user', 'date'], name='st_user_date_idx'),
-            models.Index(fields=['user', 'is_active'], name='st_active_idx'),
-            models.Index(fields=['user', 'transaction_type'], name='st_type_idx'),
+            models.Index(fields=["user", "date"], name="st_user_date_idx"),
+            models.Index(fields=["user", "is_active"], name="st_active_idx"),
+            models.Index(fields=["user", "transaction_type"], name="st_type_idx"),
         ]
 
     def __str__(self):

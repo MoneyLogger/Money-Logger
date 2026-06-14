@@ -52,9 +52,9 @@ class Note(models.Model):
     class Meta:
         ordering = ["-updated_at"]
         indexes = [
-            models.Index(fields=['user', 'is_active'], name='note_active_idx'),
-            models.Index(fields=['user', 'category'], name='note_cat_idx'),
-            models.Index(fields=['user', 'is_pinned'], name='note_pin_idx'),
+            models.Index(fields=["user", "is_active"], name="note_active_idx"),
+            models.Index(fields=["user", "category"], name="note_cat_idx"),
+            models.Index(fields=["user", "is_pinned"], name="note_pin_idx"),
         ]
 
     def __str__(self):

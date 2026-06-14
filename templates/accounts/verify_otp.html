@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/media/logo/logo.png">
+    <title>Verify Email - Money Logger</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(to bottom right, #eff6ff, #faf5ff, #fce7f3); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+
+        .auth-container { background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 100%; max-width: 440px; }
+
+        .verify-icon { width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 18px; background: linear-gradient(135deg, #1e3a8a, #4f46e5 55%, #7c3aed); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 24px -8px rgba(79,70,229,0.6); }
+        .verify-icon svg { width: 30px; height: 30px; color: #fff; }
+
+        .auth-head { text-align: center; margin-bottom: 26px; }
+        .auth-head h1 { color: #0f172a; font-size: 1.55rem; font-weight: 700; margin-bottom: 8px; }
+        .auth-head p { color: #64748b; font-size: 0.92rem; line-height: 1.5; }
+        .auth-head .email { color: #4f46e5; font-weight: 600; white-space: nowrap; }
+
+        .messages { margin-bottom: 18px; display: flex; flex-direction: column; gap: 8px; }
+        .message-item { padding: 11px 14px; border-radius: 10px; font-size: 0.86rem; font-weight: 500; }
+        .message-item.error { background: #fee2e2; color: #991b1b; }
+        .message-item.success { background: #d1fae5; color: #065f46; }
+        .message-item.info { background: #dbeafe; color: #1e40af; }
+
+        .otp-input {
+            width: 100%; padding: 16px; text-align: center; font-size: 1.9rem; font-weight: 700;
+            letter-spacing: 0.6rem; text-indent: 0.6rem; color: #0f172a; border: 2px solid #e1e8ed;
+            border-radius: 14px; background: #fff; transition: border-color 0.25s, box-shadow 0.25s;
+            font-family: 'Courier New', monospace;
+        }
+        .otp-input:focus { outline: none; border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(124,58,237,0.12); }
+        .otp-hint { text-align: center; font-size: 0.78rem; color: #94a3b8; margin-top: 10px; }
+
+        .btn { width: 100%; background: linear-gradient(135deg, #2563eb, #7c3aed); color: #fff; padding: 15px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; margin-top: 22px; -webkit-tap-highlight-color: transparent; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 22px -8px rgba(124,58,237,0.55); }
+        .btn:active { transform: translateY(0); }
+
+        .resend-row { text-align: center; margin-top: 20px; font-size: 0.88rem; color: #64748b; }
+        .resend-form { display: inline; }
+        .resend-btn { background: none; border: none; color: #4f46e5; font-weight: 600; font-size: 0.88rem; cursor: pointer; padding: 0; }
+        .resend-btn:hover:not(:disabled) { text-decoration: underline; }
+        .resend-btn:disabled { color: #cbd5e1; cursor: not-allowed; }
+
+        .auth-links { text-align: center; margin-top: 22px; font-size: 0.88rem; color: #64748b; }
+        .auth-links a { color: #2563eb; text-decoration: none; font-weight: 600; }
+        .auth-links a:hover { text-decoration: underline; }
+
+        /* Tablet */
+        @media (min-width: 481px) and (max-width: 1024px) {
+            .auth-container { max-width: 460px; }
+        }
+        /* Mobile */
+        @media (max-width: 480px) {
+            body { padding: 14px; align-items: flex-start; padding-top: 40px; }
+            .auth-container { padding: 28px 20px; border-radius: 18px; }
+            .auth-head h1 { font-size: 1.35rem; }
+            .auth-head .email { white-space: normal; overflow-wrap: anywhere; }
+            .otp-input { font-size: 1.6rem; letter-spacing: 0.45rem; text-indent: 0.45rem; padding: 15px; }
+            .btn { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="verify-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+            </svg>
+        </div>
+
+        <div class="auth-head">
+            <h1>{{ verify_heading|default:"Verify your email" }}</h1>
+            <p>We sent a 6-digit code to<br><span class="email">{{ masked_email }}</span></p>
+        </div>
+
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message-item {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" id="otpForm">
+            {% csrf_token %}
+            <input
+                type="text"
+                name="otp"
+                id="otpInput"
+                class="otp-input"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                pattern="[0-9]*"
+                maxlength="6"
+                placeholder="••••••"
+                autofocus
+                required>
+            <div class="otp-hint">Enter the code within {{ expiry_minutes }} minutes.</div>
+            <button type="submit" class="btn">Verify &amp; Continue</button>
+        </form>
+
+        <div class="resend-row">
+            Didn't get the code?
+            <form method="post" class="resend-form" id="resendForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="resend">
+                <button type="submit" class="resend-btn" id="resendBtn">Resend code</button>
+            </form>
+            <span id="resendTimer"></span>
+        </div>
+
+        <div class="auth-links">
+            {{ back_prompt|default:"Entered the wrong email?" }}
+            <a href="{{ back_url|default:'/accounts/signup/' }}">{{ back_label|default:"Start over" }}</a>
+        </div>
+    </div>
+
+    <script>
+        // Keep the OTP box numeric-only.
+        (function () {
+            var input = document.getElementById('otpInput');
+            if (input) {
+                input.addEventListener('input', function () {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+                });
+            }
+        })();
+
+        // Resend cooldown countdown — disables the button until the timer hits 0.
+        (function () {
+            var remaining = parseInt("{{ resend_remaining|default:0 }}", 10) || 0;
+            var btn = document.getElementById('resendBtn');
+            var timer = document.getElementById('resendTimer');
+            if (!btn || !timer) return;
+
+            function tick() {
+                if (remaining <= 0) {
+                    btn.disabled = false;
+                    timer.textContent = '';
+                    return;
+                }
+                btn.disabled = true;
+                timer.textContent = ' (' + remaining + 's)';
+                remaining -= 1;
+                setTimeout(tick, 1000);
+            }
+            tick();
+        })();
+    </script>
+</body>
+</html>
